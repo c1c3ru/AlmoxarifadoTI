@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGAT-TI - Sistema de Gestão de Almoxarifado de T.I.</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#E3F2FD',
+                            100: '#BBDEFB',
+                            500: '#2196F3',
+                            600: '#1976D2',
+                            700: '#1565C0'
+                        },
+                        gray: {
+                            50: '#FAFAFA',
+                            100: '#F5F5F5',
+                            800: '#424242',
+                            900: '#212121'
+                        },
+                        success: {
+                            600: '#388E3C',
+                            700: '#2E7D32'
+                        },
+                        warning: {
+                            600: '#F57C00',
+                            700: '#EF6C00'
+                        },
+                        error: {
+                            600: '#D32F2F',
+                            700: '#C62828'
+                        }
+                    },
+                    fontFamily: {
+                        'inter': ['Inter', 'system-ui', 'sans-serif']
+                    }
+                }
+            }
+        };
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50 font-inter">
+    <!-- @COMPONENT: App [Main application wrapper] -->
+    <div class="flex min-h-screen">
+        <!-- @COMPONENT: Sidebar [Navigation sidebar] -->
+        <aside class="w-60 bg-white shadow-lg border-r border-gray-200 fixed h-full z-30">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-warehouse text-white text-lg"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-lg font-semibold text-gray-900">SGAT-TI</h1>
+                        <p class="text-xs text-gray-500">Almoxarifado T.I.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <nav class="p-4 space-y-2">
+                <!-- @STATE: activeRoute:string = 'dashboard' -->
+                <a href="#" class="flex items-center space-x-3 px-3 py-2 rounded-lg bg-primary-50 text-primary-600 font-medium" data-route="dashboard">
+                    <i class="fas fa-chart-line w-5"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors" data-route="items">
+                    <i class="fas fa-boxes w-5"></i>
+                    <span>Itens</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors" data-route="search">
+                    <i class="fas fa-search w-5"></i>
+                    <span>Pesquisar</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors" data-route="movements">
+                    <i class="fas fa-exchange-alt w-5"></i>
+                    <span>Movimentações</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors" data-route="scanner">
+                    <i class="fas fa-qrcode w-5"></i>
+                    <span>Scanner QR</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors" data-route="history">
+                    <i class="fas fa-history w-5"></i>
+                    <span>Histórico</span>
+                </a>
+                
+                <div class="pt-4 border-t border-gray-200 mt-4">
+                    <p class="text-xs text-gray-500 uppercase tracking-wide font-medium px-3 mb-2">Administração</p>
+                    <a href="#" class="flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors" data-route="users" data-admin-only="true">
+                        <i class="fas fa-users w-5"></i>
+                        <span>Usuários</span>
+                    </a>
+                    <a href="#" class="flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors" data-route="categories" data-admin-only="true">
+                        <i class="fas fa-tags w-5"></i>
+                        <span>Categorias</span>
+                    </a>
+                </div>
+            </nav>
+            
+            <div class="absolute bottom-0 w-full p-4 border-t border-gray-200 bg-white">
+                <div class="flex items-center space-x-3">
+                    <!-- A professional headshot of a person in business attire -->
+                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=40&h=40" alt="User Avatar" class="w-8 h-8 rounded-full" data-bind="user.avatar">
+                    <div class="flex-1">
+                        <p class="text-sm font-medium text-gray-900" data-bind="user.name">João Silva</p>
+                        <p class="text-xs text-gray-500" data-bind="user.role">Administrador</p>
+                    </div>
+                    <button class="text-gray-400 hover:text-gray-600" data-event="click:handleLogout">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </div>
+            </div>
+        </aside>
+        <!-- @END_COMPONENT: Sidebar -->
+
+        <!-- @COMPONENT: MainContent [Main application content area] -->
+        <main class="flex-1 ml-60">
+            <!-- @COMPONENT: TopBar [Top navigation bar] -->
+            <header class="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-2xl font-semibold text-gray-900" data-bind="currentPage.title">Dashboard</h2>
+                        <p class="text-sm text-gray-500" data-bind="currentPage.subtitle">Visão geral do almoxarifado</p>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <button class="relative p-2 text-gray-400 hover:text-gray-600 transition-colors" data-event="click:toggleNotifications">
+                            <i class="fas fa-bell text-lg"></i>
+                            <span class="absolute -top-1 -right-1 w-4 h-4 bg-error-600 text-white text-xs rounded-full flex items-center justify-center" data-bind="notifications.count">3</span>
+                        </button>
+                        <button class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium" data-event="click:openAddItemModal">
+                            <i class="fas fa-plus mr-2"></i>
+                            Novo Item
+                        </button>
+                    </div>
+                </div>
+            </header>
+            <!-- @END_COMPONENT: TopBar -->
+
+            <!-- @COMPONENT: DashboardContent [Dashboard page content] -->
+            <div class="p-6" id="dashboard-content">
+                <!-- Stats Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-500">Total de Itens</p>
+                                <p class="text-2xl font-semibold text-gray-900" data-bind="stats.totalItems">1,247</p>
+                            </div>
+                            <div class="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-boxes text-primary-600 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-500">Estoque Baixo</p>
+                                <p class="text-2xl font-semibold text-warning-600" data-bind="stats.lowStock">23</p>
+                            </div>
+                            <div class="w-12 h-12 bg-warning-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-exclamation-triangle text-warning-600 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-500">Movimentações Hoje</p>
+                                <p class="text-2xl font-semibold text-success-600" data-bind="stats.todayMovements">47</p>
+                            </div>
+                            <div class="w-12 h-12 bg-success-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-exchange-alt text-success-600 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-500">Usuários Ativos</p>
+                                <p class="text-2xl font-semibold text-gray-900" data-bind="stats.activeUsers">12</p>
+                            </div>
+                            <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-users text-gray-600 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Alerts Section -->
+                <div class="bg-white rounded-lg shadow-sm mb-8 border border-gray-200">
+                    <div class="p-6 border-b border-gray-200">
+                        <div class="flex items-center space-x-2">
+                            <i class="fas fa-exclamation-triangle text-warning-600"></i>
+                            <h3 class="text-lg font-semibold text-gray-900">Alertas de Estoque</h3>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <!-- @MAP: lowStockItems.map(item => ( -->
+                        <div class="flex items-center justify-between p-4 bg-warning-50 rounded-lg border border-warning-200 mb-3">
+                            <div class="flex items-center space-x-4">
+                                <div class="w-10 h-10 bg-warning-100 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-microchip text-warning-600"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium text-gray-900" data-bind="item.name">Processador Intel Core i7-12700K</p>
+                                    <p class="text-sm text-gray-500">Código: <span data-bind="item.code">2025-0045</span></p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm text-gray-500">Estoque atual</p>
+                                <p class="font-semibold text-warning-600"><span data-bind="item.currentStock">2</span> unidades</p>
+                                <p class="text-xs text-gray-500">Mínimo: <span data-bind="item.minStock">5</span></p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center justify-between p-4 bg-warning-50 rounded-lg border border-warning-200 mb-3">
+                            <div class="flex items-center space-x-4">
+                                <div class="w-10 h-10 bg-warning-100 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-memory text-warning-600"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium text-gray-900" data-bind="item.name">Memória RAM DDR4 16GB</p>
+                                    <p class="text-sm text-gray-500">Código: <span data-bind="item.code">2025-0123</span></p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm text-gray-500">Estoque atual</p>
+                                <p class="font-semibold text-warning-600"><span data-bind="item.currentStock">1</span> unidade</p>
+                                <p class="text-xs text-gray-500">Mínimo: <span data-bind="item.minStock">3</span></p>
+                            </div>
+                        </div>
+                        <!-- @END_MAP )) -->
+                        
+                        <button class="w-full mt-4 py-2 text-center text-warning-700 hover:text-warning-800 font-medium transition-colors" data-event="click:viewAllAlerts">
+                            Ver todos os alertas <i class="fas fa-arrow-right ml-1"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Recent Activities -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                        <div class="p-6 border-b border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-900">Últimas Movimentações</h3>
+                        </div>
+                        <div class="p-6">
+                            <!-- @MAP: recentMovements.map(movement => ( -->
+                            <div class="flex items-center space-x-4 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                                <div class="w-10 h-10 bg-success-100 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-arrow-down text-success-600"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="font-medium text-gray-900" data-bind="movement.itemName">Mouse sem fio Logitech MX Master 3</p>
+                                    <p class="text-sm text-gray-500">
+                                        Entrada: <span data-bind="movement.quantity">5</span> unidades por <span data-bind="movement.user">Maria Santos</span>
+                                    </p>
+                                    <p class="text-xs text-gray-400" data-bind="movement.timestamp">Há 2 horas</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center space-x-4 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                                <div class="w-10 h-10 bg-error-100 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-arrow-up text-error-600"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="font-medium text-gray-900" data-bind="movement.itemName">Teclado Mecânico Keychron K2</p>
+                                    <p class="text-sm text-gray-500">
+                                        Saída: <span data-bind="movement.quantity">1</span> unidade para <span data-bind="movement.destination">Carlos Lima - TI</span>
+                                    </p>
+                                    <p class="text-xs text-gray-400" data-bind="movement.timestamp">Há 3 horas</p>
+                                </div>
+                            </div>
+                            <!-- @END_MAP )) -->
+                        </div>
+                    </div>
+
+                    <!-- Categories Overview -->
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                        <div class="p-6 border-b border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-900">Itens por Categoria</h3>
+                        </div>
+                        <div class="p-6">
+                            <!-- @MAP: categoriesStats.map(category => ( -->
+                            <div class="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-desktop text-primary-600 text-sm"></i>
+                                    </div>
+                                    <span class="font-medium text-gray-900" data-bind="category.name">Computadores</span>
+                                </div>
+                                <span class="font-semibold text-gray-900" data-bind="category.count">342</span>
+                            </div>
+                            
+                            <div class="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-mouse text-primary-600 text-sm"></i>
+                                    </div>
+                                    <span class="font-medium text-gray-900" data-bind="category.name">Periféricos</span>
+                                </div>
+                                <span class="font-semibold text-gray-900" data-bind="category.count">189</span>
+                            </div>
+                            
+                            <div class="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-cable-car text-primary-600 text-sm"></i>
+                                    </div>
+                                    <span class="font-medium text-gray-900" data-bind="category.name">Cabos</span>
+                                </div>
+                                <span class="font-semibold text-gray-900" data-bind="category.count">156</span>
+                            </div>
+                            
+                            <div class="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-microchip text-primary-600 text-sm"></i>
+                                    </div>
+                                    <span class="font-medium text-gray-900" data-bind="category.name">Componentes</span>
+                                </div>
+                                <span class="font-semibold text-gray-900" data-bind="category.count">78</span>
+                            </div>
+                            <!-- @END_MAP )) -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- @END_COMPONENT: DashboardContent -->
+
+            <!-- @COMPONENT: ItemsContent [Items management page content] -->
+            <div class="p-6 hidden" id="items-content">
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                    <div class="p-6 border-b border-gray-200">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-lg font-semibold text-gray-900">Gerenciar Itens</h3>
+                            <button class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium" data-event="click:openAddItemModal">
+                                <i class="fas fa-plus mr-2"></i>
+                                Adicionar Item
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50 border-b border-gray-200">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Código</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Categoria</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estoque</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">QR Code</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <!-- @MAP: items.map(item => ( -->
+                                <tr class="hover:bg-gray-50 transition-colors">
+                                    <td class="px-6 py-4">
+                                        <div>
+                                            <p class="font-medium text-gray-900" data-bind="item.name">Mouse sem fio Logitech MX Master 3</p>
+                                            <p class="text-sm text-gray-500" data-bind="item.serialNumber">SN: LMX3001234567</p>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-900" data-bind="item.code">2025-0001</td>
+                                    <td class="px-6 py-4">
+                                        <span class="px-2 py-1 text-xs font-medium bg-primary-100 text-primary-800 rounded-full" data-bind="item.category">Periféricos</span>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <div class="flex items-center space-x-2">
+                                            <span class="text-sm font-medium text-gray-900" data-bind="item.currentStock">15</span>
+                                            <span class="text-xs text-gray-500">/ <span data-bind="item.minStock">5</span> min</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <span class="px-2 py-1 text-xs font-medium bg-success-100 text-success-800 rounded-full" data-bind="item.status">Disponível</span>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <button class="text-primary-600 hover:text-primary-700 transition-colors" data-event="click:showQRCode" data-item-id="2025-0001">
+                                            <i class="fas fa-qrcode text-lg"></i>
+                                        </button>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <div class="flex items-center space-x-2">
+                                            <button class="text-gray-600 hover:text-primary-600 transition-colors" data-event="click:editItem">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="text-gray-600 hover:text-error-600 transition-colors" data-event="click:deleteItem" data-admin-only="true">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <!-- @END_MAP )) -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <!-- @END_COMPONENT: ItemsContent -->
+
+            <!-- @COMPONENT: SearchContent [Search page content] -->
+            <div class="p-6 hidden" id="search-content">
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+                    <div class="p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Pesquisar Itens</h3>
+                        <div class="flex flex-col md:flex-row gap-4">
+                            <div class="flex-1">
+                                <div class="relative">
+                                    <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                                    <input type="text" placeholder="Pesquisar por código, nome ou categoria..." 
+                                           class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
+                                           data-event="input:handleSearch" data-implementation="Implement debounced search">
+                                </div>
+                            </div>
+                            <select class="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors" data-event="change:filterByCategory">
+                                <option value="">Todas as Categorias</option>
+                                <option value="computadores">Computadores</option>
+                                <option value="perifericos">Periféricos</option>
+                                <option value="cabos">Cabos</option>
+                                <option value="componentes">Componentes</option>
+                            </select>
+                            <select class="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors" data-event="change:filterByStatus">
+                                <option value="">Todos os Status</option>
+                                <option value="disponivel">Disponível</option>
+                                <option value="em-uso">Em Uso</option>
+                                <option value="manutencao">Em Manutenção</option>
+                                <option value="descartado">Descartado</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Search Results -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- @MAP: searchResults.map(item => ( -->
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+                        <div class="p-6">
+                            <div class="flex items-start justify-between mb-4">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-mouse text-primary-600 text-lg"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-semibold text-gray-900" data-bind="item.name">Mouse sem fio Logitech MX Master 3</h4>
+                                        <p class="text-sm text-gray-500" data-bind="item.code">2025-0001</p>
+                                    </div>
+                                </div>
+                                <button class="text-gray-400 hover:text-primary-600 transition-colors" data-event="click:showQRCode">
+                                    <i class="fas fa-qrcode"></i>
+                                </button>
+                            </div>
+                            
+                            <div class="space-y-2 mb-4">
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-500">Categoria:</span>
+                                    <span class="font-medium text-gray-900" data-bind="item.category">Periféricos</span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-500">Estoque:</span>
+                                    <span class="font-medium text-gray-900"><span data-bind="item.currentStock">15</span> unidades</span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-500">Localização:</span>
+                                    <span class="font-medium text-gray-900" data-bind="item.location">Prateleira A-01</span>
+                                </div>
+                                <div class="flex justify-between text-sm items-center">
+                                    <span class="text-gray-500">Status:</span>
+                                    <span class="px-2 py-1 text-xs font-medium bg-success-100 text-success-800 rounded-full" data-bind="item.status">Disponível</span>
+                                </div>
+                            </div>
+                            
+                            <div class="flex space-x-2">
+                                <button class="flex-1 px-3 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium text-sm" data-event="click:openMovementModal">
+                                    <i class="fas fa-exchange-alt mr-2"></i>
+                                    Movimentar
+                                </button>
+                                <button class="px-3 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors" data-event="click:editItem">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- @END_MAP )) -->
+                </div>
+            </div>
+            <!-- @END_COMPONENT: SearchContent -->
+
+            <!-- @COMPONENT: ScannerContent [QR Scanner page content] -->
+            <div class="p-6 hidden" id="scanner-content">
+                <div class="max-w-2xl mx-auto">
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                        <div class="p-6 border-b border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-900">Scanner de QR Code</h3>
+                            <p class="text-sm text-gray-500 mt-1">Escaneie o QR Code do item para dar baixa no estoque</p>
+                        </div>
+                        
+                        <div class="p-6">
+                            <!-- @FUNCTIONALITY: This scanner component should implement camera access using react-qr-reader or similar library -->
+                            <div class="aspect-square bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center mb-6" data-implementation="QR Scanner Camera View">
+                                <div class="text-center">
+                                    <i class="fas fa-camera text-4xl text-gray-400 mb-4"></i>
+                                    <p class="text-gray-500">Clique para ativar a câmera</p>
+                                    <button class="mt-4 px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium" data-event="click:activateCamera">
+                                        <i class="fas fa-video mr-2"></i>
+                                        Ativar Câmera
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Scanned Item Details (shown after successful scan) -->
+                            <div class="hidden" id="scanned-item-details" data-state="showScannedItem:boolean = false">
+                                <div class="bg-success-50 border border-success-200 rounded-lg p-4 mb-6">
+                                    <div class="flex items-center space-x-3 mb-4">
+                                        <i class="fas fa-check-circle text-success-600 text-xl"></i>
+                                        <div>
+                                            <p class="font-semibold text-success-800">Item Encontrado!</p>
+                                            <p class="text-sm text-success-700">QR Code escaneado com sucesso</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="bg-white rounded-lg p-4">
+                                        <div class="flex items-center space-x-4 mb-4">
+                                            <div class="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center">
+                                                <i class="fas fa-mouse text-primary-600"></i>
+                                            </div>
+                                            <div>
+                                                <h4 class="font-semibold text-gray-900" data-bind="scannedItem.name">Mouse sem fio Logitech MX Master 3</h4>
+                                                <p class="text-sm text-gray-500">Código: <span data-bind="scannedItem.code">2025-0001</span></p>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="grid grid-cols-2 gap-4 text-sm mb-4">
+                                            <div>
+                                                <span class="text-gray-500">Estoque Atual:</span>
+                                                <span class="font-medium text-gray-900 ml-1" data-bind="scannedItem.currentStock">15 unidades</span>
+                                            </div>
+                                            <div>
+                                                <span class="text-gray-500">Localização:</span>
+                                                <span class="font-medium text-gray-900 ml-1" data-bind="scannedItem.location">Prateleira A-01</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="space-y-4">
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-2">Quantidade a Retirar</label>
+                                                <input type="number" min="1" max="15" value="1" 
+                                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                                                       data-bind="withdrawalQuantity" data-event="input:validateQuantity">
+                                            </div>
+                                            
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-2">Destino/Observação (Opcional)</label>
+                                                <input type="text" placeholder="Ex: João Silva - Depto. Financeiro"
+                                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                                                       data-bind="destination" data-event="input:updateDestination">
+                                            </div>
+                                            
+                                            <div class="flex space-x-3">
+                                                <button class="flex-1 px-4 py-2 bg-success-600 text-white rounded-lg hover:bg-success-700 transition-colors font-medium" data-event="click:confirmWithdrawal">
+                                                    <i class="fas fa-check mr-2"></i>
+                                                    Confirmar Baixa
+                                                </button>
+                                                <button class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors" data-event="click:cancelScan">
+                                                    Cancelar
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- @END_COMPONENT: ScannerContent -->
+        </main>
+        <!-- @END_COMPONENT: MainContent -->
+    </div>
+    <!-- @END_COMPONENT: App -->
+
+    <!-- @COMPONENT: AddItemModal [Modal for adding new items] -->
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden" id="add-item-modal" data-state="showAddItemModal:boolean = false">
+        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-semibold text-gray-900">Adicionar Novo Item</h3>
+                    <button class="text-gray-400 hover:text-gray-600 transition-colors" data-event="click:closeAddItemModal">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <form class="p-6 space-y-6" data-event="submit:handleAddItem">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Nome do Item *</label>
+                        <input type="text" required 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                               placeholder="Ex: Mouse sem fio Logitech MX Master 3">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Categoria *</label>
+                        <select required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                            <option value="">Selecione uma categoria</option>
+                            <option value="computadores">Computadores</option>
+                            <option value="perifericos">Periféricos</option>
+                            <option value="cabos">Cabos</option>
+                            <option value="componentes">Componentes</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Número de Série</label>
+                        <input type="text" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                               placeholder="Ex: LMX3001234567">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Quantidade Inicial *</label>
+                        <input type="number" min="0" required 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Estoque Mínimo *</label>
+                        <input type="number" min="0" required 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                        <select class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                            <option value="disponivel">Disponível</option>
+                            <option value="em-uso">Em Uso</option>
+                            <option value="manutencao">Em Manutenção</option>
+                            <option value="descartado">Descartado</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Localização</label>
+                    <input type="text" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                           placeholder="Ex: Prateleira A-01">
+                </div>
+                
+                <div class="flex items-center justify-end space-x-3 pt-4 border-t border-gray-200">
+                    <button type="button" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors" data-event="click:closeAddItemModal">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium">
+                        <i class="fas fa-save mr-2"></i>
+                        Salvar Item
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- @END_COMPONENT: AddItemModal -->
+
+    <!-- @COMPONENT: QRCodeModal [Modal for displaying QR codes] -->
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden" id="qr-code-modal" data-state="showQRModal:boolean = false">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-semibold text-gray-900">QR Code do Item</h3>
+                    <button class="text-gray-400 hover:text-gray-600 transition-colors" data-event="click:closeQRModal">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="p-6 text-center">
+                <div class="mb-4">
+                    <h4 class="font-semibold text-gray-900" data-bind="selectedItem.name">Mouse sem fio Logitech MX Master 3</h4>
+                    <p class="text-sm text-gray-500">Código: <span data-bind="selectedItem.code">2025-0001</span></p>
+                </div>
+                
+                <!-- QR Code placeholder - in real implementation, this would be generated dynamically -->
+                <div class="w-48 h-48 mx-auto bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center mb-6" data-implementation="Generate QR Code with item code">
+                    <div class="text-center">
+                        <i class="fas fa-qrcode text-4xl text-gray-400 mb-2"></i>
+                        <p class="text-sm text-gray-500">QR Code</p>
+                        <p class="text-xs text-gray-400" data-bind="selectedItem.code">2025-0001</p>
+                    </div>
+                </div>
+                
+                <div class="flex space-x-3">
+                    <button class="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium" data-event="click:printQRCode">
+                        <i class="fas fa-print mr-2"></i>
+                        Imprimir
+                    </button>
+                    <button class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors" data-event="click:downloadQRCode">
+                        <i class="fas fa-download mr-2"></i>
+                        Baixar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- @END_COMPONENT: QRCodeModal -->
+
+    <script>
+        // TODO: Implement business logic, API calls, or state management
+        (function() {
+            'use strict';
+            
+            // Application state
+            let currentPage = 'dashboard';
+            let userRole = 'admin'; // admin or tech
+            
+            // DOM elements
+            const navLinks = document.querySelectorAll('aside nav a[data-route]');
+            const contentSections = document.querySelectorAll('main > div[id$="-content"]');
+            const pageTitle = document.querySelector('[data-bind="currentPage.title"]');
+            const pageSubtitle = document.querySelector('[data-bind="currentPage.subtitle"]');
+            
+            // Page configurations
+            const pages = {
+                dashboard: {
+                    title: 'Dashboard',
+                    subtitle: 'Visão geral do almoxarifado'
+                },
+                items: {
+                    title: 'Gerenciar Itens',
+                    subtitle: 'Cadastro e controle de itens do almoxarifado'
+                },
+                search: {
+                    title: 'Pesquisar Itens',
+                    subtitle: 'Busque itens por código, nome ou categoria'
+                },
+                scanner: {
+                    title: 'Scanner QR Code',
+                    subtitle: 'Escaneie QR codes para movimentação rápida'
+                }
+            };
+            
+            // Navigation handler
+            function handleNavigation(route) {
+                // Update active nav item
+                navLinks.forEach(link => {
+                    if (link.getAttribute('data-route') === route) {
+                        link.className = 'flex items-center space-x-3 px-3 py-2 rounded-lg bg-primary-50 text-primary-600 font-medium';
+                    } else {
+                        link.className = 'flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors';
+                    }
+                });
+                
+                // Show/hide content sections
+                contentSections.forEach(section => {
+                    if (section.id === `${route}-content`) {
+                        section.classList.remove('hidden');
+                    } else {
+                        section.classList.add('hidden');
+                    }
+                });
+                
+                // Update page title and subtitle
+                if (pages[route]) {
+                    pageTitle.textContent = pages[route].title;
+                    pageSubtitle.textContent = pages[route].subtitle;
+                }
+                
+                currentPage = route;
+            }
+            
+            // Modal handlers
+            function openModal(modalId) {
+                document.getElementById(modalId).classList.remove('hidden');
+            }
+            
+            function closeModal(modalId) {
+                document.getElementById(modalId).classList.add('hidden');
+            }
+            
+            // Event listeners
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const route = link.getAttribute('data-route');
+                    
+                    // Check admin-only routes
+                    if (link.hasAttribute('data-admin-only') && userRole !== 'admin') {
+                        alert('Acesso restrito para administradores');
+                        return;
+                    }
+                    
+                    handleNavigation(route);
+                });
+            });
+            
+            // Add item modal
+            document.querySelectorAll('[data-event*="openAddItemModal"]').forEach(btn => {
+                btn.addEventListener('click', () => openModal('add-item-modal'));
+            });
+            
+            document.querySelectorAll('[data-event*="closeAddItemModal"]').forEach(btn => {
+                btn.addEventListener('click', () => closeModal('add-item-modal'));
+            });
+            
+            // QR Code modal
+            document.querySelectorAll('[data-event*="showQRCode"]').forEach(btn => {
+                btn.addEventListener('click', () => openModal('qr-code-modal'));
+            });
+            
+            document.querySelectorAll('[data-event*="closeQRModal"]').forEach(btn => {
+                btn.addEventListener('click', () => closeModal('qr-code-modal'));
+            });
+            
+            // Search functionality
+            const searchInput = document.querySelector('[data-event*="handleSearch"]');
+            if (searchInput) {
+                let searchTimeout;
+                searchInput.addEventListener('input', (e) => {
+                    clearTimeout(searchTimeout);
+                    searchTimeout = setTimeout(() => {
+                        // TODO: Implement search logic with Supabase
+                        console.log('Searching for:', e.target.value);
+                    }, 300);
+                });
+            }
+            
+            // Initialize app
+            handleNavigation('dashboard');
+            
+            // Hide admin-only elements for non-admin users
+            if (userRole !== 'admin') {
+                document.querySelectorAll('[data-admin-only]').forEach(el => {
+                    el.style.display = 'none';
+                });
+            }
+        })();
+    </script>
+</body>
+</html>

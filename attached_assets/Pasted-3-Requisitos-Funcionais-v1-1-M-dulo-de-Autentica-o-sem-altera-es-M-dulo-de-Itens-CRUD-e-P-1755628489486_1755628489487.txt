@@ -1,0 +1,90 @@
+3. Requisitos Funcionais (v1.1)
+Módulo de Autenticação: (sem alterações)
+
+Módulo de Itens (CRUD) e Pesquisa:
+
+Cadastro de novos itens com os seguintes campos:
+
+Código Interno (NOVO): Um código único gerado automaticamente pelo sistema no formato ANO-XXXX (ex: 2025-0001). Este campo não será editável pelo usuário e servirá como identificador principal para o QR Code.
+
+Nome do Item
+
+Categoria
+
+Número de Série
+
+Quantidade em Estoque
+
+Estoque Mínimo
+
+Status
+
+Localização
+
+Geração de QR Code (NOVO): Para cada item cadastrado, o sistema deve gerar um QR Code que contenha o seu Código Interno. A interface deve oferecer um botão para visualizar e imprimir este QR Code, que será afixado fisicamente na prateleira ou caixa onde o item está armazenado.
+
+Página de Pesquisa e Listagem (ATUALIZADO):
+
+O sistema terá uma página dedicada para pesquisa e listagem de itens.
+
+Um campo de busca proeminente permitirá ao usuário pesquisar por Código Interno, Nome do Item ou Categoria. A busca deve ser rápida (idealmente, atualizando os resultados conforme o usuário digita, com debounce).
+
+Filtros adicionais (dropdowns) por Categoria e Status estarão disponíveis para refinar a busca.
+
+Módulo de Movimentação:
+
+Entrada: (sem alterações)
+
+Baixa de Itens via QR Code (NOVO FLUXO):
+
+O técnico acessa a função "Dar Baixa" no sistema (preferencialmente em um dispositivo móvel como tablet ou smartphone).
+
+A interface ativa a câmera do dispositivo para escanear o QR Code.
+
+Após a leitura do QR Code, o sistema identifica o item e exibe suas informações na tela (Nome, Estoque Atual, etc.).
+
+Um campo de "Quantidade a Retirar" é apresentado ao técnico, junto com um campo opcional para "Destino/Observação" (ex: "Entregue para João Silva - Depto. Financeiro").
+
+O técnico insere a quantidade e confirma a operação.
+
+O sistema valida se a quantidade a ser retirada não é maior que o estoque disponível.
+
+Se a validação for positiva, o sistema atualiza a quantidade final no estoque do item e registra a transação detalhada no Módulo de Histórico.
+
+Baixa Manual: O sistema ainda deve permitir a baixa manual (selecionando o item de uma lista) como uma alternativa.
+
+Módulo de Histórico (Log): (sem alterações, mas agora registrará as baixas via QR Code)
+
+Módulo de Alertas/Dashboard: (sem alterações)
+
+5. Stack Tecnológico e Arquitetura (v1.1)
+As escolhas principais se mantêm, com uma adição específica para o frontend.
+
+Arquitetura: (sem alterações)
+
+Backend: (sem alterações)
+
+A lógica para gerar o Código Interno (ANO-XXXX) será implementada no backend, garantindo que seja sequencial e sem duplicatas para cada ano.
+
+Será criada uma nova rota na API (ex: GET /api/items/by-code/:code) para permitir que o frontend busque um item diretamente pelo seu código lido no QR Code.
+
+Frontend: React ou Vue.js.
+
+Adição: Será necessário incluir uma biblioteca para leitura de QR Code, como a react-qr-reader (para React) ou similar para Vue, que facilite o acesso à câmera do dispositivo e a decodificação do código.
+
+Banco de Dados: PostgreSQL.
+
+A tabela items terá um novo campo codigo_interno (TEXT ou VARCHAR), que deve ser único e indexado para otimizar as buscas.
+
+Autenticação: (sem alterações)
+
+Hospedagem: (sem alterações)
+
+Resumo do Impacto das Novas Features
+Backend: Precisará de lógica para gerar códigos internos sequenciais por ano e de um novo endpoint para buscar itens por esse código.
+
+Frontend: Precisará de uma nova tela/componente para o scanner de QR Code, da integração com a biblioteca de leitura e da adaptação do fluxo de baixa de itens.
+
+Banco de Dados: O modelo de dados do Item é atualizado para incluir o codigo_interno.
+
+Processo Físico: O almoxarifado precisará de um processo para imprimir e afixar as etiquetas de QR Code nos locais de armazenamento.

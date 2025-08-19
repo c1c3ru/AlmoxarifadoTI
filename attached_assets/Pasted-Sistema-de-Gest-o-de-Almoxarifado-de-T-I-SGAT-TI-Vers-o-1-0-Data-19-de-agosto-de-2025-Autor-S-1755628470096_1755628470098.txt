@@ -1,0 +1,193 @@
+Sistema de Gestão de Almoxarifado de T.I. (SGAT-TI)
+Versão: 1.0
+Data: 19 de agosto de 2025
+Autor: [Seu Nome/Nome do Líder Técnico]
+
+1. Visão Geral e Objetivo do Projeto
+Desenvolver um sistema web de pequeno porte para gerenciar o almoxarifado de TI. O objetivo é substituir o controle manual (planilhas, papel) por uma solução centralizada, segura e eficiente para rastrear a entrada, saída, estoque e status de equipamentos e consumíveis de TI.
+
+Problemas a Resolver:
+
+Falta de controle sobre o estoque atual.
+
+Dificuldade em rastrear quem retirou qual equipamento.
+
+Perda de tempo em processos manuais de entrada e baixa.
+
+Inexistência de alertas para reposição de itens com estoque baixo.
+
+2. Atores e Papéis do Sistema
+O sistema terá dois níveis de acesso:
+
+Administrador:
+
+Acesso total ao sistema.
+
+Pode cadastrar, editar e excluir itens, categorias e usuários.
+
+Pode visualizar todos os relatórios e logs de movimentação.
+
+Gerencia as configurações do sistema (ex: níveis de estoque mínimo).
+
+Técnico (Usuário Padrão):
+
+Pode registrar a entrada e saída de itens.
+
+Pode consultar o estoque e o histórico de movimentações.
+
+Não pode excluir itens ou alterar configurações críticas.
+
+3. Requisitos Funcionais (O que o sistema deve fazer)
+Módulo de Autenticação:
+
+Login seguro com usuário e senha.
+
+Validação de acesso baseada nos papéis (Administrador, Técnico).
+
+Módulo de Itens (CRUD):
+
+Cadastro de novos itens com os seguintes campos:
+
+Nome do Item (ex: Mouse sem fio Logitech MX Master 3)
+
+Categoria (ex: Periférico, Computador, Cabo, Consumível)
+
+Número de Série (se aplicável, para itens únicos)
+
+Quantidade em Estoque
+
+Estoque Mínimo (para alertas)
+
+Status (ex: Disponível, Em uso, Em manutenção, Descartado)
+
+Localização (ex: Prateleira A-01)
+
+Listagem, edição e exclusão (apenas Admin) de itens.
+
+Busca e filtragem por nome, categoria ou status.
+
+Módulo de Movimentação:
+
+Entrada: Registrar o recebimento de novos itens, atualizando a quantidade em estoque.
+
+Saída/Baixa: Registrar a retirada de um item, associando-o a um funcionário ou setor. O sistema deve abater a quantidade do estoque.
+
+Módulo de Histórico (Log):
+
+Visualizar um log completo de todas as movimentações (quem, o quê, quando).
+
+O log deve ser imutável para garantir a rastreabilidade.
+
+Módulo de Alertas/Dashboard:
+
+Uma página inicial simples que exibe:
+
+Itens que atingiram o estoque mínimo.
+
+Últimas movimentações realizadas.
+
+Resumo quantitativo de itens por categoria.
+
+4. Requisitos Não-Funcionais (Como o sistema deve se comportar)
+Segurança: Alta prioridade. Aderência às práticas do OWASP Top 10.
+
+Desempenho: Respostas da interface em menos de 1 segundo para operações comuns.
+
+Usabilidade: Interface limpa, intuitiva e responsiva (acessível em desktops e tablets).
+
+Manutenibilidade: Código limpo, modularizado, documentado e com testes.
+
+Disponibilidade: O sistema deve estar disponível durante o horário comercial.
+
+5. Stack Tecnológico e Arquitetura
+Para um projeto de pequeno porte, a simplicidade e a produtividade são chave. Evitaremos complexidade desnecessária (como microserviços).
+
+Arquitetura: Aplicação Monolítica com separação clara de responsabilidades (backend API e frontend SPA).
+
+Backend: Node.js com NestJS ou Python com Django/FastAPI.
+
+Justificativa: Frameworks robustos que promovem organização, segurança e possuem ORMs maduros para interação com o banco de dados. Django, com seu admin "out-of-the-box", é um forte candidato para acelerar o desenvolvimento.
+
+Frontend: React ou Vue.js.
+
+Justificativa: Ecossistemas maduros, componentização que facilita a manutenção e ótima experiência para o desenvolvedor. Usaremos uma biblioteca de componentes como Material-UI (MUI) ou Ant Design para agilizar a construção da UI.
+
+Banco de Dados: PostgreSQL.
+
+Justificativa: Confiável, de código aberto e excelente para garantir a integridade dos dados (ACID).
+
+Autenticação: JWT (JSON Web Tokens) para comunicação segura entre frontend e backend.
+
+Hospedagem: Docker para criar contêineres da aplicação (backend, frontend, banco de dados). Deploy em um provedor de nuvem como DigitalOcean, AWS (EC2/RDS) ou uma plataforma como Heroku.
+
+6. Boas Práticas de Desenvolvimento e Segurança (Iniciando do Jeito Certo)
+Este é um pilar não negociável do projeto.
+
+Controle de Versão:
+
+Git é mandatório. Repositório no GitHub/GitLab.
+
+Adotar o fluxo Git Flow simplificado (branches main, develop e feature/nome-da-feature). Pull Requests para develop com revisão de código obrigatória.
+
+Qualidade de Código:
+
+Código Limpo (Clean Code): Seguir princípios como DRY (Don't Repeat Yourself) e KISS (Keep It Simple, Stupid).
+
+Padronização: Usar ferramentas de Linter e Formatter (ex: ESLint + Prettier para o frontend, Black + Flake8 para Python) para manter o código consistente.
+
+Variáveis de Ambiente: NUNCA armazenar senhas, chaves de API ou segredos no código-fonte. Usar arquivos .env (ignorados pelo .gitignore).
+
+Segurança (OWASP Top 10):
+
+Prevenção de Injeção: Usar exclusivamente o ORM do framework para todas as queries ao banco de dados (previne SQL Injection).
+
+Senhas: Armazenar senhas de usuários usando um algoritmo de hash forte e com salt (ex: Bcrypt).
+
+Controle de Acesso: Toda rota de API no backend DEVE verificar se o usuário está autenticado e se tem a permissão necessária para executar a ação (não confiar na UI para esconder botões).
+
+Proteção contra XSS: Frameworks de frontend modernos já oferecem boa proteção, mas sempre sanitizar dados que serão renderizados como HTML.
+
+Headers de Segurança: Configurar headers como Content-Security-Policy, X-Content-Type-Options, etc.
+
+Testes Automatizados:
+
+Testes Unitários: Para a lógica de negócio crítica (ex: regras de estoque).
+
+Testes de Integração: Para os endpoints da API (garantir que as rotas de entrada/saída funcionam como esperado).
+
+CI/CD (Integração e Entrega Contínua):
+
+Configurar um pipeline básico (usando GitHub Actions ou GitLab CI) que, a cada push para a branch develop, automaticamente:
+
+Instale as dependências.
+
+Rode os linters.
+
+Execute os testes automatizados.
+
+Isso garante que código com problemas não seja integrado.
+
+7. Plano de Entregas (MVP - Produto Mínimo Viável)
+Sprint 1 (Setup & Core):
+
+Configuração do ambiente de desenvolvimento (Docker Compose).
+
+Estrutura básica do projeto (backend e frontend).
+
+Implementação do sistema de autenticação e papéis.
+
+CRUD completo do Módulo de Itens.
+
+Sprint 2 (Funcionalidades Principais):
+
+Implementação do Módulo de Movimentação (entrada e saída).
+
+Implementação do Módulo de Histórico (log).
+
+Sprint 3 (Finalização e Deploy):
+
+Criação do Dashboard com alertas.
+
+Refinamento da UI/UX.
+
+Configuração do ambiente de produção e deploy inicial.
