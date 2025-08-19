@@ -325,10 +325,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const csvData = items.map(item => [
         item.internalCode,
         `"${item.name}"`,
-        `"${item.description || ''}"`,
+        // schema não possui 'description'; exporta vazio para manter compatibilidade de colunas
+        `""`,
         `"${item.category?.name || ''}"`,
         item.currentStock,
-        item.minimumStock,
+        item.minStock,
         `"${item.location || ''}"`,
         item.status,
         new Date(item.createdAt).toLocaleDateString('pt-BR')
@@ -372,16 +373,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
             continue;
           }
 
-          const [name, description, currentStock, minimumStock, location] = columns;
+          // CSV esperado: Nome, Descrição(vazia/ignorada), Estoque Atual, Estoque Mínimo, Localização
+          const [name, _description, currentStock, minimumStock, location] = columns;
           
           const itemData = {
             name: name || `Item ${i}`,
-            description: description || '',
             categoryId,
             currentStock: parseInt(currentStock) || 0,
-            minimumStock: parseInt(minimumStock) || 1,
+            minStock: parseInt(minimumStock) || 1,
             location: location || '',
-            status: 'ativo' as const
+            status: 'disponivel' as const
           };
 
           await storage.createItem(itemData);
