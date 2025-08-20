@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/use-auth";
 
 interface TopbarProps {
   title: string;
@@ -8,6 +9,8 @@ interface TopbarProps {
 }
 
 export function Topbar({ title, subtitle, onAddItem, showAddButton = true }: TopbarProps) {
+  const { user, logout } = useAuth();
+  
   return (
     <header className="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
       <div className="flex items-center justify-between">
@@ -20,6 +23,23 @@ export function Topbar({ title, subtitle, onAddItem, showAddButton = true }: Top
           </p>
         </div>
         <div className="flex items-center space-x-4">
+          {user && (
+            <div className="flex items-center space-x-3">
+              <span className="text-sm text-gray-600">
+                Olá, <span className="font-medium text-gray-900">{user.username}</span>
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={logout}
+                className="text-gray-600 hover:text-error-600 transition-colors"
+                data-testid="button-logout"
+              >
+                <i className="fas fa-sign-out-alt mr-2"></i>
+                Sair
+              </Button>
+            </div>
+          )}
           <Button
             variant="ghost"
             size="sm"

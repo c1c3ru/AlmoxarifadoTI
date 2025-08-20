@@ -138,6 +138,7 @@ export default function Categories() {
   };
 
   const handleEdit = (category: Category) => {
+    console.log('✏️ Editando categoria:', category);
     setEditingCategory(category);
     form.reset({
       name: category.name,
@@ -148,6 +149,7 @@ export default function Categories() {
   };
 
   const handleDelete = (category: Category) => {
+    console.log('🗑️ Excluindo categoria:', category);
     if (confirm(`Tem certeza que deseja excluir a categoria "${category.name}"?`)) {
       deleteCategoryMutation.mutate(category.id);
     }

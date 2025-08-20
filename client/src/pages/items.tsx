@@ -28,6 +28,10 @@ export default function Items() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Debug: verificar se o usuário está sendo carregado
+  console.log('👤 Usuário atual:', user);
+  console.log('🔐 Pode excluir itens:', canDeleteItems(user));
+
   const { data: items = [], isLoading } = useQuery<ItemWithCategory[]>({
     queryKey: ["/api/items"],
   });
@@ -252,26 +256,28 @@ export default function Items() {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex items-center space-x-2">
+                        <div className="flex items-center space-x-2 p-2 bg-gray-50 rounded border">
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => handleEdit(item)}
-                            className="text-gray-600 hover:text-primary-600"
+                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-3 py-2"
                             data-testid={`button-edit-${item.id}`}
                             title="Editar item"
                           >
-                            <i className="fas fa-edit"></i>
+                            <i className="fas fa-edit mr-1"></i>
+                            Editar
                           </Button>
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => handleMovement(item)}
-                            className="text-gray-600 hover:text-primary-600"
+                            className="text-green-600 hover:text-green-700 hover:bg-green-50 px-3 py-2"
                             data-testid={`button-movement-${item.id}`}
                             title="Registrar movimentação"
                           >
-                            <i className="fas fa-exchange-alt"></i>
+                            <i className="fas fa-exchange-alt mr-1"></i>
+                            Movimentar
                           </Button>
                           {canDeleteItems(user) && (
                             <Button
@@ -279,11 +285,12 @@ export default function Items() {
                               size="sm"
                               onClick={() => handleDelete(item)}
                               disabled={deleteItemMutation.isPending}
-                              className="text-gray-600 hover:text-error-600"
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50 px-3 py-2"
                               data-testid={`button-delete-${item.id}`}
                               title="Excluir item"
                             >
-                              <i className="fas fa-trash"></i>
+                              <i className="fas fa-trash mr-1"></i>
+                              Excluir
                             </Button>
                           )}
                         </div>

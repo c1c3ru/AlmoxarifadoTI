@@ -28,7 +28,7 @@ export default function Search() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedQuery(searchQuery);
-    }, 300);
+    }, 100); // Reduzido para 100ms para resposta mais rápida
 
     return () => clearTimeout(timer);
   }, [searchQuery]);
@@ -41,8 +41,35 @@ export default function Search() {
   const categoryParam = selectedCategory === ALL ? undefined : selectedCategory;
   const statusParam = selectedStatus === ALL ? undefined : selectedStatus;
   const hasFilters = Boolean(debouncedQuery || categoryParam || statusParam);
+  
+  console.log('🔍 Estado da pesquisa:', { 
+    searchQuery, 
+    debouncedQuery, 
+    selectedCategory, 
+    selectedStatus, 
+    hasFilters 
+  });
+  
   const { data: searchResults = [], isLoading } = useQuery<ItemWithCategory[]>({
-    queryKey: ["/api/items/search", { q: debouncedQuery, category: categoryParam, status: statusParam }],
+    queryKey: ["/api/items/search", debouncedQuery, categoryParam, statusParam],
+    queryFn: async () => {
+      if (!hasFilters) return [];
+      
+      const params = new URLSearchParams();
+      if (debouncedQuery) params.append('q', debouncedQuery);
+      if (categoryParam) params.append('category', categoryParam);
+      if (statusParam) params.append('status', statusParam);
+      
+      console.log('🔍 Fazendo pesquisa:', { debouncedQuery, categoryParam, statusParam });
+      const url = `/api/items/search?${params.toString()}`;
+      console.log('🔍 URL da pesquisa:', url);
+      
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Falha na pesquisa');
+      const data = await response.json();
+      console.log('🔍 Resultados da pesquisa:', data.length, 'itens');
+      return data;
+    },
     enabled: hasFilters,
   });
 
@@ -177,103 +204,109 @@ export default function Search() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {searchResults.map((item) => (
-            <Card
-              key={item.id}
-              className="border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
-              data-testid={`search-result-${item.id}`}
-            >
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center">
-                      <i className={`${item.category?.icon || 'fas fa-box'} text-primary-600 text-lg`}></i>
+        <div className="space-y-4">
+          <div className="text-sm text-gray-600">
+            🔍 Encontrados {searchResults.length} resultado(s) para "{debouncedQuery}"
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {searchResults.map((item) => (
+              <Card
+                key={item.id}
+                className="border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
+                data-testid={`search-result-${item.id}`}
+              >
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center">
+                        <i className={`${item.category?.icon || 'fas fa-box'} text-primary-600 text-lg`}></i>
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-gray-900" data-testid={`search-item-name-${item.id}`}>
+                          {item.name}
+                        </h4>
+                        <p className="text-sm text-gray-500" data-testid={`search-item-code-${item.id}`}>
+                          {item.internalCode}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-900" data-testid={`search-item-name-${item.id}`}>
-                        {item.name}
-                      </h4>
-                      <p className="text-sm text-gray-500" data-testid={`search-item-code-${item.id}`}>
-                        {item.internalCode}
-                      </p>
+                    <div className="flex items-center space-x-2">
+                      <QRCodeGenerator 
+                        value={`ITEM:${item.id}:${item.internalCode}`}
+                        size={32}
+                        className="cursor-pointer hover:scale-110 transition-transform"
+                      />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleShowQR(item)}
+                        className="text-gray-400 hover:text-primary-600 transition-colors"
+                        data-testid={`button-qr-modal-${item.id}`}
+                      >
+                        <i className="fas fa-expand-alt text-xs"></i>
+                      </Button>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <QRCodeGenerator 
-                      value={`ITEM:${item.id}:${item.internalCode}`}
-                      size={32}
-                      className="cursor-pointer hover:scale-110 transition-transform"
-                    />
+                  
+                  <div className="space-y-2 mb-4">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">Categoria:</span>
+                      <span className="font-medium text-gray-900">{item.category?.name}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">Estoque:</span>
+                      <span className="font-medium text-gray-900">
+                        {item.currentStock} unidades
+                      </span>
+                    </div>
+                    {item.location && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-500">Localização:</span>
+                        <span className="font-medium text-gray-900">{item.location}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between text-sm items-center">
+                      <span className="text-gray-500">Status:</span>
+                      <Badge
+                        className={getStatusColor(item.status)}
+                        data-testid={`search-item-status-${item.id}`}
+                      >
+                        {getStatusLabel(item.status)}
+                      </Badge>
+                    </div>
+                  </div>
+                  
+                  <div className="flex space-x-2 mt-4 p-2 bg-gray-50 rounded border">
                     <Button
-                      variant="ghost"
+                      onClick={() => handleEdit(item)}
+                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm py-2"
+                      data-testid={`button-edit-${item.id}`}
+                    >
+                      <i className="fas fa-edit mr-2"></i>
+                      Editar
+                    </Button>
+                    <Button
+                      onClick={() => handleMovement(item)}
+                      className="flex-1 bg-primary-600 hover:bg-primary-700 text-white text-sm py-2"
+                      data-testid={`button-movement-${item.id}`}
+                    >
+                      <i className="fas fa-exchange-alt mr-2"></i>
+                      Movimentar
+                    </Button>
+                    <Button
+                      variant="outline"
                       size="sm"
                       onClick={() => handleShowQR(item)}
-                      className="text-gray-400 hover:text-primary-600 transition-colors"
-                      data-testid={`button-qr-modal-${item.id}`}
+                      className="px-3 py-2"
+                      data-testid={`button-view-${item.id}`}
                     >
-                      <i className="fas fa-expand-alt text-xs"></i>
+                      <i className="fas fa-eye"></i>
                     </Button>
                   </div>
-                </div>
-                
-                <div className="space-y-2 mb-4">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Categoria:</span>
-                    <span className="font-medium text-gray-900">{item.category?.name}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Estoque:</span>
-                    <span className="font-medium text-gray-900">
-                      {item.currentStock} unidades
-                    </span>
-                  </div>
-                  {item.location && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Localização:</span>
-                      <span className="font-medium text-gray-900">{item.location}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between text-sm items-center">
-                    <span className="text-gray-500">Status:</span>
-                    <Badge
-                      className={getStatusColor(item.status)}
-                      data-testid={`search-item-status-${item.id}`}
-                    >
-                      {getStatusLabel(item.status)}
-                    </Badge>
-                  </div>
-                </div>
-                
-                <div className="flex space-x-2">
-                  <Button
-                    onClick={() => handleEdit(item)}
-                    className="flex-1 bg-secondary-600 hover:bg-secondary-700 text-white text-sm"
-                    data-testid={`button-edit-${item.id}`}
-                  >
-                    <i className="fas fa-edit mr-2"></i>
-                    Editar
-                  </Button>
-                  <Button
-                    onClick={() => handleMovement(item)}
-                    className="flex-1 bg-primary-600 hover:bg-primary-700 text-white text-sm"
-                    data-testid={`button-movement-${item.id}`}
-                  >
-                    <i className="fas fa-exchange-alt mr-2"></i>
-                    Movimentar
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleShowQR(item)}
-                    data-testid={`button-view-${item.id}`}
-                  >
-                    <i className="fas fa-eye"></i>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
       )}
 
