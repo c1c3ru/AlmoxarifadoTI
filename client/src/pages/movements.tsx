@@ -10,16 +10,18 @@ import { Skeleton } from "@/components/ui/skeleton";
 import type { ItemWithCategory, MovementWithDetails } from "@shared/schema";
 
 export default function Movements() {
+  const ALL = "ALL";
   const [showMovementModal, setShowMovementModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState<ItemWithCategory | null>(null);
-  const [selectedItemFilter, setSelectedItemFilter] = useState("");
+  const [selectedItemFilter, setSelectedItemFilter] = useState(ALL);
 
   const { data: items = [] } = useQuery<ItemWithCategory[]>({
     queryKey: ["/api/items"],
   });
 
+  const itemIdParam = selectedItemFilter === ALL ? undefined : selectedItemFilter;
   const { data: movements = [], isLoading } = useQuery<MovementWithDetails[]>({
-    queryKey: ["/api/movements", { itemId: selectedItemFilter || undefined }],
+    queryKey: ["/api/movements", { itemId: itemIdParam }],
   });
 
   const handleNewMovement = (item: ItemWithCategory) => {
@@ -118,8 +120,10 @@ export default function Movements() {
                   <SelectValue placeholder="Filtrar por item" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos os itens</SelectItem>
-                  {items.map((item) => (
+                  <SelectItem value={ALL}>Todos os itens</SelectItem>
+                  {items
+                    .filter((item) => typeof item.id === 'string' && item.id.trim().length > 0)
+                    .map((item) => (
                     <SelectItem key={item.id} value={item.id}>
                       {item.name} ({item.internalCode})
                     </SelectItem>
@@ -147,7 +151,7 @@ export default function Movements() {
               <i className="fas fa-exchange-alt text-4xl text-gray-400 mb-4"></i>
               <h4 className="text-lg font-semibold text-gray-900 mb-2">Nenhuma movimentação encontrada</h4>
               <p className="text-gray-500 mb-4">
-                {selectedItemFilter ? "Nenhuma movimentação para o item selecionado" : "Registre a primeira movimentação"}
+                {selectedItemFilter !== ALL ? "Nenhuma movimentação para o item selecionado" : "Registre a primeira movimentação"}
               </p>
               <Button 
                 onClick={() => setShowMovementModal(true)}

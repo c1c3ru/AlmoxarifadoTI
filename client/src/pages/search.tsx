@@ -12,9 +12,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import type { ItemWithCategory, Category } from "@shared/schema";
 
 export default function Search() {
+  const ALL = "ALL";
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("");
-  const [selectedStatus, setSelectedStatus] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState(ALL);
+  const [selectedStatus, setSelectedStatus] = useState(ALL);
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [showQRModal, setShowQRModal] = useState(false);
   const [showMovementModal, setShowMovementModal] = useState(false);
@@ -31,11 +32,15 @@ export default function Search() {
 
   const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
+    select: (data) => data.filter((c) => !!c && typeof c.id === 'string' && c.id.trim().length > 0),
   });
 
+  const categoryParam = selectedCategory === ALL ? undefined : selectedCategory;
+  const statusParam = selectedStatus === ALL ? undefined : selectedStatus;
+  const hasFilters = Boolean(debouncedQuery || categoryParam || statusParam);
   const { data: searchResults = [], isLoading } = useQuery<ItemWithCategory[]>({
-    queryKey: ["/api/items/search", { q: debouncedQuery, category: selectedCategory, status: selectedStatus }],
-    enabled: debouncedQuery.length > 0 || selectedCategory !== "" || selectedStatus !== "",
+    queryKey: ["/api/items/search", { q: debouncedQuery, category: categoryParam, status: statusParam }],
+    enabled: hasFilters,
   });
 
   const handleShowQR = (item: ItemWithCategory) => {
@@ -109,7 +114,7 @@ export default function Search() {
                 <SelectValue placeholder="Todas as Categorias" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todas as Categorias</SelectItem>
+                <SelectItem value={ALL}>Todas as Categorias</SelectItem>
                 {categories.map((category) => (
                   <SelectItem key={category.id} value={category.id}>
                     {category.name}
@@ -125,7 +130,7 @@ export default function Search() {
                 <SelectValue placeholder="Todos os Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos os Status</SelectItem>
+                <SelectItem value={ALL}>Todos os Status</SelectItem>
                 <SelectItem value="disponivel">Disponível</SelectItem>
                 <SelectItem value="em-uso">Em Uso</SelectItem>
                 <SelectItem value="manutencao">Em Manutenção</SelectItem>
@@ -147,7 +152,7 @@ export default function Search() {
             </Card>
           ))}
         </div>
-      ) : searchResults.length === 0 && (debouncedQuery || selectedCategory || selectedStatus) ? (
+      ) : searchResults.length === 0 && hasFilters ? (
         <Card className="border border-gray-200">
           <CardContent className="p-12 text-center">
             <i className="fas fa-search text-4xl text-gray-400 mb-4"></i>

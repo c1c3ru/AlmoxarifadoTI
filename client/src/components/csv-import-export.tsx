@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
@@ -33,9 +33,93 @@ export function CSVImportExport() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: categories = [] } = useQuery<Category[]>({
+  // Ordem personalizada do menu de categorias
+  const CATEGORY_ORDER = [
+    "MEMÓRIA RAM",
+    "CONSUMÍVEIS E PEQUENOS ITENS",
+    "ARMAZENAMENTO",
+    "COMPONENTES E ACESSÓRIOS",
+    "CADEADOS",
+    "CABOS",
+    "FONTES DE ENERGIA",
+    "PROCESSADORES",
+    "REDES E CONECTIVIDADE",
+    "PERIFÉRICOS"
+  ];
+
+  const { data: categories = [], refetch: refetchCategories, isFetching: isFetchingCategories } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
+    staleTime: 0,
+    refetchOnMount: "always",
+    select: (data) => {
+      const orderMap = new Map(CATEGORY_ORDER.map((n, i) => [n, i] as const));
+      const normalize = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().trim();
+
+      // 1) Filtra categorias inválidas (sem id ou com id vazio)
+      const valid = data.filter((c) => !!c && typeof c.id === 'string' && c.id.trim().length > 0);
+
+      // 2) Deduplica por nome normalizado, preferindo o que aparece em CATEGORY_ORDER
+      const byName = new Map<string, Category>();
+      for (const c of valid) {
+        const key = normalize(c.name);
+        if (!byName.has(key)) {
+          byName.set(key, c);
+        } else {
+          const current = byName.get(key)!;
+          const currentOrder = orderMap.get(current.name);
+          const incomingOrder = orderMap.get(c.name);
+          const preferIncoming = (incomingOrder ?? Infinity) < (currentOrder ?? Infinity);
+          if (preferIncoming) byName.set(key, c);
+          // Loga colisão para diagnóstico
+          try {
+            console.warn('[categories] duplicate by normalized name:', current.name, 'vs', c.name);
+          } catch {}
+        }
+      }
+      const unique = Array.from(byName.values());
+
+      // 3) Ordena: conhecidas pela ordem fixa primeiro; demais em ordem alfabética
+      return unique.sort((a, b) => {
+        const ai = orderMap.has(a.name) ? (orderMap.get(a.name) as number) : Number.POSITIVE_INFINITY;
+        const bi = orderMap.has(b.name) ? (orderMap.get(b.name) as number) : Number.POSITIVE_INFINITY;
+        if (ai !== bi) return ai - bi;
+        return a.name.localeCompare(b.name, 'pt-BR');
+      });
+    },
   });
+
+  // Debug: log categorias ao abrir o modal e quando mudarem durante o modal aberto
+  useEffect(() => {
+    if (showImportModal) {
+      try {
+        console.log("[CSVImportExport] modal aberto - categorias (cache)", categories.length, categories.map(c => c.name));
+      } catch {}
+      // Raw fetch (fora do React Query) para comparar
+      fetch('/api/categories', { credentials: 'include' })
+        .then(r => r.ok ? r.json() : Promise.reject(r.status))
+        .then((raw: Category[]) => {
+          try {
+            console.log('[CSVImportExport] RAW /api/categories', raw.length, raw.map(c => c.name));
+          } catch {}
+        })
+        .catch(() => {});
+      refetchCategories().then((res) => {
+        try {
+          const data = res.data || [];
+          console.log("[CSVImportExport] após refetch - categorias", data.length, data.map(c => c.name));
+        } catch {}
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showImportModal]);
+
+  useEffect(() => {
+    if (showImportModal) {
+      try {
+        console.log("[CSVImportExport] categorias atualizadas durante modal", categories.length, categories.map(c => c.name));
+      } catch {}
+    }
+  }, [categories, showImportModal]);
 
   const form = useForm<ImportFormData>({
     resolver: zodResolver(importSchema),
@@ -84,12 +168,18 @@ export function CSVImportExport() {
     },
     onSuccess: (result) => {
       setImportResult(result);
-      if (result.success > 0) {
+      const hasSuccess = result.success > 0;
+      const errorCount = result.errors?.length ?? 0;
+      if (hasSuccess) {
         queryClient.invalidateQueries({ queryKey: ["/api/items"] });
         toast({
-          title: "Importação realizada",
-          description: `${result.success} itens importados com sucesso.`,
+          title: "Importação concluída",
+          description: `${result.success} itens importados. ${errorCount > 0 ? errorCount + " erros." : "Sem erros."}`,
         });
+        // Fecha o modal automaticamente em caso de sucesso sem erros
+        if (errorCount === 0) {
+          handleCloseModal();
+        }
       }
     },
     onError: (error) => {
@@ -104,6 +194,26 @@ export function CSVImportExport() {
   const onSubmit = (data: ImportFormData) => {
     setImportResult(null);
     importMutation.mutate(data);
+  };
+
+  // Helpers para UX de erros
+  const csvLines = (form.watch("csvData") || "").replace(/^\uFEFF/, "").split(/\r?\n/);
+  const parsedErrors = (importResult?.errors || []).map((e) => {
+    const m = e.match(/Linha\s+(\d+):\s*(.*)/i);
+    return m ? { line: Number(m[1]), message: m[2] } : { line: NaN, message: e };
+  });
+  const errorMap = new Map<number, string[]>();
+  for (const err of parsedErrors) {
+    if (!Number.isFinite(err.line)) continue;
+    if (!errorMap.has(err.line)) errorMap.set(err.line, []);
+    errorMap.get(err.line)!.push(err.message);
+  }
+  const errorReportText = () => {
+    const parts = [
+      `Erros de importação: ${importResult?.errors.length || 0}`,
+      ...parsedErrors.map((e) => `Linha ${e.line || '?'}: ${e.message}`),
+    ];
+    return parts.join("\n");
   };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -123,6 +233,14 @@ export function CSVImportExport() {
     reader.onload = (e) => {
       const csvContent = e.target?.result as string;
       form.setValue("csvData", csvContent);
+      const lines = csvContent.replace(/^\uFEFF/, "").split(/\r?\n/).filter(l => l.trim());
+      const dataLines = Math.max(0, lines.length - 1);
+      toast({
+        title: "Arquivo carregado",
+        description: `${file.name} • ${dataLines} linha(s) de dados detectadas`,
+      });
+      // dispara validação para remover mensagens pendentes
+      form.trigger("csvData");
     };
     reader.readAsText(file, "utf-8");
   };
@@ -160,11 +278,21 @@ Monitor LED 19,"Monitor LED 19 polegadas",8,2,"Sala B - Mesa 1"`;
         )}
       </Button>
 
-      <Dialog open={showImportModal} onOpenChange={handleCloseModal}>
+      <Dialog open={showImportModal} onOpenChange={(open) => { 
+        setShowImportModal(open); 
+        if (open) {
+          // Garante que novas categorias criadas fora do app apareçam no dropdown
+          queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
+          refetchCategories();
+        } else {
+          handleCloseModal();
+        }
+      }}>
         <DialogTrigger asChild>
           <Button
             className="bg-primary-600 hover:bg-primary-700"
             data-testid="button-import-csv"
+            onClick={() => setShowImportModal(true)}
           >
             <i className="fas fa-upload mr-2"></i>
             Importar CSV
@@ -173,6 +301,9 @@ Monitor LED 19,"Monitor LED 19 polegadas",8,2,"Sala B - Mesa 1"`;
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Importar Inventário via CSV</DialogTitle>
+            <DialogDescription>
+              Selecione uma categoria e forneça um arquivo CSV no formato indicado abaixo.
+            </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-6">
@@ -204,14 +335,25 @@ Monitor LED 19,"Monitor LED 19 polegadas",8,2,"Sala B - Mesa 1"`;
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {categories.map((category) => (
-                            <SelectItem key={category.id} value={category.id}>
-                              <div className="flex items-center space-x-2">
-                                <i className={category.icon}></i>
-                                <span>{category.name}</span>
-                              </div>
-                            </SelectItem>
-                          ))}
+                          {isFetchingCategories && (
+                            <div className="px-3 py-2 text-sm text-gray-500">Atualizando categorias...</div>
+                          )}
+                          {(!isFetchingCategories && categories.length === 0) ? (
+                            <div className="px-3 py-2 text-sm text-gray-500">
+                              Nenhuma categoria encontrada. Crie uma categoria antes de importar.
+                            </div>
+                          ) : (
+                            categories
+                              .filter((category) => typeof category.id === 'string' && category.id.trim().length > 0)
+                              .map((category) => (
+                              <SelectItem key={category.id} value={category.id}>
+                                <div className="flex items-center space-x-2">
+                                  <i className={category.icon}></i>
+                                  <span>{category.name}</span>
+                                </div>
+                              </SelectItem>
+                            ))
+                          )}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -263,17 +405,73 @@ Monitor LED 19,"Monitor LED 19 polegadas",8,2,"Sala B - Mesa 1"`;
                     )}
                     
                     {importResult.errors.length > 0 && (
-                      <Alert className="border-error-200 bg-error-50">
-                        <i className="fas fa-exclamation-triangle text-error-600"></i>
-                        <AlertDescription className="text-error-800">
-                          <strong>Erros encontrados:</strong>
-                          <ul className="mt-2 space-y-1">
-                            {importResult.errors.map((error, index) => (
-                              <li key={index} className="text-xs">• {error}</li>
-                            ))}
-                          </ul>
-                        </AlertDescription>
-                      </Alert>
+                      <div className="space-y-3">
+                        <Alert className="border-error-200 bg-error-50">
+                          <i className="fas fa-exclamation-triangle text-error-600"></i>
+                          <AlertDescription className="text-error-800">
+                            <div className="flex items-center justify-between">
+                              <strong>Erros encontrados ({importResult.errors.length})</strong>
+                              <div className="space-x-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => navigator.clipboard.writeText(errorReportText())}
+                                >
+                                  <i className="fas fa-copy mr-2" /> Copiar relatório
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    const blob = new Blob([errorReportText()], { type: 'text/plain;charset=utf-8' });
+                                    const url = URL.createObjectURL(blob);
+                                    const a = document.createElement('a');
+                                    a.href = url;
+                                    a.download = `erros-importacao-${new Date().toISOString().slice(0,10)}.txt`;
+                                    document.body.appendChild(a);
+                                    a.click();
+                                    URL.revokeObjectURL(url);
+                                    document.body.removeChild(a);
+                                  }}
+                                >
+                                  <i className="fas fa-file-arrow-down mr-2" /> Baixar relatório
+                                </Button>
+                              </div>
+                            </div>
+                            <ul className="mt-2 space-y-1">
+                              {parsedErrors.map((e, idx) => (
+                                <li key={idx} className="text-xs">• Linha {e.line || '?'}: {e.message}</li>
+                              ))}
+                            </ul>
+                          </AlertDescription>
+                        </Alert>
+
+                        {/* Preview com destaque das linhas com erro */}
+                        <div>
+                          <div className="text-xs text-gray-600 mb-1">Pré-visualização do CSV com destaques de erro</div>
+                          <div className="max-h-48 overflow-auto border rounded">
+                            <pre className="text-xs leading-5 m-0 p-2">
+{csvLines.map((ln, idx) => {
+  const lineNumber = idx + 1;
+  const isHeader = idx === 0;
+  const errs = errorMap.get(lineNumber) || [];
+  const hasError = errs.length > 0;
+  const bg = isHeader ? 'bg-gray-50' : hasError ? 'bg-red-50' : '';
+  const prefix = `${String(lineNumber).padStart(4, ' ')}│ `;
+  return (
+    <div key={idx} className={`${bg} whitespace-pre-wrap break-words pr-2`}> 
+      <span className="text-gray-400 select-none">{prefix}</span>
+      <span className="font-mono">{ln}</span>
+      {hasError && (
+        <div className="text-red-700 text-[10px] mt-1 ml-10">{errs.join(' | ')}</div>
+      )}
+    </div>
+  );
+})}
+                            </pre>
+                          </div>
+                        </div>
+                      </div>
                     )}
                   </div>
                 )}
@@ -287,24 +485,43 @@ Monitor LED 19,"Monitor LED 19 polegadas",8,2,"Sala B - Mesa 1"`;
                   >
                     Cancelar
                   </Button>
-                  <Button
-                    type="submit"
-                    disabled={importMutation.isPending || !form.watch("categoryId")}
-                    className="bg-primary-600 hover:bg-primary-700"
-                    data-testid="button-submit-import"
-                  >
-                    {importMutation.isPending ? (
+                  {(() => {
+                    const isDisabled = (
+                      importMutation.isPending ||
+                      !form.watch("categoryId") ||
+                      !(form.watch("csvData")?.trim())
+                    );
+                    const reasons: string[] = [];
+                    if (!form.watch("categoryId")) reasons.push("Selecione uma categoria");
+                    if (!(form.watch("csvData")?.trim())) reasons.push("Forneça um CSV (arquivo ou texto)");
+                    return (
                       <>
-                        <i className="fas fa-spinner fa-spin mr-2"></i>
-                        Importando...
+                        <Button
+                          type="submit"
+                          disabled={isDisabled}
+                          className="bg-primary-600 hover:bg-primary-700"
+                          data-testid="button-submit-import"
+                        >
+                          {importMutation.isPending ? (
+                            <>
+                              <i className="fas fa-spinner fa-spin mr-2"></i>
+                              Importando...
+                            </>
+                          ) : (
+                            <>
+                              <i className="fas fa-upload mr-2"></i>
+                              Importar Itens
+                            </>
+                          )}
+                        </Button>
+                        {isDisabled && reasons.length > 0 && (
+                          <div className="text-xs text-gray-500 ml-2">
+                            {reasons.join(" • ")}
+                          </div>
+                        )}
                       </>
-                    ) : (
-                      <>
-                        <i className="fas fa-upload mr-2"></i>
-                        Importar Itens
-                      </>
-                    )}
-                  </Button>
+                    );
+                  })()}
                 </div>
               </form>
             </Form>

@@ -70,6 +70,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/categories", async (req, res) => {
     try {
       const categories = await storage.getAllCategories();
+      // Debug: log how many categories and their names to diagnose discrepancies
+      try {
+        console.log("[GET /api/categories] count=", categories.length, "names=", categories.map(c => c.name));
+      } catch {}
       res.json(categories);
     } catch (error) {
       console.error("Categories error:", error);
@@ -354,41 +358,110 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Dados CSV e categoria são obrigatórios" });
       }
 
-      const lines = csvData.split('\n').filter((line: string) => line.trim());
-      const results = {
-        success: 0,
-        errors: [] as string[]
-      };
+      // Robust CSV parsing (supports quoted commas and BOM)
+      const data = csvData.replace(/^\uFEFF/, "");
+      const rows: string[][] = [];
+      let current: string[] = [];
+      let field = "";
+      let inQuotes = false;
+      for (let idx = 0; idx < data.length; idx++) {
+        const ch = data[idx];
+        const next = data[idx + 1];
+        if (ch === '"') {
+          if (inQuotes && next === '"') { // escaped quote
+            field += '"';
+            idx++; // skip next
+          } else {
+            inQuotes = !inQuotes;
+          }
+        } else if (ch === ',' && !inQuotes) {
+          current.push(field.trim());
+          field = "";
+        } else if ((ch === '\n' || ch === '\r') && !inQuotes) {
+          if (field.length > 0 || current.length > 0) {
+            current.push(field.trim());
+            rows.push(current);
+            current = [];
+            field = "";
+          }
+          // handle CRLF by skipping the LF after CR
+          if (ch === '\r' && next === '\n') idx++;
+        } else {
+          field += ch;
+        }
+      }
+      if (field.length > 0 || current.length > 0) {
+        current.push(field.trim());
+        rows.push(current);
+      }
 
-      // Skip header line
-      for (let i = 1; i < lines.length; i++) {
-        const line = lines[i].trim();
-        if (!line) continue;
+      // Remove empty rows
+      const filtered = rows.filter(r => r.some(c => c && c.trim().length > 0));
+      if (filtered.length === 0) {
+        return res.status(400).json({ message: "CSV vazio" });
+      }
 
+      const header = filtered[0].map(h => h.replace(/^"|"$/g, '').trim().toLowerCase());
+      const body = filtered.slice(1);
+
+      const results = { success: 0, errors: [] as string[] };
+
+      // Detect format by headers
+      const isExportFormat = header.includes('código interno') || header.includes('codigo interno');
+      const isTemplateFormat = header[0] === 'nome' && header.includes('estoque atual');
+
+      for (let i = 0; i < body.length; i++) {
         try {
-          const columns = line.split(',').map((col: string) => col.replace(/^"(.*)"$/, '$1').trim());
-          
-          if (columns.length < 4) {
-            results.errors.push(`Linha ${i + 1}: Formato inválido - necessário pelo menos 4 colunas`);
-            continue;
+          const cols = body[i].map(c => c.replace(/^"|"$/g, ''));
+
+          let name = "";
+          let currentStockStr = "";
+          let minStockStr = "";
+          let location = "";
+
+          if (isExportFormat) {
+            // Export columns: [Código Interno, Nome, Descrição, Categoria, Estoque Atual, Estoque Mínimo, Localização, Status, Data Criação]
+            // Map only the fields we need
+            const map: Record<string, number> = {};
+            header.forEach((h, idx) => { map[h] = idx; });
+            name = cols[map['nome']];
+            currentStockStr = cols[map['estoque atual']];
+            minStockStr = cols[map['estoque mínimo']] ?? cols[map['estoque minimo']];
+            location = cols[map['localização']] ?? cols[map['localizacao']] ?? '';
+          } else if (isTemplateFormat) {
+            // Template columns: [Nome, Descrição, Estoque Atual, Estoque Mínimo, Localização]
+            name = cols[0];
+            currentStockStr = cols[2];
+            minStockStr = cols[3];
+            location = cols[4] ?? '';
+          } else {
+            // Fallback: try by position like template
+            name = cols[0];
+            currentStockStr = cols[2] ?? cols[1] ?? '0';
+            minStockStr = cols[3] ?? '0';
+            location = cols[4] ?? '';
           }
 
-          // CSV esperado: Nome, Descrição(vazia/ignorada), Estoque Atual, Estoque Mínimo, Localização
-          const [name, _description, currentStock, minimumStock, location] = columns;
-          
+          const currentStock = Number.parseInt((currentStockStr || '0').toString().replace(/\D/g, '')) || 0;
+          const minStock = Number.parseInt((minStockStr || '0').toString().replace(/\D/g, '')) || 0;
+
+          if (!name || name.trim().length === 0) {
+            throw new Error("Nome do item não informado");
+          }
+
           const itemData = {
-            name: name || `Item ${i}`,
+            name: name.trim(),
             categoryId,
-            currentStock: parseInt(currentStock) || 0,
-            minStock: parseInt(minimumStock) || 1,
-            location: location || '',
-            status: 'disponivel' as const
+            currentStock,
+            minStock,
+            location: location?.trim() || '',
+            status: 'disponivel' as const,
           };
 
           await storage.createItem(itemData);
           results.success++;
         } catch (error) {
-          results.errors.push(`Linha ${i + 1}: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+          results.errors.push(`Linha ${i + 2}: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
         }
       }
 

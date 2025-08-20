@@ -8,21 +8,22 @@ import { Skeleton } from "@/components/ui/skeleton";
 import type { MovementWithDetails, ItemWithCategory } from "@shared/schema";
 
 export default function History() {
-  const [selectedItemFilter, setSelectedItemFilter] = useState("");
-  const [selectedTypeFilter, setSelectedTypeFilter] = useState("");
+  const ALL = "ALL";
+  const [selectedItemFilter, setSelectedItemFilter] = useState(ALL);
+  const [selectedTypeFilter, setSelectedTypeFilter] = useState(ALL);
 
   const { data: items = [] } = useQuery<ItemWithCategory[]>({
     queryKey: ["/api/items"],
   });
 
+  const itemIdParam = selectedItemFilter === ALL ? undefined : selectedItemFilter;
   const { data: movements = [], isLoading } = useQuery<MovementWithDetails[]>({
-    queryKey: ["/api/movements", { itemId: selectedItemFilter || undefined, limit: 100 }],
+    queryKey: ["/api/movements", { itemId: itemIdParam, limit: 100 }],
   });
 
   const filteredMovements = movements.filter(movement => {
-    if (selectedTypeFilter && movement.type !== selectedTypeFilter) {
-      return false;
-    }
+    const typeFilter = selectedTypeFilter === ALL ? undefined : selectedTypeFilter;
+    if (typeFilter && movement.type !== typeFilter) return false;
     return true;
   });
 
@@ -147,8 +148,10 @@ export default function History() {
                   <SelectValue placeholder="Filtrar por item" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos os itens</SelectItem>
-                  {items.map((item) => (
+                  <SelectItem value={ALL}>Todos os itens</SelectItem>
+                  {items
+                    .filter((item) => typeof item.id === 'string' && item.id.trim().length > 0)
+                    .map((item) => (
                     <SelectItem key={item.id} value={item.id}>
                       {item.name} ({item.internalCode})
                     </SelectItem>
@@ -161,7 +164,7 @@ export default function History() {
                   <SelectValue placeholder="Tipo" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos</SelectItem>
+                  <SelectItem value={ALL}>Todos</SelectItem>
                   <SelectItem value="entrada">Entrada</SelectItem>
                   <SelectItem value="saida">Saída</SelectItem>
                 </SelectContent>
