@@ -14,6 +14,7 @@ import History from "@/pages/history";
 import Users from "@/pages/users";
 import Categories from "@/pages/categories";
 import NotFound from "@/pages/not-found";
+import RegisterUserPage from "@/pages/register";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
@@ -54,11 +55,19 @@ function Router() {
       <Route path="/login">
         {user ? <Redirect to="/" /> : <Login />}
       </Route>
+
+      <Route path="/register">
+        {user ? <Redirect to="/" /> : <RegisterUserPage />}
+      </Route>
       
       <Route path="/">
-        <ProtectedRoute>
-          <Dashboard />
-        </ProtectedRoute>
+        {user ? (
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        ) : (
+          <RegisterUserPage />
+        )}
       </Route>
       
       <Route path="/items">
