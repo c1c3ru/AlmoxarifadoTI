@@ -11,6 +11,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { canDeleteItems } from "@/lib/auth";
@@ -244,54 +245,92 @@ export default function Items() {
                             size={32}
                             className="cursor-pointer hover:scale-110 transition-transform"
                           />
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleShowQR(item)}
-                            className="text-primary-600 hover:text-primary-700"
-                            data-testid={`button-qr-modal-${item.id}`}
-                          >
-                            <i className="fas fa-expand-alt text-xs"></i>
-                          </Button>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleShowQR(item)}
+                                  className="text-primary-600 hover:text-primary-700"
+                                  data-testid={`button-qr-modal-${item.id}`}
+                                  aria-label="Ver QR em tamanho maior"
+                                >
+                                  <i className="fas fa-expand-alt text-xs"></i>
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Ampliar QR Code</TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         </div>
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center space-x-2 p-2 bg-gray-50 rounded border">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEdit(item)}
-                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-3 py-2"
-                            data-testid={`button-edit-${item.id}`}
-                            title="Editar item"
-                          >
-                            <i className="fas fa-edit mr-1"></i>
-                            Editar
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleMovement(item)}
-                            className="text-green-600 hover:text-green-700 hover:bg-green-50 px-3 py-2"
-                            data-testid={`button-movement-${item.id}`}
-                            title="Registrar movimentação"
-                          >
-                            <i className="fas fa-exchange-alt mr-1"></i>
-                            Movimentar
-                          </Button>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleEdit(item)}
+                                  className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-3 py-2"
+                                  data-testid={`button-edit-${item.id}`}
+                                  aria-label="Editar item"
+                                >
+                                  <i className="fas fa-edit mr-1"></i>
+                                  Editar
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Editar item</TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleMovement(item)}
+                                  className="text-green-600 hover:text-green-700 hover:bg-green-50 px-3 py-2"
+                                  data-testid={`button-movement-${item.id}`}
+                                  aria-label="Registrar movimentação"
+                                >
+                                  <i className="fas fa-exchange-alt mr-1"></i>
+                                  Movimentar
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Registrar movimentação</TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                           {canDeleteItems(user) && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDelete(item)}
-                              disabled={deleteItemMutation.isPending}
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50 px-3 py-2"
-                              data-testid={`button-delete-${item.id}`}
-                              title="Excluir item"
-                            >
-                              <i className="fas fa-trash mr-1"></i>
-                              Excluir
-                            </Button>
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleDelete(item)}
+                                    disabled={deleteItemMutation.isPending}
+                                    className="text-red-600 hover:text-red-700 hover:bg-red-50 px-3 py-2"
+                                    data-testid={`button-delete-${item.id}`}
+                                    aria-label="Excluir item"
+                                  >
+                                    {deleteItemMutation.isPending ? (
+                                      <>
+                                        <i className="fas fa-spinner fa-spin mr-1"></i>
+                                        Excluindo
+                                      </>
+                                    ) : (
+                                      <>
+                                        <i className="fas fa-trash mr-1"></i>
+                                        Excluir
+                                      </>
+                                    )}
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Excluir item</TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
                           )}
                         </div>
                       </td>

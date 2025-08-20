@@ -2,6 +2,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import type { ItemWithCategory } from "@shared/schema";
+import { QRCodeGenerator } from "@/components/qr-code-generator";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface QRCodeModalProps {
   open: boolean;
@@ -25,7 +27,10 @@ export function QRCodeModal({ open, onOpenChange, item }: QRCodeModalProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md w-full">
         <DialogHeader>
-          <DialogTitle>QR Code do Item</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <i className="fas fa-qrcode text-primary-600"></i>
+            QR Code do Item
+          </DialogTitle>
         </DialogHeader>
         
         <div className="text-center space-y-6">
@@ -38,38 +43,58 @@ export function QRCodeModal({ open, onOpenChange, item }: QRCodeModalProps) {
             </p>
           </div>
           
-          {/* QR Code placeholder - in real implementation, this would be generated dynamically */}
-          <Card className="w-48 h-48 mx-auto bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center">
-            <CardContent className="text-center p-6">
-              <i className="fas fa-qrcode text-4xl text-gray-400 mb-2"></i>
-              <p className="text-sm text-gray-500">QR Code</p>
-              <p className="text-xs text-gray-400" data-testid="qr-code-data">
+          {/* QR Code real */}
+          <Card className="mx-auto bg-white border rounded-lg flex items-center justify-center p-4 print:shadow-none">
+            <CardContent className="text-center p-0">
+              <QRCodeGenerator
+                value={`ITEM:${item.id}:${item.internalCode}`}
+                size={256}
+                className="mx-auto"
+              />
+              <p className="mt-3 text-xs text-gray-500" data-testid="qr-code-data">
                 {item.internalCode}
               </p>
             </CardContent>
           </Card>
           
-          <div className="flex space-x-3">
-            <Button
-              onClick={handlePrint}
-              className="flex-1 bg-primary-600 hover:bg-primary-700"
-              data-testid="button-print-qr"
-            >
-              <i className="fas fa-print mr-2"></i>
-              Imprimir
-            </Button>
-            <Button
-              onClick={handleDownload}
-              variant="outline"
-              className="flex-1"
-              data-testid="button-download-qr"
-            >
-              <i className="fas fa-download mr-2"></i>
-              Baixar
-            </Button>
+          <div className="flex space-x-3 print:hidden">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={handlePrint}
+                    className="flex-1 bg-primary-600 hover:bg-primary-700"
+                    data-testid="button-print-qr"
+                    aria-label="Imprimir QR Code"
+                  >
+                    <i className="fas fa-print mr-2"></i>
+                    Imprimir
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Imprimir QR Code</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={handleDownload}
+                    variant="outline"
+                    className="flex-1"
+                    data-testid="button-download-qr"
+                    aria-label="Baixar QR Code"
+                  >
+                    <i className="fas fa-download mr-2"></i>
+                    Baixar
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Baixar como imagem</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </div>
       </DialogContent>
     </Dialog>
   );
 }
+

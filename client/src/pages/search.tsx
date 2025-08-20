@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { ItemWithCategory, Category } from "@shared/schema";
 
 export default function Search() {
@@ -236,15 +237,23 @@ export default function Search() {
                         size={32}
                         className="cursor-pointer hover:scale-110 transition-transform"
                       />
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleShowQR(item)}
-                        className="text-gray-400 hover:text-primary-600 transition-colors"
-                        data-testid={`button-qr-modal-${item.id}`}
-                      >
-                        <i className="fas fa-expand-alt text-xs"></i>
-                      </Button>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleShowQR(item)}
+                              className="text-gray-400 hover:text-primary-600 transition-colors"
+                              data-testid={`button-qr-modal-${item.id}`}
+                              aria-label="Ampliar QR Code"
+                            >
+                              <i className="fas fa-expand-alt text-xs"></i>
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Ampliar QR Code</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     </div>
                   </div>
                   
@@ -277,31 +286,55 @@ export default function Search() {
                   </div>
                   
                   <div className="flex space-x-2 mt-4 p-2 bg-gray-50 rounded border">
-                    <Button
-                      onClick={() => handleEdit(item)}
-                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm py-2"
-                      data-testid={`button-edit-${item.id}`}
-                    >
-                      <i className="fas fa-edit mr-2"></i>
-                      Editar
-                    </Button>
-                    <Button
-                      onClick={() => handleMovement(item)}
-                      className="flex-1 bg-primary-600 hover:bg-primary-700 text-white text-sm py-2"
-                      data-testid={`button-movement-${item.id}`}
-                    >
-                      <i className="fas fa-exchange-alt mr-2"></i>
-                      Movimentar
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleShowQR(item)}
-                      className="px-3 py-2"
-                      data-testid={`button-view-${item.id}`}
-                    >
-                      <i className="fas fa-eye"></i>
-                    </Button>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            onClick={() => handleEdit(item)}
+                            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm py-2"
+                            data-testid={`button-edit-${item.id}`}
+                            aria-label="Editar item"
+                          >
+                            <i className="fas fa-edit mr-2"></i>
+                            Editar
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Editar item</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            onClick={() => handleMovement(item)}
+                            className="flex-1 bg-primary-600 hover:bg-primary-700 text-white text-sm py-2"
+                            data-testid={`button-movement-${item.id}`}
+                            aria-label="Registrar movimentação"
+                          >
+                            <i className="fas fa-exchange-alt mr-2"></i>
+                            Movimentar
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Registrar movimentação</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleShowQR(item)}
+                            className="px-3 py-2"
+                            data-testid={`button-view-${item.id}`}
+                            aria-label="Ver detalhes"
+                          >
+                            <i className="fas fa-eye"></i>
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Ver detalhes</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
                 </CardContent>
               </Card>
