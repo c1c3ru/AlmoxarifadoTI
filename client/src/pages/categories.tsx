@@ -153,6 +153,12 @@ export default function Categories() {
     }
   };
 
+  const handleOpenModal = () => {
+    setShowAddModal(true);
+    setEditingCategory(null);
+    form.reset();
+  };
+
   const handleCloseModal = () => {
     setShowAddModal(false);
     setEditingCategory(null);
@@ -169,121 +175,123 @@ export default function Categories() {
         <CardContent className="p-6">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-semibold text-gray-900">Lista de Categorias</h3>
-            <Dialog open={showAddModal} onOpenChange={handleCloseModal}>
-              <DialogTrigger asChild>
-                <Button 
-                  className="bg-primary-600 hover:bg-primary-700"
-                  data-testid="button-add-category"
-                >
-                  <i className="fas fa-plus mr-2"></i>
-                  Nova Categoria
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-lg">
-                <DialogHeader>
-                  <DialogTitle>
-                    {editingCategory ? "Editar Categoria" : "Adicionar Nova Categoria"}
-                  </DialogTitle>
-                </DialogHeader>
-                
-                <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                    <FormField
-                      control={form.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Nome da Categoria</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="Ex: Periféricos"
-                              {...field}
-                              data-testid="input-category-name"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="description"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Descrição (Opcional)</FormLabel>
-                          <FormControl>
-                            <Textarea
-                              placeholder="Descrição da categoria..."
-                              {...field}
-                              data-testid="textarea-category-description"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="icon"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Ícone</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
+            <Button 
+              className="bg-primary-600 hover:bg-primary-700"
+              data-testid="button-add-category"
+              onClick={handleOpenModal}
+            >
+              <i className="fas fa-plus mr-2"></i>
+              Nova Categoria
+            </Button>
+
+            {showAddModal && (
+              <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
+                <DialogContent className="max-w-lg">
+                  <DialogHeader>
+                    <DialogTitle>
+                      {editingCategory ? "Editar Categoria" : "Adicionar Nova Categoria"}
+                    </DialogTitle>
+                  </DialogHeader>
+                  
+                  <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                      <FormField
+                        control={form.control}
+                        name="name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Nome da Categoria</FormLabel>
                             <FormControl>
-                              <SelectTrigger data-testid="select-category-icon">
-                                <SelectValue />
-                              </SelectTrigger>
+                              <Input
+                                placeholder="Ex: Periféricos"
+                                {...field}
+                                data-testid="input-category-name"
+                              />
                             </FormControl>
-                            <SelectContent>
-                              {iconOptions.map((option) => (
-                                <SelectItem key={option.value} value={option.value}>
-                                  <div className="flex items-center space-x-2">
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="description"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Descrição (Opcional)</FormLabel>
+                            <FormControl>
+                              <Textarea
+                                placeholder="Descrição da categoria..."
+                                {...field}
+                                data-testid="textarea-category-description"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="icon"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Ícone</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger data-testid="select-category-icon">
+                                  <SelectValue />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {iconOptions.map((option) => (
+                                  <SelectItem key={option.value} value={option.value}>
+                                    <div className="flex items-center space-x-2">
                                     <i className={option.value}></i>
                                     <span>{option.label}</span>
                                   </div>
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <div className="flex items-center justify-end space-x-3 pt-4 border-t border-gray-200">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={handleCloseModal}
-                        data-testid="button-cancel"
-                      >
-                        Cancelar
-                      </Button>
-                      <Button
-                        type="submit"
-                        disabled={createCategoryMutation.isPending || updateCategoryMutation.isPending}
-                        className="bg-primary-600 hover:bg-primary-700"
-                        data-testid="button-save-category"
-                      >
-                        {(createCategoryMutation.isPending || updateCategoryMutation.isPending) ? (
-                          <>
-                            <i className="fas fa-spinner fa-spin mr-2"></i>
-                            Salvando...
-                          </>
-                        ) : (
-                          <>
-                            <i className="fas fa-save mr-2"></i>
-                            {editingCategory ? "Atualizar" : "Salvar"} Categoria
-                          </>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
                         )}
-                      </Button>
-                    </div>
-                  </form>
-                </Form>
-              </DialogContent>
-            </Dialog>
+                      />
+                      
+                      <div className="flex items-center justify-end space-x-3 pt-4 border-t border-gray-200">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={handleCloseModal}
+                          data-testid="button-cancel"
+                        >
+                          Cancelar
+                        </Button>
+                        <Button
+                          type="submit"
+                          disabled={createCategoryMutation.isPending || updateCategoryMutation.isPending}
+                          className="bg-primary-600 hover:bg-primary-700"
+                          data-testid="button-save-category"
+                        >
+                          {(createCategoryMutation.isPending || updateCategoryMutation.isPending) ? (
+                            <>
+                              <i className="fas fa-spinner fa-spin mr-2"></i>
+                              Salvando...
+                            </>
+                          ) : (
+                            <>
+                              <i className="fas fa-save mr-2"></i>
+                              {editingCategory ? "Atualizar" : "Salvar"} Categoria
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </form>
+                  </Form>
+                </DialogContent>
+              </Dialog>
+            )}
           </div>
 
           {isLoading ? (

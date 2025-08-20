@@ -2,8 +2,10 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { MainLayout } from "@/components/layout/main-layout";
 import { AddItemModal } from "@/components/modals/add-item-modal";
+import { EditItemModal } from "@/components/modals/edit-item-modal";
 import { QRCodeModal } from "@/components/modals/qr-code-modal";
 import { MovementModal } from "@/components/modals/movement-modal";
+import { QRCodeGenerator } from "@/components/qr-code-generator";
 import { CSVImportExport } from "@/components/csv-import-export";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,6 +19,7 @@ import type { ItemWithCategory } from "@shared/schema";
 
 export default function Items() {
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [showQRModal, setShowQRModal] = useState(false);
   const [showMovementModal, setShowMovementModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState<ItemWithCategory | null>(null);
@@ -48,6 +51,11 @@ export default function Items() {
       });
     },
   });
+
+  const handleEdit = (item: ItemWithCategory) => {
+    setSelectedItem(item);
+    setShowEditModal(true);
+  };
 
   const handleShowQR = (item: ItemWithCategory) => {
     setSelectedItem(item);
@@ -226,24 +234,42 @@ export default function Items() {
                         </Badge>
                       </td>
                       <td className="px-6 py-4">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleShowQR(item)}
-                          className="text-primary-600 hover:text-primary-700"
-                          data-testid={`button-qr-${item.id}`}
-                        >
-                          <i className="fas fa-qrcode text-lg"></i>
-                        </Button>
+                        <div className="flex items-center space-x-2">
+                          <QRCodeGenerator 
+                            value={`ITEM:${item.id}:${item.internalCode}`}
+                            size={32}
+                            className="cursor-pointer hover:scale-110 transition-transform"
+                          />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleShowQR(item)}
+                            className="text-primary-600 hover:text-primary-700"
+                            data-testid={`button-qr-modal-${item.id}`}
+                          >
+                            <i className="fas fa-expand-alt text-xs"></i>
+                          </Button>
+                        </div>
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center space-x-2">
                           <Button
                             variant="ghost"
                             size="sm"
+                            onClick={() => handleEdit(item)}
+                            className="text-gray-600 hover:text-primary-600"
+                            data-testid={`button-edit-${item.id}`}
+                            title="Editar item"
+                          >
+                            <i className="fas fa-edit"></i>
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() => handleMovement(item)}
                             className="text-gray-600 hover:text-primary-600"
                             data-testid={`button-movement-${item.id}`}
+                            title="Registrar movimentação"
                           >
                             <i className="fas fa-exchange-alt"></i>
                           </Button>
@@ -255,6 +281,7 @@ export default function Items() {
                               disabled={deleteItemMutation.isPending}
                               className="text-gray-600 hover:text-error-600"
                               data-testid={`button-delete-${item.id}`}
+                              title="Excluir item"
                             >
                               <i className="fas fa-trash"></i>
                             </Button>
@@ -273,6 +300,12 @@ export default function Items() {
       <AddItemModal
         open={showAddModal}
         onOpenChange={setShowAddModal}
+      />
+
+      <EditItemModal
+        open={showEditModal}
+        onOpenChange={setShowEditModal}
+        item={selectedItem}
       />
 
       <QRCodeModal

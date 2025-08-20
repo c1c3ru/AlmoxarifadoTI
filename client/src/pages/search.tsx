@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { MainLayout } from "@/components/layout/main-layout";
+import { EditItemModal } from "@/components/modals/edit-item-modal";
 import { QRCodeModal } from "@/components/modals/qr-code-modal";
 import { MovementModal } from "@/components/modals/movement-modal";
+import { QRCodeGenerator } from "@/components/qr-code-generator";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -17,6 +19,7 @@ export default function Search() {
   const [selectedCategory, setSelectedCategory] = useState(ALL);
   const [selectedStatus, setSelectedStatus] = useState(ALL);
   const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [showEditModal, setShowEditModal] = useState(false);
   const [showQRModal, setShowQRModal] = useState(false);
   const [showMovementModal, setShowMovementModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState<ItemWithCategory | null>(null);
@@ -42,6 +45,11 @@ export default function Search() {
     queryKey: ["/api/items/search", { q: debouncedQuery, category: categoryParam, status: statusParam }],
     enabled: hasFilters,
   });
+
+  const handleEdit = (item: ItemWithCategory) => {
+    setSelectedItem(item);
+    setShowEditModal(true);
+  };
 
   const handleShowQR = (item: ItemWithCategory) => {
     setSelectedItem(item);
@@ -191,15 +199,22 @@ export default function Search() {
                       </p>
                     </div>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleShowQR(item)}
-                    className="text-gray-400 hover:text-primary-600 transition-colors"
-                    data-testid={`button-qr-${item.id}`}
-                  >
-                    <i className="fas fa-qrcode"></i>
-                  </Button>
+                  <div className="flex items-center space-x-2">
+                    <QRCodeGenerator 
+                      value={`ITEM:${item.id}:${item.internalCode}`}
+                      size={32}
+                      className="cursor-pointer hover:scale-110 transition-transform"
+                    />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleShowQR(item)}
+                      className="text-gray-400 hover:text-primary-600 transition-colors"
+                      data-testid={`button-qr-modal-${item.id}`}
+                    >
+                      <i className="fas fa-expand-alt text-xs"></i>
+                    </Button>
+                  </div>
                 </div>
                 
                 <div className="space-y-2 mb-4">
@@ -232,6 +247,14 @@ export default function Search() {
                 
                 <div className="flex space-x-2">
                   <Button
+                    onClick={() => handleEdit(item)}
+                    className="flex-1 bg-secondary-600 hover:bg-secondary-700 text-white text-sm"
+                    data-testid={`button-edit-${item.id}`}
+                  >
+                    <i className="fas fa-edit mr-2"></i>
+                    Editar
+                  </Button>
+                  <Button
                     onClick={() => handleMovement(item)}
                     className="flex-1 bg-primary-600 hover:bg-primary-700 text-white text-sm"
                     data-testid={`button-movement-${item.id}`}
@@ -253,6 +276,12 @@ export default function Search() {
           ))}
         </div>
       )}
+
+      <EditItemModal
+        open={showEditModal}
+        onOpenChange={setShowEditModal}
+        item={selectedItem}
+      />
 
       <QRCodeModal
         open={showQRModal}
