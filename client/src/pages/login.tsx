@@ -100,7 +100,7 @@ export default function Login() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4 relative overflow-hidden">
       {/* Background Pattern */}
       <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmNGY2ZjgiIGZpbGwtb3BhY2l0eT0iMC4xIj48Y2lyY2xlIGN4PSIzMCIgY3k9IjMwIiByPSIxLjUiPjwvY2lyY2xlPjwvZz48L2c+PC9zdmc+')] opacity-40"></div>
-      
+
       <Card className="w-full max-w-md bg-white/80 backdrop-blur-lg border-0 shadow-2xl">
         <CardHeader className="text-center pb-6">
           <div className="relative mx-auto mb-6">
@@ -117,7 +117,7 @@ export default function Login() {
           <p className="text-gray-600 font-medium">Sistema de Gestão de Almoxarifado de T.I.</p>
           <div className="w-16 h-1 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full mx-auto mt-2"></div>
         </CardHeader>
-        
+
         <CardContent className="space-y-6">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
@@ -144,7 +144,7 @@ export default function Login() {
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="password"
@@ -169,7 +169,7 @@ export default function Login() {
                   </FormItem>
                 )}
               />
-              
+
               <Button
                 type="submit"
                 disabled={isLoading}
@@ -218,9 +218,9 @@ export default function Login() {
                                   <FormItem>
                                     <FormLabel className="font-semibold">Usuário ou Email</FormLabel>
                                     <FormControl>
-                                      <Input 
-                                        placeholder="Digite seu usuário ou email" 
-                                        {...field} 
+                                      <Input
+                                        placeholder="Digite seu usuário ou email"
+                                        {...field}
                                         className="h-11"
                                       />
                                     </FormControl>
@@ -309,30 +309,12 @@ export default function Login() {
             </form>
           </Form>
 
-          {/* Demo credentials with modern styling */}
-          <div className="bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl p-4 border border-gray-100">
-            <div className="text-center">
-              <p className="text-sm font-semibold text-gray-700 mb-2">
-                <i className="fa-solid fa-info-circle mr-1 text-blue-500"></i>
-                Contas de Demonstração
-              </p>
-              <div className="grid grid-cols-1 gap-2 text-xs">
-                <div className="bg-white rounded-lg p-2 border">
-                  <span className="font-semibold text-blue-700">Admin:</span> admin / admin123
-                </div>
-                <div className="bg-white rounded-lg p-2 border">
-                  <span className="font-semibold text-green-700">Técnico:</span> tech / tech123
-                </div>
-              </div>
-            </div>
-          </div>
-
           {/* Register link with modern styling */}
           <div className="text-center pt-4 border-t border-gray-100">
             <p className="text-gray-600 text-sm mb-3">Não possui uma conta?</p>
             <Link href="/register">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="w-full border-2 border-dashed border-blue-300 hover:border-blue-400 hover:bg-blue-50 text-blue-600 font-semibold transition-all duration-300"
                 data-testid="link-register"
               >
