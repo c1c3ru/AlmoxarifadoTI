@@ -3,7 +3,13 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import { registerRoutes } from "./routes";
-import { serveStatic, setupVite, log } from "./vite";
+// Avoid importing Vite in serverless runtime. Provide a minimal logger here.
+function log(message: string) {
+  try {
+    const ts = new Date().toISOString();
+    console.log(`${ts} [api] ${message}`);
+  } catch {}
+}
 
 export async function createApp() {
   const app = express();
@@ -63,9 +69,9 @@ export async function createApp() {
     let capturedJsonResponse: Record<string, any> | undefined = undefined;
 
     const originalResJson = res.json.bind(res);
-    (res as any).json = function (bodyJson: any, ...args: any[]) {
+    (res as any).json = function (bodyJson: any) {
       capturedJsonResponse = bodyJson;
-      return originalResJson(bodyJson, ...args);
+      return originalResJson(bodyJson);
     } as any;
 
     res.on("finish", () => {
