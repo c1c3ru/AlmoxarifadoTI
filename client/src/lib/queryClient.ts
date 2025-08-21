@@ -1,7 +1,28 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
+let isRedirecting401 = false;
+function handleUnauthorizedRedirect() {
+  if (typeof window === 'undefined') return;
+  if (isRedirecting401) return;
+  isRedirecting401 = true;
+  try {
+    localStorage.removeItem('sgat-user');
+    localStorage.removeItem('sgat-token');
+  } catch {}
+  const current = window.location.pathname + window.location.search + window.location.hash;
+  if (!current.startsWith('/login')) {
+    window.location.assign('/login');
+  } else {
+    // já está no login, apenas força atualização do estado
+    window.location.reload();
+  }
+}
+
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
+    if (res.status === 401) {
+      handleUnauthorizedRedirect();
+    }
     const text = (await res.text()) || res.statusText;
     throw new Error(`${res.status}: ${text}`);
   }
@@ -12,9 +33,14 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
+  const token = typeof localStorage !== 'undefined' ? localStorage.getItem('sgat-token') : null;
+  const headers: Record<string, string> = {};
+  if (data) headers["Content-Type"] = "application/json";
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+
   const res = await fetch(url, {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
+    headers,
     body: data ? JSON.stringify(data) : undefined,
     credentials: "include",
   });
@@ -29,12 +55,20 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
+    const token = typeof localStorage !== 'undefined' ? localStorage.getItem('sgat-token') : null;
+    const headers: Record<string, string> = {};
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+
     const res = await fetch(queryKey.join("/") as string, {
       credentials: "include",
+      headers,
     });
 
-    if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-      return null;
+    if (res.status === 401) {
+      handleUnauthorizedRedirect();
+      if (unauthorizedBehavior === "returnNull") {
+        return null as any;
+      }
     }
 
     await throwIfResNotOk(res);

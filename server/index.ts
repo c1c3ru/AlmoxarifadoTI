@@ -1,23 +1,61 @@
 import "dotenv/config";
 import express, { type Request, Response, NextFunction } from "express";
 import cors from "cors";
+import helmet from "helmet";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
 const app = express();
 
-// Configurar CORS
+// Helmet com CSP básica
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      useDefaults: true,
+      directives: {
+        "default-src": ["'self'"],
+        "base-uri": ["'self'"],
+        "block-all-mixed-content": [],
+        "font-src": ["'self'", "https:", "data:"],
+        "frame-ancestors": ["'self'"],
+        "img-src": ["'self'", "data:", "https:"],
+        "object-src": ["'none'"],
+        "script-src": ["'self'", "https://cdnjs.cloudflare.com"],
+        "script-src-attr": ["'none'"],
+        "style-src": ["'self'", "'unsafe-inline'", "https:"],
+        "connect-src": ["'self'"],
+      },
+    },
+    referrerPolicy: { policy: "no-referrer" },
+    frameguard: { action: "sameorigin" },
+  })
+);
+
+// Configurar CORS (endurecido por ambiente)
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || (
+  process.env.NODE_ENV === 'production'
+    ? ''
+    : 'http://localhost:3000,http://localhost:5173,http://localhost:4173'
+))
+  .split(',')
+  .map(o => o.trim())
+  .filter(Boolean);
+
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? ['https://yourdomain.com'] // Substitua pelo seu domínio em produção
-    : ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:4173'],
+  origin: (origin, callback) => {
+    // Permite chamadas server-to-server ou mesma origem sem cabeçalho Origin
+    if (!origin) return callback(null, true);
+    const isAllowed = allowedOrigins.includes(origin);
+    return callback(isAllowed ? null : new Error('Not allowed by CORS'), isAllowed);
+  },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
 }));
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+// Limites explícitos de tamanho do corpo da requisição
+app.use(express.json({ limit: "1mb" }));
+app.use(express.urlencoded({ extended: false, limit: "1mb" }));
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -53,11 +91,17 @@ app.use((req, res, next) => {
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
-
-    res.status(status).json({ message });
-    throw err;
+    const status = err?.status || err?.statusCode || 500;
+    const message = err?.message || "Internal Server Error";
+    // Log estruturado (sem lançar após responder)
+    console.error("[error]", {
+      status,
+      message,
+      stack: app.get("env") === "development" ? err?.stack : undefined,
+    });
+    if (!res.headersSent) {
+      res.status(status).json({ message });
+    }
   });
 
   // importantly only setup vite in development and after

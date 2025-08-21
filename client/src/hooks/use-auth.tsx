@@ -34,6 +34,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const data = await response.json();
       setUser(data.user);
       localStorage.setItem("sgat-user", JSON.stringify(data.user));
+      // Se o servidor estiver com JWT habilitado, virá um token
+      if (data.token) {
+        localStorage.setItem("sgat-token", data.token as string);
+      } else {
+        // Garante limpeza caso tenha token antigo
+        localStorage.removeItem("sgat-token");
+      }
       return true;
     } catch (error) {
       console.error("Login failed:", error);
@@ -44,6 +51,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = () => {
     setUser(null);
     localStorage.removeItem("sgat-user");
+    localStorage.removeItem("sgat-token");
   };
 
   return (

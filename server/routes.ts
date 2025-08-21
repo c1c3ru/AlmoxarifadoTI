@@ -5,10 +5,28 @@ import bcrypt from "bcrypt";
 import { 
   insertUserSchema, insertCategorySchema, insertItemSchema, insertMovementSchema 
 } from "@shared/schema";
+import rateLimit from "express-rate-limit";
+import { authenticateJWT, isAuthEnabled, generateToken } from "./auth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Rate limiters
+  const loginLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutos
+    limit: 10,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { message: "Muitas tentativas. Tente novamente mais tarde." },
+  });
+
+  const importLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 5,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { message: "Muitas importações. Tente novamente mais tarde." },
+  });
   // Authentication routes
-  app.post("/api/auth/login", async (req, res) => {
+  app.post("/api/auth/login", loginLimiter, async (req, res) => {
     try {
       const { username, password } = req.body;
       
@@ -28,6 +46,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Don't send password in response
       const { password: _, ...userWithoutPassword } = user;
+      if (isAuthEnabled()) {
+        const token = generateToken({
+          sub: user.id,
+          username: user.username,
+          role: user.role,
+        });
+        return res.json({ user: userWithoutPassword, token });
+      }
       res.json({ user: userWithoutPassword });
     } catch (error) {
       console.error("Login error:", error);
@@ -91,7 +117,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/categories", async (req, res) => {
+  app.post("/api/categories", authenticateJWT, async (req, res) => {
     try {
       const validation = insertCategorySchema.safeParse(req.body);
       if (!validation.success) {
@@ -106,7 +132,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/categories/:id", async (req, res) => {
+  app.put("/api/categories/:id", authenticateJWT, async (req, res) => {
     try {
       const { id } = req.params;
       const validation = insertCategorySchema.partial().safeParse(req.body);
@@ -126,7 +152,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/categories/:id", async (req, res) => {
+  app.delete("/api/categories/:id", authenticateJWT, async (req, res) => {
     try {
       const { id } = req.params;
       const success = await storage.deleteCategory(id);
@@ -194,7 +220,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/items", async (req, res) => {
+  app.post("/api/items", authenticateJWT, async (req, res) => {
     try {
       const validation = insertItemSchema.safeParse(req.body);
       if (!validation.success) {
@@ -209,7 +235,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/items/:id", async (req, res) => {
+  app.put("/api/items/:id", authenticateJWT, async (req, res) => {
     try {
       const { id } = req.params;
       const validation = insertItemSchema.partial().safeParse(req.body);
@@ -229,7 +255,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/items/:id", async (req, res) => {
+  app.delete("/api/items/:id", authenticateJWT, async (req, res) => {
     try {
       const { id } = req.params;
       const success = await storage.deleteItem(id);
@@ -258,7 +284,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/movements", async (req, res) => {
+  app.post("/api/movements", authenticateJWT, async (req, res) => {
     try {
       const validation = insertMovementSchema.safeParse(req.body);
       if (!validation.success) {
@@ -290,7 +316,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Users routes (admin only in real implementation)
-  app.get("/api/users", async (req, res) => {
+  app.get("/api/users", authenticateJWT, async (req, res) => {
     try {
       const users = await storage.getAllUsers();
       // Remove passwords from response
@@ -302,7 +328,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/users", async (req, res) => {
+  app.post("/api/users", authenticateJWT, async (req, res) => {
     try {
       const validation = insertUserSchema.safeParse(req.body);
       if (!validation.success) {
@@ -319,7 +345,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // CSV Export/Import routes
-  app.get("/api/inventory/export", async (req, res) => {
+  app.get("/api/inventory/export", authenticateJWT, async (req, res) => {
     try {
       const items = await storage.getAllItems();
       
@@ -360,7 +386,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/inventory/import", async (req, res) => {
+  app.post("/api/inventory/import", authenticateJWT, importLimiter, async (req, res) => {
     try {
       const { csvData, categoryId } = req.body;
       
