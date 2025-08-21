@@ -267,7 +267,7 @@ export default function RegisterUserPage() {
                         placeholder="Digite o nome completo" 
                         {...field} 
                         data-testid="input-name"
-                        className="h-11"
+                        className="h-11 placeholder:text-gray-400"
                         maxLength={100}
                       />
                     </FormControl>
@@ -288,7 +288,7 @@ export default function RegisterUserPage() {
                         placeholder="usuario@instituicao.edu.br" 
                         {...field} 
                         data-testid="input-email"
-                        className="h-11"
+                        className="h-11 placeholder:text-gray-400"
                         maxLength={255}
                         autoComplete="email"
                       />
@@ -311,7 +311,7 @@ export default function RegisterUserPage() {
                         placeholder={matriculaConfig.placeholder}
                         {...field} 
                         data-testid="input-matricula"
-                        className="h-11"
+                        className="h-11 placeholder:text-gray-400"
                         maxLength={matriculaConfig.maxLength}
                         pattern="[0-9]*"
                         inputMode="numeric"
@@ -336,7 +336,7 @@ export default function RegisterUserPage() {
                         placeholder="Crie uma senha segura"
                         {...field} 
                         data-testid="input-password"
-                        className="h-11"
+                        className="h-11 placeholder:text-gray-400"
                         maxLength={128}
                         autoComplete="new-password"
                       />
@@ -361,7 +361,7 @@ export default function RegisterUserPage() {
                         placeholder="Digite a senha novamente"
                         {...field} 
                         data-testid="input-confirm-password"
-                        className="h-11"
+                        className="h-11 placeholder:text-gray-400"
                         maxLength={128}
                         autoComplete="new-password"
                       />
