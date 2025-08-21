@@ -1,6 +1,11 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import QrScanner from "qr-scanner";
+// Vite: import worker asset URL and set WORKER_PATH
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore - vite query suffix for asset url import
+import qrScannerWorkerUrl from "qr-scanner/qr-scanner-worker.min.js?url";
 
 interface QRScannerProps {
   onScan: (code: string) => void;
@@ -10,59 +15,65 @@ interface QRScannerProps {
 
 export function QRScanner({ onScan, isActive, onActivate }: QRScannerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [stream, setStream] = useState<MediaStream | null>(null);
+  const scannerRef = useRef<QrScanner | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    QrScanner.WORKER_PATH = qrScannerWorkerUrl as unknown as string;
+
     if (isActive) {
-      startCamera();
+      startScanner();
     } else {
-      stopCamera();
+      stopScanner();
     }
 
     return () => {
-      stopCamera();
+      stopScanner(true);
     };
   }, [isActive]);
 
-  const startCamera = async () => {
+  const startScanner = async () => {
+    if (!videoRef.current) return;
     try {
       setError(null);
-      const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: { 
-          facingMode: "environment", // Use rear camera on mobile
-          width: { ideal: 400 },
-          height: { ideal: 400 }
-        }
-      });
-      
-      setStream(mediaStream);
-      
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream;
-        videoRef.current.play();
+      // Cleanup any previous instance
+      if (scannerRef.current) {
+        await scannerRef.current.stop();
+        scannerRef.current.destroy();
+        scannerRef.current = null;
       }
 
-      // For demo purposes, we'll simulate QR code scanning
-      // In a real implementation, you'd use a library like react-qr-reader
-      // or qr-scanner to decode QR codes from the video stream
-      
+      const scanner = new QrScanner(
+        videoRef.current,
+        (result: { data: string }) => {
+          // Debounce: stop after first read
+          onScan(result.data);
+        },
+        {
+          preferredCamera: "environment",
+          maxScansPerSecond: 8,
+          highlightScanRegion: true,
+          highlightCodeOutline: true,
+        }
+      );
+      scannerRef.current = scanner;
+      await scanner.start();
     } catch (err) {
-      console.error("Error accessing camera:", err);
+      console.error("Erro ao iniciar scanner:", err);
       setError("Não foi possível acessar a câmera. Verifique as permissões.");
     }
   };
 
-  const stopCamera = () => {
-    if (stream) {
-      stream.getTracks().forEach(track => track.stop());
-      setStream(null);
+  const stopScanner = async (destroy = false) => {
+    try {
+      if (scannerRef.current) {
+        await scannerRef.current.stop();
+        if (destroy) scannerRef.current.destroy();
+        scannerRef.current = null;
+      }
+    } catch (err) {
+      // noop
     }
-  };
-
-  // Simulate QR code detection for demo
-  const simulateQRScan = () => {
-    onScan("2025-0001"); // Demo code
   };
 
   if (!isActive) {
@@ -113,15 +124,6 @@ export function QRScanner({ onScan, isActive, onActivate }: QRScannerProps) {
             />
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="w-48 h-48 border-2 border-white rounded-lg"></div>
-            </div>
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
-              <Button
-                onClick={simulateQRScan}
-                className="bg-success-600 text-white hover:bg-success-700"
-                data-testid="button-simulate-scan"
-              >
-                Simular Scan (Demo)
-              </Button>
             </div>
           </>
         )}
