@@ -11,8 +11,18 @@ import { eq, desc, asc, and, or, ilike, sql, count } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import bcrypt from "bcrypt";
 
-const client = neon(process.env.DATABASE_URL!);
-const db = drizzle(client);
+let _db: ReturnType<typeof drizzle> | undefined;
+function getDb() {
+  if (_db) return _db;
+  const url = process.env.DATABASE_URL;
+  if (!url) {
+    // Throwing here will be caught by route try/catch (since it's not at module top-level anymore)
+    throw new Error("DATABASE_URL environment variable is not set");
+  }
+  const client = neon(url);
+  _db = drizzle(client);
+  return _db;
+}
 
 export interface IStorage {
   // Users
@@ -54,18 +64,18 @@ export interface IStorage {
 export class DatabaseStorage implements IStorage {
   // Users
   async getUser(id: string): Promise<User | undefined> {
-    const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
+    const result = await getDb().select().from(users).where(eq(users.id, id)).limit(1);
     return result[0];
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    const result = await db.select().from(users).where(eq(users.username, username)).limit(1);
+    const result = await getDb().select().from(users).where(eq(users.username, username)).limit(1);
     return result[0];
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const hashedPassword = await bcrypt.hash(insertUser.password, 10);
-    const result = await db.insert(users).values({
+    const result = await getDb().insert(users).values({
       ...insertUser,
       password: hashedPassword,
     }).returning();
@@ -78,26 +88,26 @@ export class DatabaseStorage implements IStorage {
       updateData.password = await bcrypt.hash(user.password, 10);
     }
     
-    const result = await db.update(users).set(updateData).where(eq(users.id, id)).returning();
+    const result = await getDb().update(users).set(updateData).where(eq(users.id, id)).returning();
     return result[0];
   }
 
   async getAllUsers(): Promise<User[]> {
-    return await db.select().from(users).orderBy(asc(users.name));
+    return await getDb().select().from(users).orderBy(asc(users.name));
   }
 
   // Categories
   async getCategory(id: string): Promise<Category | undefined> {
-    const result = await db.select().from(categories).where(eq(categories.id, id)).limit(1);
+    const result = await getDb().select().from(categories).where(eq(categories.id, id)).limit(1);
     return result[0];
   }
 
   async getAllCategories(): Promise<Category[]> {
-    return await db.select().from(categories).orderBy(asc(categories.name));
+    return await getDb().select().from(categories).orderBy(asc(categories.name));
   }
 
   async getCategoriesWithItemCount(): Promise<(Category & { itemCount: number })[]> {
-    const result = await db
+    const result = await getDb()
       .select({
         id: categories.id,
         name: categories.name,
@@ -121,23 +131,23 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createCategory(category: InsertCategory): Promise<Category> {
-    const result = await db.insert(categories).values(category).returning();
+    const result = await getDb().insert(categories).values(category).returning();
     return result[0];
   }
 
   async updateCategory(id: string, category: Partial<InsertCategory>): Promise<Category | undefined> {
-    const result = await db.update(categories).set(category).where(eq(categories.id, id)).returning();
+    const result = await getDb().update(categories).set(category).where(eq(categories.id, id)).returning();
     return result[0];
   }
 
   async deleteCategory(id: string): Promise<boolean> {
-    const result = await db.delete(categories).where(eq(categories.id, id)).returning();
+    const result = await getDb().delete(categories).where(eq(categories.id, id)).returning();
     return result.length > 0;
   }
 
   // Items
   async getItem(id: string): Promise<ItemWithCategory | undefined> {
-    const result = await db.select({
+    const result = await getDb().select({
       id: items.id,
       internalCode: items.internalCode,
       name: items.name,
@@ -160,7 +170,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getItemByCode(code: string): Promise<ItemWithCategory | undefined> {
-    const result = await db.select({
+    const result = await getDb().select({
       id: items.id,
       internalCode: items.internalCode,
       name: items.name,
@@ -183,7 +193,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllItems(): Promise<ItemWithCategory[]> {
-    const result = await db.select({
+    const result = await getDb().select({
       id: items.id,
       internalCode: items.internalCode,
       name: items.name,
@@ -218,7 +228,7 @@ export class DatabaseStorage implements IStorage {
       whereCondition = and(whereCondition, eq(items.status, status as any));
     }
 
-    const result = await db.select({
+    const result = await getDb().select({
       id: items.id,
       internalCode: items.internalCode,
       name: items.name,
@@ -245,7 +255,7 @@ export class DatabaseStorage implements IStorage {
     const yearPrefix = currentYear.toString();
     
     // Get the highest number for this year
-    const result = await db.select({
+    const result = await getDb().select({
       code: items.internalCode
     })
     .from(items)
@@ -265,7 +275,7 @@ export class DatabaseStorage implements IStorage {
 
   async createItem(item: InsertItem): Promise<ItemWithCategory> {
     const internalCode = await this.generateInternalCode();
-    const result = await db.insert(items).values({
+    const result = await getDb().insert(items).values({
       ...item,
       internalCode,
     }).returning();
@@ -274,7 +284,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateItem(id: string, item: Partial<InsertItem>): Promise<ItemWithCategory | undefined> {
-    const result = await db.update(items).set({
+    const result = await getDb().update(items).set({
       ...item,
       updatedAt: sql`now()`,
     }).where(eq(items.id, id)).returning();
@@ -284,12 +294,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteItem(id: string): Promise<boolean> {
-    const result = await db.delete(items).where(eq(items.id, id)).returning();
+    const result = await getDb().delete(items).where(eq(items.id, id)).returning();
     return result.length > 0;
   }
 
   async getLowStockItems(): Promise<ItemWithCategory[]> {
-    const result = await db.select({
+    const result = await getDb().select({
       id: items.id,
       internalCode: items.internalCode,
       name: items.name,
@@ -313,14 +323,14 @@ export class DatabaseStorage implements IStorage {
 
   // Movements
   async createMovement(movement: InsertMovement): Promise<Movement> {
-    const result = await db.insert(movements).values(movement).returning();
+    const result = await getDb().insert(movements).values(movement).returning();
     
     // Update item stock
     const newStock = movement.type === "entrada" 
       ? movement.previousStock + movement.quantity
       : movement.previousStock - movement.quantity;
       
-    await db.update(items).set({
+    await getDb().update(items).set({
       currentStock: newStock,
       updatedAt: sql`now()`,
     }).where(eq(items.id, movement.itemId));
@@ -334,7 +344,7 @@ export class DatabaseStorage implements IStorage {
       whereCondition = eq(movements.itemId, itemId);
     }
 
-    const result = await db.select({
+    const result = await getDb().select({
       id: movements.id,
       itemId: movements.itemId,
       userId: movements.userId,
@@ -366,19 +376,19 @@ export class DatabaseStorage implements IStorage {
     todayMovements: number;
     activeUsers: number;
   }> {
-    const [totalItemsResult] = await db.select({ count: count() }).from(items);
+    const [totalItemsResult] = await getDb().select({ count: count() }).from(items);
     
-    const [lowStockResult] = await db.select({ count: count() })
+    const [lowStockResult] = await getDb().select({ count: count() })
       .from(items)
       .where(sql`${items.currentStock} <= ${items.minStock}`);
     
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const [todayMovementsResult] = await db.select({ count: count() })
+    const [todayMovementsResult] = await getDb().select({ count: count() })
       .from(movements)
       .where(sql`${movements.createdAt} >= ${today}`);
     
-    const [activeUsersResult] = await db.select({ count: count() })
+    const [activeUsersResult] = await getDb().select({ count: count() })
       .from(users)
       .where(eq(users.isActive, true));
     
