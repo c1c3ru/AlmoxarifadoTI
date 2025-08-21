@@ -131,6 +131,28 @@ export default function RegisterUserPage() {
             <p className="text-sm text-gray-500">Preencha os dados obrigatórios abaixo</p>
           </div>
 
+          <FormField
+                control={form.control}
+                name="role"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Perfil</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger data-testid="select-role">
+                          <SelectValue placeholder="Selecione o perfil" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="tech">Técnico</SelectItem>
+                        <SelectItem value="admin">Administrador</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
@@ -175,27 +197,7 @@ export default function RegisterUserPage() {
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="role"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Perfil</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger data-testid="select-role">
-                          <SelectValue placeholder="Selecione o perfil" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="tech">Técnico</SelectItem>
-                        <SelectItem value="admin">Administrador</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              
 
               <Button type="submit" className="w-full bg-primary-600 hover:bg-primary-700" disabled={disabled} data-testid="button-submit">
                 {form.formState.isSubmitting ? (
