@@ -373,7 +373,7 @@ export default function RegisterUserPage() {
 
               <Button 
                 type="submit" 
-                className="w-full h-12 rounded-lg bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white font-semibold shadow-lg transition disabled:from-primary-400 disabled:to-primary-400 disabled:text-white disabled:opacity-100 disabled:cursor-not-allowed disabled:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2" 
+                className="w-full h-12 rounded-lg bg-gradient-to-r from-sky-600 to-blue-700 hover:from-sky-700 hover:to-blue-800 text-white font-semibold shadow-lg transition disabled:from-sky-300 disabled:to-blue-300 disabled:text-white disabled:opacity-100 disabled:cursor-not-allowed disabled:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2" 
                 disabled={disabled} 
                 data-testid="button-submit"
               >
