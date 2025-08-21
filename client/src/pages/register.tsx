@@ -141,6 +141,8 @@ export default function RegisterUserPage() {
       // Payload seguro para criação de usuário
       const payload = {
         username: data.email.toLowerCase().trim(),
+        email: data.email.toLowerCase().trim(),
+        matricula: data.matricula.trim(),
         password: data.password,
         name: data.name.trim(),
         role: data.role,
@@ -148,10 +150,26 @@ export default function RegisterUserPage() {
       };
 
       const res = await apiRequest("POST", "/api/users", payload);
-      
+
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err?.message || "Erro ao cadastrar usuário");
+        const status = res.status;
+        const errBody = await res.json().catch(() => ({} as any));
+        const rawMsg = (errBody?.message ?? "").toString();
+        const msg = rawMsg.toLowerCase();
+        const isDupMatricula =
+          status === 409 ||
+          /matr[íi]cula/.test(msg) ||
+          /duplicate|unique constraint|violates unique/.test(msg);
+
+        if (isDupMatricula) {
+          form.setError("matricula", {
+            type: "manual",
+            message: "Matrícula já cadastrada",
+          });
+          throw new Error("Matrícula já cadastrada");
+        }
+
+        throw new Error(rawMsg || "Erro ao cadastrar usuário");
       }
 
       toast({
