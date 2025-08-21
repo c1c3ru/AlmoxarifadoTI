@@ -66,7 +66,7 @@ function Router() {
             <Dashboard />
           </ProtectedRoute>
         ) : (
-          <RegisterUserPage />
+          <Redirect to="/login" />
         )}
       </Route>
       
