@@ -14,6 +14,7 @@ export default function Movements() {
   const [showMovementModal, setShowMovementModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState<ItemWithCategory | null>(null);
   const [selectedItemFilter, setSelectedItemFilter] = useState(ALL);
+  const [movementType, setMovementType] = useState<"entrada" | "saida" | null>(null);
 
   const { data: items = [] } = useQuery<ItemWithCategory[]>({
     queryKey: ["/api/items"],
@@ -24,20 +25,26 @@ export default function Movements() {
     queryKey: ["/api/movements", { itemId: itemIdParam }],
   });
 
-  const handleNewMovement = (item: ItemWithCategory) => {
-    setSelectedItem(item);
+  const handleNewMovement = (type: "entrada" | "saida", item?: ItemWithCategory) => {
+    setMovementType(type);
+    setSelectedItem(item || null);
     setShowMovementModal(true);
   };
 
   const formatTimestamp = (timestamp: string | Date) => {
     const date = typeof timestamp === 'string' ? new Date(timestamp) : timestamp;
-    return date.toLocaleString("pt-BR");
+    const now = new Date();
+    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+    
+    if (diffInHours < 1) return "Há menos de 1 hora";
+    if (diffInHours === 1) return "Há 1 hora";
+    return `Há ${diffInHours} horas`;
   };
 
   const getMovementTypeColor = (type: string) => {
     return type === "entrada" 
-      ? "bg-success-100 text-success-800" 
-      : "bg-error-100 text-error-800";
+      ? "bg-emerald-100 text-emerald-800 border-emerald-200" 
+      : "bg-red-100 text-red-800 border-red-200";
   };
 
   const getMovementTypeLabel = (type: string) => {
@@ -45,7 +52,7 @@ export default function Movements() {
   };
 
   const getMovementIcon = (type: string) => {
-    return type === "entrada" ? "fa-arrow-down" : "fa-arrow-up";
+    return type === "entrada" ? "fa-solid fa-arrow-down" : "fa-solid fa-arrow-up";
   };
 
   return (
@@ -54,67 +61,74 @@ export default function Movements() {
       subtitle="Gerencie entradas e saídas de itens do almoxarifado"
       showAddButton={false}
     >
-      {/* Quick Actions */}
+      {/* Quick Actions Hero */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <Card className="border border-gray-200 cursor-pointer hover:shadow-md transition-shadow">
-          <CardContent className="p-6 text-center">
-            <div className="w-12 h-12 bg-success-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-              <i className="fas fa-arrow-down text-success-600 text-xl"></i>
+        <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-0 shadow-lg hover:shadow-xl transition-all duration-300 group cursor-pointer" 
+              onClick={() => handleNewMovement("entrada")}>
+          <CardContent className="p-8 text-center">
+            <div className="w-16 h-16 bg-emerald-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300">
+              <i className="fa-solid fa-arrow-down text-white text-2xl"></i>
             </div>
-            <h3 className="font-semibold text-gray-900 mb-2">Registrar Entrada</h3>
-            <p className="text-sm text-gray-500 mb-4">Adicionar itens ao estoque</p>
+            <h3 className="text-xl font-bold text-emerald-900 mb-2">Registrar Entrada</h3>
+            <p className="text-emerald-700 mb-6">Adicionar itens ao estoque do almoxarifado</p>
             <Button 
-              className="w-full bg-success-600 hover:bg-success-700"
-              onClick={() => setShowMovementModal(true)}
+              className="w-full bg-emerald-600 hover:bg-emerald-700 shadow-lg h-12 text-base font-semibold"
               data-testid="button-register-entry"
             >
+              <i className="fa-solid fa-plus mr-2"></i>
               Nova Entrada
             </Button>
           </CardContent>
         </Card>
 
-        <Card className="border border-gray-200 cursor-pointer hover:shadow-md transition-shadow">
-          <CardContent className="p-6 text-center">
-            <div className="w-12 h-12 bg-error-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-              <i className="fas fa-arrow-up text-error-600 text-xl"></i>
+        <Card className="bg-gradient-to-br from-red-50 to-red-100 border-0 shadow-lg hover:shadow-xl transition-all duration-300 group cursor-pointer"
+              onClick={() => handleNewMovement("saida")}>
+          <CardContent className="p-8 text-center">
+            <div className="w-16 h-16 bg-red-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300">
+              <i className="fa-solid fa-arrow-up text-white text-2xl"></i>
             </div>
-            <h3 className="font-semibold text-gray-900 mb-2">Registrar Saída</h3>
-            <p className="text-sm text-gray-500 mb-4">Retirar itens do estoque</p>
+            <h3 className="text-xl font-bold text-red-900 mb-2">Registrar Saída</h3>
+            <p className="text-red-700 mb-6">Retirar itens do estoque para uso</p>
             <Button 
-              className="w-full bg-error-600 hover:bg-error-700"
-              onClick={() => setShowMovementModal(true)}
+              className="w-full bg-red-600 hover:bg-red-700 shadow-lg h-12 text-base font-semibold"
               data-testid="button-register-exit"
             >
+              <i className="fa-solid fa-minus mr-2"></i>
               Nova Saída
             </Button>
           </CardContent>
         </Card>
 
-        <Card className="border border-gray-200 cursor-pointer hover:shadow-md transition-shadow">
-          <CardContent className="p-6 text-center">
-            <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-              <i className="fas fa-qrcode text-primary-600 text-xl"></i>
+        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-0 shadow-lg hover:shadow-xl transition-all duration-300 group cursor-pointer"
+              onClick={() => window.location.href = '/scanner'}>
+          <CardContent className="p-8 text-center">
+            <div className="w-16 h-16 bg-blue-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300">
+              <i className="fa-solid fa-qrcode text-white text-2xl"></i>
             </div>
-            <h3 className="font-semibold text-gray-900 mb-2">Scanner QR</h3>
-            <p className="text-sm text-gray-500 mb-4">Dar baixa via QR Code</p>
+            <h3 className="text-xl font-bold text-blue-900 mb-2">Scanner QR</h3>
+            <p className="text-blue-700 mb-6">Dar baixa rápida via QR Code</p>
             <Button 
-              variant="outline"
-              className="w-full"
-              onClick={() => window.location.href = '/scanner'}
+              className="w-full bg-blue-600 hover:bg-blue-700 shadow-lg h-12 text-base font-semibold"
               data-testid="button-go-scanner"
             >
+              <i className="fa-solid fa-camera mr-2"></i>
               Abrir Scanner
             </Button>
           </CardContent>
         </Card>
       </div>
 
-      {/* Movements History */}
-      <Card className="border border-gray-200">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-gray-900">Movimentações Recentes</h3>
-            <div className="w-64">
+      {/* Recent Movements */}
+      <Card className="bg-white border-0 shadow-xl">
+        <div className="bg-gradient-to-r from-gray-50 to-blue-50 px-6 py-4 border-b border-gray-200">
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
+                <i className="fa-solid fa-clock-rotate-left text-white text-sm"></i>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900">Movimentações Recentes</h3>
+            </div>
+            <div className="w-full lg:w-64">
               <Select value={selectedItemFilter} onValueChange={setSelectedItemFilter}>
                 <SelectTrigger data-testid="select-item-filter">
                   <SelectValue placeholder="Filtrar por item" />
@@ -132,12 +146,14 @@ export default function Movements() {
               </Select>
             </div>
           </div>
+        </div>
 
+        <CardContent className="p-6">
           {isLoading ? (
             <div className="space-y-4">
               {Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="flex items-center space-x-4 p-4 border rounded-lg">
-                  <Skeleton className="w-12 h-12 rounded-lg" />
+                <div key={i} className="flex items-center space-x-4 p-4 border rounded-xl">
+                  <Skeleton className="w-16 h-16 rounded-xl" />
                   <div className="flex-1 space-y-2">
                     <Skeleton className="h-4 w-3/4" />
                     <Skeleton className="h-3 w-1/2" />
@@ -147,73 +163,107 @@ export default function Movements() {
               ))}
             </div>
           ) : movements.length === 0 ? (
-            <div className="text-center py-12">
-              <i className="fas fa-exchange-alt text-4xl text-gray-400 mb-4"></i>
-              <h4 className="text-lg font-semibold text-gray-900 mb-2">Nenhuma movimentação encontrada</h4>
-              <p className="text-gray-500 mb-4">
-                {selectedItemFilter !== ALL ? "Nenhuma movimentação para o item selecionado" : "Registre a primeira movimentação"}
+            <div className="text-center py-16">
+              <div className="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i className="fa-solid fa-arrows-rotate text-gray-400 text-3xl"></i>
+              </div>
+              <h4 className="text-xl font-bold text-gray-900 mb-3">Nenhuma movimentação encontrada</h4>
+              <p className="text-gray-500 mb-6">
+                {selectedItemFilter !== ALL ? "Nenhuma movimentação para o item selecionado" : "Registre a primeira movimentação do almoxarifado"}
               </p>
-              <Button 
-                onClick={() => setShowMovementModal(true)}
-                data-testid="button-first-movement"
-              >
-                Nova Movimentação
-              </Button>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Button 
+                  onClick={() => handleNewMovement("entrada")}
+                  className="bg-emerald-600 hover:bg-emerald-700"
+                  data-testid="button-first-entry"
+                >
+                  <i className="fa-solid fa-arrow-down mr-2"></i>
+                  Nova Entrada
+                </Button>
+                <Button 
+                  onClick={() => handleNewMovement("saida")}
+                  className="bg-red-600 hover:bg-red-700"
+                  data-testid="button-first-exit"
+                >
+                  <i className="fa-solid fa-arrow-up mr-2"></i>
+                  Nova Saída
+                </Button>
+              </div>
             </div>
           ) : (
             <div className="space-y-4">
               {movements.map((movement) => (
                 <div
                   key={movement.id}
-                  className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex items-center justify-between p-6 border border-gray-200 rounded-2xl hover:shadow-lg hover:border-blue-200 transition-all duration-300 group bg-gradient-to-r from-white to-gray-50"
                   data-testid={`movement-${movement.id}`}
                 >
-                  <div className="flex items-center space-x-4">
-                    <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                  <div className="flex items-center space-x-4 flex-1">
+                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg ${
                       movement.type === "entrada" 
-                        ? "bg-success-100" 
-                        : "bg-error-100"
+                        ? "bg-gradient-to-br from-emerald-400 to-emerald-600" 
+                        : "bg-gradient-to-br from-red-400 to-red-600"
                     }`}>
-                      <i className={`fas ${getMovementIcon(movement.type)} ${
-                        movement.type === "entrada" 
-                          ? "text-success-600" 
-                          : "text-error-600"
-                      }`}></i>
+                      <i className={`${getMovementIcon(movement.type)} text-white text-xl`}></i>
                     </div>
-                    <div>
-                      <p className="font-medium text-gray-900" data-testid={`movement-item-${movement.id}`}>
-                        {movement.item?.name}
-                      </p>
-                      <div className="flex items-center space-x-4 text-sm text-gray-500">
-                        <span>Código: {movement.item?.internalCode}</span>
-                        <span>Por: {movement.user?.name}</span>
-                        <span>{formatTimestamp(movement.createdAt)}</span>
+                    
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-3 mb-2">
+                        <p className="font-bold text-gray-900 text-lg group-hover:text-blue-700 transition-colors" data-testid={`movement-item-${movement.id}`}>
+                          {movement.item?.name}
+                        </p>
+                        <Badge 
+                          className={`${getMovementTypeColor(movement.type)} font-medium border px-3 py-1`}
+                          data-testid={`movement-type-${movement.id}`}
+                        >
+                          <i className={`${getMovementIcon(movement.type)} mr-2 text-xs`}></i>
+                          {getMovementTypeLabel(movement.type)}
+                        </Badge>
                       </div>
+                      
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm text-gray-600">
+                        <span className="flex items-center">
+                          <i className="fa-solid fa-barcode mr-2 text-blue-500"></i>
+                          {movement.item?.internalCode}
+                        </span>
+                        <span className="flex items-center">
+                          <i className="fa-solid fa-user mr-2 text-purple-500"></i>
+                          {movement.user?.name}
+                        </span>
+                        <span className="flex items-center">
+                          <i className="fa-solid fa-clock mr-2 text-orange-500"></i>
+                          {formatTimestamp(movement.createdAt)}
+                        </span>
+                      </div>
+                      
+                      <div className="flex items-center space-x-4 text-xs text-gray-500 mt-2">
+                        <span className="bg-gray-100 px-2 py-1 rounded-lg font-medium">
+                          {movement.previousStock} → {movement.newStock}
+                        </span>
+                      </div>
+                      
                       {movement.destination && (
-                        <p className="text-sm text-gray-500">
-                          Destino: {movement.destination}
+                        <p className="text-sm text-gray-700 mt-2 flex items-center">
+                          <i className="fa-solid fa-location-dot mr-2 text-blue-500"></i>
+                          <strong>Destino:</strong> {movement.destination}
                         </p>
                       )}
                       {movement.observation && (
-                        <p className="text-sm text-gray-500">
-                          Obs: {movement.observation}
+                        <p className="text-sm text-gray-700 mt-2 flex items-center">
+                          <i className="fa-solid fa-sticky-note mr-2 text-yellow-500"></i>
+                          <strong>Obs:</strong> {movement.observation}
                         </p>
                       )}
                     </div>
                   </div>
-                  <div className="text-right">
-                    <Badge 
-                      className={getMovementTypeColor(movement.type)}
-                      data-testid={`movement-type-${movement.id}`}
-                    >
-                      {getMovementTypeLabel(movement.type)}
-                    </Badge>
-                    <div className="text-sm text-gray-500 mt-1">
-                      <span className="font-medium">{movement.quantity}</span> unidade(s)
+                  
+                  <div className="text-right ml-4">
+                    <div className={`text-3xl font-bold ${
+                      movement.type === "entrada" ? "text-emerald-600" : "text-red-600"
+                    }`}>
+                      {movement.type === "entrada" ? "+" : "-"}{movement.quantity}
                     </div>
-                    <div className="text-xs text-gray-400">
-                      {movement.previousStock} → {movement.newStock}
-                    </div>
+                    <div className="text-sm text-gray-500">unidade(s)</div>
                   </div>
                 </div>
               ))}
@@ -224,8 +274,15 @@ export default function Movements() {
 
       <MovementModal
         open={showMovementModal}
-        onOpenChange={setShowMovementModal}
+        onOpenChange={(open) => {
+          setShowMovementModal(open);
+          if (!open) {
+            setMovementType(null);
+            setSelectedItem(null);
+          }
+        }}
         item={selectedItem}
+        defaultType={movementType}
       />
     </MainLayout>
   );

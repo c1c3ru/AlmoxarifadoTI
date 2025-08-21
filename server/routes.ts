@@ -81,6 +81,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/categories/with-counts", async (req, res) => {
+    try {
+      const categoriesWithCounts = await storage.getCategoriesWithItemCount();
+      res.json(categoriesWithCounts);
+    } catch (error) {
+      console.error("Categories with counts error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   app.post("/api/categories", async (req, res) => {
     try {
       const validation = insertCategorySchema.safeParse(req.body);

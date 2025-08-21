@@ -96,6 +96,30 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(categories).orderBy(asc(categories.name));
   }
 
+  async getCategoriesWithItemCount(): Promise<(Category & { itemCount: number })[]> {
+    const result = await db
+      .select({
+        id: categories.id,
+        name: categories.name,
+        description: categories.description,
+        icon: categories.icon,
+        createdAt: categories.createdAt,
+        itemCount: sql<number>`count(${items.id})::int`.as('itemCount'),
+      })
+      .from(categories)
+      .leftJoin(items, eq(categories.id, items.categoryId))
+      .groupBy(
+        categories.id,
+        categories.name, 
+        categories.description,
+        categories.icon,
+        categories.createdAt
+      )
+      .orderBy(asc(categories.name));
+
+    return result;
+  }
+
   async createCategory(category: InsertCategory): Promise<Category> {
     const result = await db.insert(categories).values(category).returning();
     return result[0];

@@ -29,10 +29,6 @@ export default function Items() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Debug: verificar se o usuário está sendo carregado
-  console.log('👤 Usuário atual:', user);
-  console.log('🔐 Pode excluir itens:', canDeleteItems(user));
-
   const { data: items = [], isLoading } = useQuery<ItemWithCategory[]>({
     queryKey: ["/api/items"],
   });
@@ -81,13 +77,13 @@ export default function Items() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "disponivel":
-        return "bg-success-100 text-success-800";
+        return "bg-emerald-100 text-emerald-800";
       case "em-uso":
         return "bg-blue-100 text-blue-800";
       case "manutencao":
-        return "bg-warning-100 text-warning-800";
+        return "bg-amber-100 text-amber-800";
       case "descartado":
-        return "bg-error-100 text-error-800";
+        return "bg-red-100 text-red-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -108,143 +104,232 @@ export default function Items() {
     }
   };
 
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "disponivel":
+        return "fa-solid fa-circle-check";
+      case "em-uso":
+        return "fa-solid fa-clock";
+      case "manutencao":
+        return "fa-solid fa-wrench";
+      case "descartado":
+        return "fa-solid fa-trash";
+      default:
+        return "fa-solid fa-circle";
+    }
+  };
+
   return (
     <MainLayout
       title="Gerenciar Itens"
       subtitle="Cadastro e controle de itens do almoxarifado"
       onAddItem={() => setShowAddModal(true)}
     >
-      {/* CSV Import/Export Section */}
-      <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-lg font-semibold text-gray-900">Gerenciar Inventário</h3>
-          <CSVImportExport />
-        </div>
-        <p className="text-sm text-gray-600">
-          Exporte todos os itens em formato CSV ou importe itens em lote para acelerar o cadastro do inventário.
-        </p>
-      </div>
+      {/* Hero Section with CSV */}
+      <Card className="bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 border-0 shadow-lg mb-8">
+        <CardContent className="p-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <i className="fa-solid fa-file-csv text-white text-xl"></i>
+                </div>
+                <div>
+                  <h3 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                    Gerenciar Inventário
+                  </h3>
+                  <p className="text-gray-600 font-medium">
+                    Importe ou exporte itens em formato CSV para gerenciamento em lote
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="hidden md:block">
+              <CSVImportExport />
+            </div>
+          </div>
+          <div className="md:hidden mt-4 flex justify-center">
+            <CSVImportExport />
+          </div>
+        </CardContent>
+      </Card>
 
-      <Card className="border border-gray-200">
+      {/* Items Grid */}
+      <Card className="bg-white border-0 shadow-xl overflow-hidden">
+        <div className="bg-gradient-to-r from-gray-50 to-blue-50 px-6 py-4 border-b border-gray-200">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
+                <i className="fa-solid fa-boxes-stacked text-white text-sm"></i>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900">Itens Cadastrados</h3>
+            </div>
+            <Badge className="bg-blue-100 text-blue-800 font-semibold px-3 py-1">
+              {items.length} itens
+            </Badge>
+          </div>
+        </div>
+        
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
+                    <i className="fa-solid fa-cube mr-2 text-blue-500"></i>
                     Item
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
+                    <i className="fa-solid fa-barcode mr-2 text-green-500"></i>
                     Código
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
+                    <i className="fa-solid fa-tags mr-2 text-purple-500"></i>
                     Categoria
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
+                    <i className="fa-solid fa-warehouse mr-2 text-orange-500"></i>
                     Estoque
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
+                    <i className="fa-solid fa-info-circle mr-2 text-blue-500"></i>
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
+                    <i className="fa-solid fa-qrcode mr-2 text-indigo-500"></i>
                     QR Code
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
+                    <i className="fa-solid fa-cog mr-2 text-gray-500"></i>
                     Ações
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white divide-y divide-gray-100">
                 {isLoading ? (
                   Array.from({ length: 5 }).map((_, i) => (
-                    <tr key={i}>
+                    <tr key={i} className="hover:bg-gray-50 transition-colors">
                       <td className="px-6 py-4">
-                        <Skeleton className="h-12 w-full" />
+                        <div className="flex items-center space-x-3">
+                          <Skeleton className="h-10 w-10 rounded-lg" />
+                          <div className="space-y-2">
+                            <Skeleton className="h-4 w-32" />
+                            <Skeleton className="h-3 w-24" />
+                          </div>
+                        </div>
                       </td>
-                      <td className="px-6 py-4">
-                        <Skeleton className="h-4 w-20" />
-                      </td>
-                      <td className="px-6 py-4">
-                        <Skeleton className="h-6 w-16" />
-                      </td>
-                      <td className="px-6 py-4">
-                        <Skeleton className="h-4 w-16" />
-                      </td>
-                      <td className="px-6 py-4">
-                        <Skeleton className="h-6 w-20" />
-                      </td>
-                      <td className="px-6 py-4">
-                        <Skeleton className="h-8 w-8" />
-                      </td>
-                      <td className="px-6 py-4">
-                        <Skeleton className="h-8 w-16" />
-                      </td>
+                      <td className="px-6 py-4"><Skeleton className="h-4 w-20" /></td>
+                      <td className="px-6 py-4"><Skeleton className="h-6 w-16" /></td>
+                      <td className="px-6 py-4"><Skeleton className="h-4 w-16" /></td>
+                      <td className="px-6 py-4"><Skeleton className="h-6 w-20" /></td>
+                      <td className="px-6 py-4"><Skeleton className="h-8 w-8" /></td>
+                      <td className="px-6 py-4"><Skeleton className="h-8 w-32" /></td>
                     </tr>
                   ))
                 ) : items.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
-                      <i className="fas fa-inbox text-4xl mb-4"></i>
-                      <p>Nenhum item cadastrado</p>
-                      <p className="text-sm mt-2">Clique em "Novo Item" para começar</p>
+                    <td colSpan={7} className="px-6 py-16 text-center">
+                      <div className="flex flex-col items-center space-y-4">
+                        <div className="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center">
+                          <i className="fa-solid fa-inbox text-gray-400 text-3xl"></i>
+                        </div>
+                        <div>
+                          <h4 className="text-lg font-semibold text-gray-900 mb-2">Nenhum item cadastrado</h4>
+                          <p className="text-gray-500 mb-4">Clique em "Novo Item" para começar a gerenciar seu inventário</p>
+                          <Button
+                            onClick={() => setShowAddModal(true)}
+                            className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+                          >
+                            <i className="fa-solid fa-plus mr-2"></i>
+                            Adicionar Primeiro Item
+                          </Button>
+                        </div>
+                      </div>
                     </td>
                   </tr>
                 ) : (
                   items.map((item) => (
                     <tr
                       key={item.id}
-                      className="hover:bg-gray-50 transition-colors"
+                      className="hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-200 group"
                       data-testid={`item-row-${item.id}`}
                     >
                       <td className="px-6 py-4">
-                        <div>
-                          <p className="font-medium text-gray-900" data-testid={`item-name-${item.id}`}>
-                            {item.name}
-                          </p>
-                          {item.serialNumber && (
-                            <p className="text-sm text-gray-500">
-                              SN: {item.serialNumber}
+                        <div className="flex items-center space-x-4">
+                          <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-purple-100 rounded-xl flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
+                            <i className={`${item.category?.icon || 'fa-solid fa-cube'} text-blue-600 text-lg`}></i>
+                          </div>
+                          <div>
+                            <p className="font-semibold text-gray-900 group-hover:text-blue-700 transition-colors" data-testid={`item-name-${item.id}`}>
+                              {item.name}
                             </p>
-                          )}
+                            {item.serialNumber && (
+                              <p className="text-sm text-gray-500 flex items-center mt-1">
+                                <i className="fa-solid fa-hashtag mr-1 text-xs"></i>
+                                {item.serialNumber}
+                              </p>
+                            )}
+                            {item.location && (
+                              <p className="text-xs text-gray-400 flex items-center mt-1">
+                                <i className="fa-solid fa-location-dot mr-1"></i>
+                                {item.location}
+                              </p>
+                            )}
+                          </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-900" data-testid={`item-code-${item.id}`}>
-                        {item.internalCode}
+                      <td className="px-6 py-4">
+                        <div className="bg-gray-50 px-3 py-1 rounded-lg border font-mono text-sm text-gray-900" data-testid={`item-code-${item.id}`}>
+                          {item.internalCode}
+                        </div>
                       </td>
                       <td className="px-6 py-4">
                         <Badge
-                          variant="secondary"
-                          className="bg-primary-100 text-primary-800"
+                          className="bg-gradient-to-r from-purple-100 to-blue-100 text-purple-800 border-purple-200 font-medium"
                           data-testid={`item-category-${item.id}`}
                         >
+                          <i className={`${item.category?.icon || 'fa-solid fa-tag'} mr-2 text-xs`}></i>
                           {item.category?.name}
                         </Badge>
                       </td>
                       <td className="px-6 py-4" data-testid={`item-stock-${item.id}`}>
                         <div className="flex items-center space-x-2">
-                          <span className="text-sm font-medium text-gray-900">
+                          <div className={`px-3 py-1 rounded-lg font-bold text-lg ${
+                            item.currentStock <= item.minStock 
+                              ? 'bg-red-100 text-red-800' 
+                              : 'bg-green-100 text-green-800'
+                          }`}>
                             {item.currentStock}
-                          </span>
-                          <span className="text-xs text-gray-500">
-                            / {item.minStock} min
-                          </span>
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            <div>de {item.minStock} mín</div>
+                            {item.currentStock <= item.minStock && (
+                              <div className="text-red-500 font-medium flex items-center">
+                                <i className="fa-solid fa-triangle-exclamation mr-1"></i>
+                                Baixo!
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </td>
                       <td className="px-6 py-4">
                         <Badge
-                          className={getStatusColor(item.status)}
+                          className={`${getStatusColor(item.status)} font-medium flex items-center w-fit`}
                           data-testid={`item-status-${item.id}`}
                         >
+                          <i className={`${getStatusIcon(item.status)} mr-2 text-xs`}></i>
                           {getStatusLabel(item.status)}
                         </Badge>
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center space-x-2">
-                          <QRCodeGenerator 
-                            value={`ITEM:${item.id}:${item.internalCode}`}
-                            size={32}
-                            className="cursor-pointer hover:scale-110 transition-transform"
-                          />
+                          <div className="p-1 bg-white rounded-lg shadow-sm border">
+                            <QRCodeGenerator 
+                              value={`ITEM:${item.id}:${item.internalCode}`}
+                              size={32}
+                              className="cursor-pointer hover:scale-110 transition-transform"
+                            />
+                          </div>
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
@@ -252,11 +337,11 @@ export default function Items() {
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => handleShowQR(item)}
-                                  className="text-primary-600 hover:text-primary-700"
+                                  className="text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 w-8 h-8 p-0"
                                   data-testid={`button-qr-modal-${item.id}`}
                                   aria-label="Ver QR em tamanho maior"
                                 >
-                                  <i className="fas fa-expand-alt text-xs"></i>
+                                  <i className="fa-solid fa-expand text-xs"></i>
                                 </Button>
                               </TooltipTrigger>
                               <TooltipContent>Ampliar QR Code</TooltipContent>
@@ -265,66 +350,60 @@ export default function Items() {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex items-center space-x-2 p-2 bg-gray-50 rounded border">
+                        <div className="flex items-center space-x-2">
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <Button
-                                  variant="ghost"
                                   size="sm"
                                   onClick={() => handleEdit(item)}
-                                  className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-3 py-2"
+                                  className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-sm"
                                   data-testid={`button-edit-${item.id}`}
                                   aria-label="Editar item"
                                 >
-                                  <i className="fas fa-edit mr-1"></i>
+                                  <i className="fa-solid fa-edit mr-2 text-sm"></i>
                                   Editar
                                 </Button>
                               </TooltipTrigger>
                               <TooltipContent>Editar item</TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
+                          
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <Button
-                                  variant="ghost"
                                   size="sm"
                                   onClick={() => handleMovement(item)}
-                                  className="text-green-600 hover:text-green-700 hover:bg-green-50 px-3 py-2"
+                                  className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-sm"
                                   data-testid={`button-movement-${item.id}`}
                                   aria-label="Registrar movimentação"
                                 >
-                                  <i className="fas fa-exchange-alt mr-1"></i>
-                                  Movimentar
+                                  <i className="fa-solid fa-arrows-rotate mr-2 text-sm"></i>
+                                  Mover
                                 </Button>
                               </TooltipTrigger>
                               <TooltipContent>Registrar movimentação</TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
+                          
                           {canDeleteItems(user) && (
                             <TooltipProvider>
                               <Tooltip>
                                 <TooltipTrigger asChild>
                                   <Button
-                                    variant="ghost"
+                                    variant="outline"
                                     size="sm"
                                     onClick={() => handleDelete(item)}
                                     disabled={deleteItemMutation.isPending}
-                                    className="text-red-600 hover:text-red-700 hover:bg-red-50 px-3 py-2"
+                                    className="border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 hover:text-red-700"
                                     data-testid={`button-delete-${item.id}`}
                                     aria-label="Excluir item"
                                   >
                                     {deleteItemMutation.isPending ? (
-                                      <>
-                                        <i className="fas fa-spinner fa-spin mr-1"></i>
-                                        Excluindo
-                                      </>
+                                      <i className="fa-solid fa-spinner fa-spin text-sm"></i>
                                     ) : (
-                                      <>
-                                        <i className="fas fa-trash mr-1"></i>
-                                        Excluir
-                                      </>
+                                      <i className="fa-solid fa-trash text-sm"></i>
                                     )}
                                   </Button>
                                 </TooltipTrigger>

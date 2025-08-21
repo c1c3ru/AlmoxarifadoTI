@@ -124,7 +124,7 @@ export default function Users() {
     setEditingUser(user);
     form.reset({
       username: user.username,
-      password: "", // Don't pre-fill password for security
+      password: "",
       name: user.name,
       role: user.role as "admin" | "tech",
       isActive: user.isActive,
@@ -147,55 +147,117 @@ export default function Users() {
 
   const getRoleColor = (role: string) => {
     return role === "admin" 
-      ? "bg-primary-100 text-primary-800" 
-      : "bg-gray-100 text-gray-800";
+      ? "bg-gradient-to-r from-purple-100 to-blue-100 text-purple-800 border-purple-200" 
+      : "bg-gradient-to-r from-gray-100 to-slate-100 text-gray-800 border-gray-200";
   };
 
   const getRoleLabel = (role: string) => {
     return role === "admin" ? "Administrador" : "Técnico";
   };
 
+  const getRoleIcon = (role: string) => {
+    return role === "admin" ? "fa-solid fa-crown" : "fa-solid fa-user-gear";
+  };
+
   return (
     <MainLayout
-      title="Usuários"
-      subtitle="Gerenciar usuários do sistema"
+      title="Gerenciar Usuários"
+      subtitle="Controle de acesso e permissões do sistema"
       showAddButton={false}
     >
-      <Card className="border border-gray-200">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-gray-900">Lista de Usuários</h3>
+      {/* Hero Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-0 shadow-lg">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-blue-600 mb-1">Total de Usuários</p>
+                <p className="text-3xl font-bold text-blue-900">
+                  {users.length}
+                </p>
+              </div>
+              <div className="w-14 h-14 bg-blue-500 rounded-2xl flex items-center justify-center shadow-lg">
+                <i className="fa-solid fa-users text-white text-xl"></i>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-0 shadow-lg">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-purple-600 mb-1">Administradores</p>
+                <p className="text-3xl font-bold text-purple-900">
+                  {users.filter(u => u.role === 'admin').length}
+                </p>
+              </div>
+              <div className="w-14 h-14 bg-purple-500 rounded-2xl flex items-center justify-center shadow-lg">
+                <i className="fa-solid fa-crown text-white text-xl"></i>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-gradient-to-br from-green-50 to-green-100 border-0 shadow-lg">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-green-600 mb-1">Usuários Ativos</p>
+                <p className="text-3xl font-bold text-green-900">
+                  {users.filter(u => u.isActive).length}
+                </p>
+              </div>
+              <div className="w-14 h-14 bg-green-500 rounded-2xl flex items-center justify-center shadow-lg">
+                <i className="fa-solid fa-user-check text-white text-xl"></i>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Users Management */}
+      <Card className="bg-white border-0 shadow-xl">
+        <div className="bg-gradient-to-r from-gray-50 to-blue-50 px-6 py-4 border-b border-gray-200">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
+                <i className="fa-solid fa-users text-white text-sm"></i>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900">Lista de Usuários</h3>
+            </div>
             <Dialog open={showAddModal} onOpenChange={handleCloseModal}>
               <DialogTrigger asChild>
                 <Button 
-                  className="bg-primary-600 hover:bg-primary-700"
+                  className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 shadow-lg"
                   data-testid="button-add-user"
                 >
-                  <i className="fas fa-plus mr-2"></i>
+                  <i className="fa-solid fa-plus mr-2"></i>
                   Novo Usuário
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-lg">
+              <DialogContent className="max-w-lg bg-white/95 backdrop-blur-lg">
                 <DialogHeader>
-                  <DialogTitle>
+                  <DialogTitle className="text-xl font-bold text-center">
                     {editingUser ? "Editar Usuário" : "Adicionar Novo Usuário"}
                   </DialogTitle>
                 </DialogHeader>
                 
                 <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
                     <FormField
                       control={form.control}
                       name="username"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Nome de Usuário</FormLabel>
+                          <FormLabel className="font-semibold text-gray-700">Nome de Usuário</FormLabel>
                           <FormControl>
                             <Input
                               placeholder="Nome de usuário"
-                              disabled={!!editingUser} // Don't allow changing username
+                              disabled={!!editingUser}
                               {...field}
                               data-testid="input-username"
+                              className="h-11 bg-gray-50/50 focus:bg-white transition-colors"
                             />
                           </FormControl>
                           <FormMessage />
@@ -208,7 +270,7 @@ export default function Users() {
                       name="password"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>
+                          <FormLabel className="font-semibold text-gray-700">
                             {editingUser ? "Nova Senha (deixe vazio para manter)" : "Senha"}
                           </FormLabel>
                           <FormControl>
@@ -217,6 +279,7 @@ export default function Users() {
                               placeholder="Senha"
                               {...field}
                               data-testid="input-password"
+                              className="h-11 bg-gray-50/50 focus:bg-white transition-colors"
                             />
                           </FormControl>
                           <FormMessage />
@@ -229,12 +292,13 @@ export default function Users() {
                       name="name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Nome Completo</FormLabel>
+                          <FormLabel className="font-semibold text-gray-700">Nome Completo</FormLabel>
                           <FormControl>
                             <Input
                               placeholder="Nome completo"
                               {...field}
                               data-testid="input-name"
+                              className="h-11 bg-gray-50/50 focus:bg-white transition-colors"
                             />
                           </FormControl>
                           <FormMessage />
@@ -247,16 +311,26 @@ export default function Users() {
                       name="role"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Função</FormLabel>
+                          <FormLabel className="font-semibold text-gray-700">Função</FormLabel>
                           <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
-                              <SelectTrigger data-testid="select-role">
+                              <SelectTrigger data-testid="select-role" className="h-11 bg-gray-50/50 focus:bg-white">
                                 <SelectValue />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="tech">Técnico</SelectItem>
-                              <SelectItem value="admin">Administrador</SelectItem>
+                              <SelectItem value="tech">
+                                <div className="flex items-center space-x-2">
+                                  <i className="fa-solid fa-user-gear text-gray-600"></i>
+                                  <span>Técnico</span>
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="admin">
+                                <div className="flex items-center space-x-2">
+                                  <i className="fa-solid fa-crown text-purple-600"></i>
+                                  <span>Administrador</span>
+                                </div>
+                              </SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -268,9 +342,9 @@ export default function Users() {
                       control={form.control}
                       name="isActive"
                       render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                        <FormItem className="flex flex-row items-center justify-between rounded-xl border p-4 bg-gradient-to-r from-gray-50 to-blue-50">
                           <div className="space-y-0.5">
-                            <FormLabel>Usuário Ativo</FormLabel>
+                            <FormLabel className="font-semibold text-gray-700">Usuário Ativo</FormLabel>
                             <div className="text-sm text-gray-500">
                               Permitir que o usuário acesse o sistema
                             </div>
@@ -286,29 +360,31 @@ export default function Users() {
                       )}
                     />
                     
-                    <div className="flex items-center justify-end space-x-3 pt-4 border-t border-gray-200">
+                    <div className="flex items-center justify-end space-x-3 pt-6 border-t border-gray-200">
                       <Button
                         type="button"
                         variant="outline"
                         onClick={handleCloseModal}
                         data-testid="button-cancel"
+                        className="border-2"
                       >
+                        <i className="fa-solid fa-times mr-2"></i>
                         Cancelar
                       </Button>
                       <Button
                         type="submit"
                         disabled={createUserMutation.isPending || updateUserMutation.isPending}
-                        className="bg-primary-600 hover:bg-primary-700"
+                        className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 shadow-lg"
                         data-testid="button-save-user"
                       >
                         {(createUserMutation.isPending || updateUserMutation.isPending) ? (
                           <>
-                            <i className="fas fa-spinner fa-spin mr-2"></i>
+                            <i className="fa-solid fa-spinner fa-spin mr-2"></i>
                             Salvando...
                           </>
                         ) : (
                           <>
-                            <i className="fas fa-save mr-2"></i>
+                            <i className="fa-solid fa-save mr-2"></i>
                             {editingUser ? "Atualizar" : "Salvar"} Usuário
                           </>
                         )}
@@ -319,12 +395,14 @@ export default function Users() {
               </DialogContent>
             </Dialog>
           </div>
+        </div>
 
+        <CardContent className="p-6">
           {isLoading ? (
             <div className="space-y-4">
               {Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="flex items-center space-x-4 p-4 border rounded-lg">
-                  <Skeleton className="w-12 h-12 rounded-full" />
+                <div key={i} className="flex items-center space-x-4 p-4 rounded-xl border border-gray-200">
+                  <Skeleton className="w-14 h-14 rounded-full" />
                   <div className="flex-1 space-y-2">
                     <Skeleton className="h-4 w-1/3" />
                     <Skeleton className="h-3 w-1/2" />
@@ -335,12 +413,18 @@ export default function Users() {
               ))}
             </div>
           ) : users.length === 0 ? (
-            <div className="text-center py-12">
-              <i className="fas fa-users text-4xl text-gray-400 mb-4"></i>
-              <h4 className="text-lg font-semibold text-gray-900 mb-2">Nenhum usuário cadastrado</h4>
-              <p className="text-gray-500 mb-4">Adicione o primeiro usuário ao sistema</p>
-              <Button onClick={() => setShowAddModal(true)}>
-                Novo Usuário
+            <div className="text-center py-16">
+              <div className="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i className="fa-solid fa-users text-gray-400 text-3xl"></i>
+              </div>
+              <h4 className="text-xl font-bold text-gray-900 mb-3">Nenhum usuário cadastrado</h4>
+              <p className="text-gray-500 mb-6">Adicione o primeiro usuário para começar a gerenciar o acesso ao sistema</p>
+              <Button 
+                onClick={() => setShowAddModal(true)}
+                className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+              >
+                <i className="fa-solid fa-plus mr-2"></i>
+                Adicionar Primeiro Usuário
               </Button>
             </div>
           ) : (
@@ -348,51 +432,66 @@ export default function Users() {
               {users.map((user) => (
                 <div
                   key={user.id}
-                  className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex items-center justify-between p-6 border border-gray-200 rounded-2xl hover:shadow-lg hover:border-blue-200 transition-all duration-300 group bg-gradient-to-r from-white to-gray-50"
                   data-testid={`user-${user.id}`}
                 >
                   <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
-                      <i className="fas fa-user text-gray-600"></i>
+                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg ${
+                      user.role === 'admin' 
+                        ? 'bg-gradient-to-br from-purple-400 to-purple-600' 
+                        : 'bg-gradient-to-br from-blue-400 to-blue-600'
+                    }`}>
+                      <i className={`${getRoleIcon(user.role)} text-white text-xl`}></i>
                     </div>
                     <div>
-                      <div className="flex items-center space-x-3 mb-1">
-                        <p className="font-medium text-gray-900" data-testid={`user-name-${user.id}`}>
+                      <div className="flex items-center space-x-3 mb-2">
+                        <p className="font-bold text-gray-900 text-lg group-hover:text-blue-700 transition-colors" data-testid={`user-name-${user.id}`}>
                           {user.name}
                         </p>
                         <Badge 
-                          className={getRoleColor(user.role)}
+                          className={`${getRoleColor(user.role)} font-medium px-3 py-1 border`}
                           data-testid={`user-role-${user.id}`}
                         >
+                          <i className={`${getRoleIcon(user.role)} mr-2 text-xs`}></i>
                           {getRoleLabel(user.role)}
                         </Badge>
                         {!user.isActive && (
-                          <Badge variant="secondary" className="bg-gray-100 text-gray-600">
+                          <Badge className="bg-red-100 text-red-800 border-red-200 font-medium">
+                            <i className="fa-solid fa-user-slash mr-1 text-xs"></i>
                             Inativo
                           </Badge>
                         )}
                       </div>
-                      <div className="flex items-center space-x-4 text-sm text-gray-500">
-                        <span>@{user.username}</span>
-                        <span>Criado em: {new Date(user.createdAt).toLocaleDateString("pt-BR")}</span>
+                      <div className="flex items-center space-x-4 text-sm text-gray-600">
+                        <span className="flex items-center">
+                          <i className="fa-solid fa-at mr-2 text-blue-500"></i>
+                          {user.username}
+                        </span>
+                        <span className="flex items-center">
+                          <i className="fa-solid fa-calendar mr-2 text-green-500"></i>
+                          {new Date(user.createdAt).toLocaleDateString("pt-BR")}
+                        </span>
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      checked={user.isActive}
-                      onCheckedChange={() => handleToggleStatus(user)}
-                      disabled={toggleUserStatusMutation.isPending}
-                      data-testid={`switch-active-${user.id}`}
-                    />
+                  <div className="flex items-center space-x-4">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-sm font-medium text-gray-600">Status:</span>
+                      <Switch
+                        checked={user.isActive}
+                        onCheckedChange={() => handleToggleStatus(user)}
+                        disabled={toggleUserStatusMutation.isPending}
+                        data-testid={`switch-active-${user.id}`}
+                      />
+                    </div>
                     <Button
-                      variant="ghost"
                       size="sm"
                       onClick={() => handleEdit(user)}
-                      className="text-gray-600 hover:text-primary-600"
+                      className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white shadow-md"
                       data-testid={`button-edit-${user.id}`}
                     >
-                      <i className="fas fa-edit"></i>
+                      <i className="fa-solid fa-edit mr-2"></i>
+                      Editar
                     </Button>
                   </div>
                 </div>

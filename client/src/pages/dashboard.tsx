@@ -2,6 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import { MainLayout } from "@/components/layout/main-layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import type { ItemWithCategory, MovementWithDetails } from "@shared/schema";
 
 interface DashboardStats {
@@ -24,8 +26,8 @@ export default function Dashboard() {
     queryKey: ["/api/dashboard/recent-movements"],
   });
 
-  const { data: categories = [] } = useQuery<any[]>({
-    queryKey: ["/api/categories"],
+  const { data: categories = [] } = useQuery<(any & { itemCount: number })[]>({
+    queryKey: ["/api/categories/with-counts"],
   });
 
   const formatTimestamp = (timestamp: string | Date) => {
@@ -41,129 +43,153 @@ export default function Dashboard() {
   return (
     <MainLayout
       title="Dashboard"
-      subtitle="Visão geral do almoxarifado"
+      subtitle="Visão geral completa do almoxarifado"
       showAddButton={false}
     >
-      {/* Stats Cards */}
+      {/* Hero Stats Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <Card className="border border-gray-200">
+        <Card className="relative overflow-hidden bg-gradient-to-br from-blue-50 to-blue-100 border-0 shadow-lg hover:shadow-xl transition-all duration-300 group">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Total de Itens</p>
+                <p className="text-sm font-medium text-blue-600 mb-1">Total de Itens</p>
                 {statsLoading ? (
                   <Skeleton className="h-8 w-16 mt-1" />
                 ) : (
-                  <p className="text-2xl font-semibold text-gray-900" data-testid="stat-total-items">
+                  <p className="text-3xl font-bold text-blue-900" data-testid="stat-total-items">
                     {stats?.totalItems || 0}
                   </p>
                 )}
               </div>
-              <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center">
-                <i className="fas fa-boxes text-primary-600 text-xl"></i>
+              <div className="w-14 h-14 bg-blue-500 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                <i className="fa-solid fa-boxes-stacked text-white text-xl"></i>
               </div>
             </div>
+            <div className="absolute bottom-0 right-0 w-20 h-20 bg-blue-200/30 rounded-full -mb-10 -mr-10"></div>
           </CardContent>
         </Card>
         
-        <Card className="border border-gray-200">
+        <Card className="relative overflow-hidden bg-gradient-to-br from-amber-50 to-amber-100 border-0 shadow-lg hover:shadow-xl transition-all duration-300 group">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Estoque Baixo</p>
+                <p className="text-sm font-medium text-amber-600 mb-1">Estoque Baixo</p>
                 {statsLoading ? (
                   <Skeleton className="h-8 w-16 mt-1" />
                 ) : (
-                  <p className="text-2xl font-semibold text-warning-600" data-testid="stat-low-stock">
+                  <p className="text-3xl font-bold text-amber-900" data-testid="stat-low-stock">
                     {stats?.lowStock || 0}
                   </p>
                 )}
+                <div className="flex items-center mt-1">
+                  <div className="w-2 h-2 bg-amber-500 rounded-full mr-2"></div>
+                  <span className="text-xs text-amber-600">Requer atenção</span>
+                </div>
               </div>
-              <div className="w-12 h-12 bg-warning-100 rounded-lg flex items-center justify-center">
-                <i className="fas fa-exclamation-triangle text-warning-600 text-xl"></i>
+              <div className="w-14 h-14 bg-amber-500 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                <i className="fa-solid fa-triangle-exclamation text-white text-xl"></i>
               </div>
             </div>
+            <div className="absolute bottom-0 right-0 w-20 h-20 bg-amber-200/30 rounded-full -mb-10 -mr-10"></div>
           </CardContent>
         </Card>
         
-        <Card className="border border-gray-200">
+        <Card className="relative overflow-hidden bg-gradient-to-br from-emerald-50 to-emerald-100 border-0 shadow-lg hover:shadow-xl transition-all duration-300 group">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Movimentações Hoje</p>
+                <p className="text-sm font-medium text-emerald-600 mb-1">Movimentações Hoje</p>
                 {statsLoading ? (
                   <Skeleton className="h-8 w-16 mt-1" />
                 ) : (
-                  <p className="text-2xl font-semibold text-success-600" data-testid="stat-today-movements">
+                  <p className="text-3xl font-bold text-emerald-900" data-testid="stat-today-movements">
                     {stats?.todayMovements || 0}
                   </p>
                 )}
+                <div className="flex items-center mt-1">
+                  <div className="w-2 h-2 bg-emerald-500 rounded-full mr-2 animate-pulse"></div>
+                  <span className="text-xs text-emerald-600">Ativo</span>
+                </div>
               </div>
-              <div className="w-12 h-12 bg-success-100 rounded-lg flex items-center justify-center">
-                <i className="fas fa-exchange-alt text-success-600 text-xl"></i>
+              <div className="w-14 h-14 bg-emerald-500 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                <i className="fa-solid fa-arrows-rotate text-white text-xl"></i>
               </div>
             </div>
+            <div className="absolute bottom-0 right-0 w-20 h-20 bg-emerald-200/30 rounded-full -mb-10 -mr-10"></div>
           </CardContent>
         </Card>
         
-        <Card className="border border-gray-200">
+        <Card className="relative overflow-hidden bg-gradient-to-br from-violet-50 to-violet-100 border-0 shadow-lg hover:shadow-xl transition-all duration-300 group">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Usuários Ativos</p>
+                <p className="text-sm font-medium text-violet-600 mb-1">Usuários Ativos</p>
                 {statsLoading ? (
                   <Skeleton className="h-8 w-16 mt-1" />
                 ) : (
-                  <p className="text-2xl font-semibold text-gray-900" data-testid="stat-active-users">
+                  <p className="text-3xl font-bold text-violet-900" data-testid="stat-active-users">
                     {stats?.activeUsers || 0}
                   </p>
                 )}
+                <div className="flex items-center mt-1">
+                  <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                  <span className="text-xs text-violet-600">Online</span>
+                </div>
               </div>
-              <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
-                <i className="fas fa-users text-gray-600 text-xl"></i>
+              <div className="w-14 h-14 bg-violet-500 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                <i className="fa-solid fa-users text-white text-xl"></i>
               </div>
             </div>
+            <div className="absolute bottom-0 right-0 w-20 h-20 bg-violet-200/30 rounded-full -mb-10 -mr-10"></div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Alerts Section */}
+      {/* Critical Alerts Section */}
       {lowStockItems.length > 0 && (
-        <Card className="border border-gray-200 mb-8">
+        <Card className="bg-gradient-to-r from-red-50 via-orange-50 to-red-50 border-l-4 border-red-400 shadow-lg mb-8">
           <CardContent className="p-6">
-            <div className="flex items-center space-x-2 mb-6">
-              <i className="fas fa-exclamation-triangle text-warning-600"></i>
-              <h3 className="text-lg font-semibold text-gray-900">Alertas de Estoque</h3>
+            <div className="flex items-center space-x-3 mb-6">
+              <div className="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center animate-pulse">
+                <i className="fa-solid fa-bell text-white text-lg"></i>
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-red-800">Alertas Críticos de Estoque</h3>
+                <p className="text-red-600">Itens com estoque abaixo do mínimo recomendado</p>
+              </div>
             </div>
-            <div className="space-y-3">
+            <div className="grid gap-4">
               {lowStockLoading ? (
                 Array.from({ length: 3 }).map((_, i) => (
-                  <Skeleton key={i} className="h-16 w-full" />
+                  <Skeleton key={i} className="h-20 w-full rounded-xl" />
                 ))
               ) : (
                 lowStockItems.slice(0, 5).map((item) => (
                   <div
                     key={item.id}
-                    className="flex items-center justify-between p-4 bg-warning-50 rounded-lg border border-warning-200"
+                    className="flex items-center justify-between p-4 bg-white rounded-xl border border-red-200 hover:border-red-300 transition-all duration-200 hover:shadow-md"
                     data-testid={`alert-item-${item.id}`}
                   >
                     <div className="flex items-center space-x-4">
-                      <div className="w-10 h-10 bg-warning-100 rounded-lg flex items-center justify-center">
-                        <i className={`${item.category?.icon || 'fas fa-box'} text-warning-600`}></i>
+                      <div className="w-12 h-12 bg-gradient-to-br from-red-100 to-red-200 rounded-xl flex items-center justify-center">
+                        <i className={`${item.category?.icon || 'fa-solid fa-box'} text-red-600 text-lg`}></i>
                       </div>
                       <div>
-                        <p className="font-medium text-gray-900">{item.name}</p>
+                        <p className="font-semibold text-gray-900">{item.name}</p>
                         <p className="text-sm text-gray-500">Código: {item.internalCode}</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm text-gray-500">Estoque atual</p>
-                      <p className="font-semibold text-warning-600">
-                        {item.currentStock} unidades
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        Mínimo: {item.minStock}
-                      </p>
+                      <div className="flex items-center space-x-2 mb-1">
+                        <Badge variant="destructive" className="font-medium">
+                          {item.currentStock} unidades
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-gray-500">Mínimo: {item.minStock}</p>
+                      <Progress 
+                        value={(item.currentStock / item.minStock) * 100} 
+                        className="w-20 h-2 mt-1"
+                      />
                     </div>
                   </div>
                 ))
@@ -173,48 +199,70 @@ export default function Dashboard() {
         </Card>
       )}
 
-      {/* Recent Activities */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="border border-gray-200">
+      {/* Content Grid */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+        {/* Recent Activities */}
+        <Card className="bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
           <CardContent className="p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-6">Últimas Movimentações</h3>
+            <div className="flex items-center space-x-3 mb-6">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                <i className="fa-solid fa-clock-rotate-left text-white text-sm"></i>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900">Atividades Recentes</h3>
+            </div>
+            
             <div className="space-y-4">
               {movementsLoading ? (
                 Array.from({ length: 5 }).map((_, i) => (
-                  <Skeleton key={i} className="h-16 w-full" />
+                  <div key={i} className="flex items-center space-x-4 p-3 rounded-xl">
+                    <Skeleton className="w-12 h-12 rounded-xl" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-4 w-3/4" />
+                      <Skeleton className="h-3 w-1/2" />
+                    </div>
+                  </div>
                 ))
               ) : recentMovements.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <i className="fas fa-inbox text-4xl mb-4"></i>
-                  <p>Nenhuma movimentação recente</p>
+                <div className="text-center py-12">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i className="fa-solid fa-inbox text-gray-400 text-xl"></i>
+                  </div>
+                  <p className="text-gray-500 font-medium">Nenhuma movimentação recente</p>
+                  <p className="text-sm text-gray-400">As atividades aparecerão aqui</p>
                 </div>
               ) : (
                 recentMovements.map((movement) => (
                   <div
                     key={movement.id}
-                    className="flex items-center space-x-4 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                    className="flex items-center space-x-4 p-3 rounded-xl hover:bg-gray-50 transition-all duration-200 group"
                     data-testid={`movement-${movement.id}`}
                   >
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-md ${
                       movement.type === "entrada" 
-                        ? "bg-success-100" 
-                        : "bg-error-100"
+                        ? "bg-gradient-to-br from-emerald-400 to-emerald-500" 
+                        : "bg-gradient-to-br from-red-400 to-red-500"
                     }`}>
-                      <i className={`fas ${
+                      <i className={`fa-solid ${
                         movement.type === "entrada" 
-                          ? "fa-arrow-down text-success-600" 
-                          : "fa-arrow-up text-error-600"
+                          ? "fa-arrow-down text-white" 
+                          : "fa-arrow-up text-white"
                       }`}></i>
                     </div>
-                    <div className="flex-1">
-                      <p className="font-medium text-gray-900">{movement.item?.name}</p>
-                      <p className="text-sm text-gray-500">
-                        {movement.type === "entrada" ? "Entrada" : "Saída"}: {movement.quantity} unidades
-                        {movement.destination && ` para ${movement.destination}`}
-                        {movement.user && ` por ${movement.user.name}`}
-                      </p>
-                      <p className="text-xs text-gray-400">
-                        {formatTimestamp(movement.createdAt)}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-gray-900 truncate">{movement.item?.name}</p>
+                      <div className="flex items-center space-x-2 text-sm text-gray-500">
+                        <span className="font-medium">
+                          {movement.type === "entrada" ? "+" : "-"}{movement.quantity}
+                        </span>
+                        {movement.destination && (
+                          <>
+                            <span>•</span>
+                            <span className="truncate">{movement.destination}</span>
+                          </>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-400 mt-1">
+                        {formatTimestamp(movement.createdAt)} • {movement.user?.name}
                       </p>
                     </div>
                   </div>
@@ -225,32 +273,56 @@ export default function Dashboard() {
         </Card>
 
         {/* Categories Overview */}
-        <Card className="border border-gray-200">
+        <Card className="bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
           <CardContent className="p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-6">Categorias</h3>
-            <div className="space-y-4">
+            <div className="flex items-center space-x-3 mb-6">
+              <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
+                <i className="fa-solid fa-tags text-white text-sm"></i>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900">Categorias</h3>
+            </div>
+
+            <div className="space-y-3">
               {categories.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <i className="fas fa-tags text-4xl mb-4"></i>
-                  <p>Nenhuma categoria cadastrada</p>
+                <div className="text-center py-12">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i className="fa-solid fa-tags text-gray-400 text-xl"></i>
+                  </div>
+                  <p className="text-gray-500 font-medium">Nenhuma categoria cadastrada</p>
+                  <p className="text-sm text-gray-400">Organize seus itens em categorias</p>
                 </div>
               ) : (
-                categories.map((category) => (
+                categories.map((category, index) => (
                   <div
                     key={category.id}
-                    className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                    className="flex items-center justify-between p-4 rounded-xl hover:bg-gray-50 transition-all duration-200 group border border-gray-100 hover:border-gray-200"
                     data-testid={`category-${category.id}`}
                   >
                     <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center">
-                        <i className={`${category.icon} text-primary-600 text-sm`}></i>
+                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center shadow-sm ${
+                        ['bg-gradient-to-br from-blue-400 to-blue-500',
+                         'bg-gradient-to-br from-green-400 to-green-500', 
+                         'bg-gradient-to-br from-purple-400 to-purple-500',
+                         'bg-gradient-to-br from-orange-400 to-orange-500',
+                         'bg-gradient-to-br from-pink-400 to-pink-500'][index % 5]
+                      }`}>
+                        <i className={`${category.icon} text-white text-sm`}></i>
                       </div>
-                      <span className="font-medium text-gray-900">{category.name}</span>
+                      <div>
+                        <p className="font-semibold text-gray-900">{category.name}</p>
+                        {category.description && (
+                          <p className="text-xs text-gray-500 truncate max-w-48">{category.description}</p>
+                        )}
+                      </div>
                     </div>
-                    <span className="font-semibold text-gray-900">
-                      {/* This would be calculated from items count in real implementation */}
-                      0
-                    </span>
+                    <div className="text-right">
+                      <Badge variant="secondary" className="font-medium">
+                        {category.itemCount || 0} {category.itemCount === 1 ? 'item' : 'itens'}
+                      </Badge>
+                      <p className="text-xs text-gray-400 mt-1">
+                        Criado em {new Date(category.createdAt).toLocaleDateString("pt-BR")}
+                      </p>
+                    </div>
                   </div>
                 ))
               )}

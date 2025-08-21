@@ -29,7 +29,7 @@ export default function Search() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedQuery(searchQuery);
-    }, 100); // Reduzido para 100ms para resposta mais rápida
+    }, 100);
 
     return () => clearTimeout(timer);
   }, [searchQuery]);
@@ -43,14 +43,6 @@ export default function Search() {
   const statusParam = selectedStatus === ALL ? undefined : selectedStatus;
   const hasFilters = Boolean(debouncedQuery || categoryParam || statusParam);
   
-  console.log('🔍 Estado da pesquisa:', { 
-    searchQuery, 
-    debouncedQuery, 
-    selectedCategory, 
-    selectedStatus, 
-    hasFilters 
-  });
-  
   const { data: searchResults = [], isLoading } = useQuery<ItemWithCategory[]>({
     queryKey: ["/api/items/search", debouncedQuery, categoryParam, statusParam],
     queryFn: async () => {
@@ -61,14 +53,10 @@ export default function Search() {
       if (categoryParam) params.append('category', categoryParam);
       if (statusParam) params.append('status', statusParam);
       
-      console.log('🔍 Fazendo pesquisa:', { debouncedQuery, categoryParam, statusParam });
       const url = `/api/items/search?${params.toString()}`;
-      console.log('🔍 URL da pesquisa:', url);
-      
       const response = await fetch(url);
       if (!response.ok) throw new Error('Falha na pesquisa');
       const data = await response.json();
-      console.log('🔍 Resultados da pesquisa:', data.length, 'itens');
       return data;
     },
     enabled: hasFilters,
@@ -92,15 +80,15 @@ export default function Search() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "disponivel":
-        return "bg-success-100 text-success-800";
+        return "bg-emerald-100 text-emerald-800 border-emerald-200";
       case "em-uso":
-        return "bg-blue-100 text-blue-800";
+        return "bg-blue-100 text-blue-800 border-blue-200";
       case "manutencao":
-        return "bg-warning-100 text-warning-800";
+        return "bg-amber-100 text-amber-800 border-amber-200";
       case "descartado":
-        return "bg-error-100 text-error-800";
+        return "bg-red-100 text-red-800 border-red-200";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-gray-100 text-gray-800 border-gray-200";
     }
   };
 
@@ -119,58 +107,114 @@ export default function Search() {
     }
   };
 
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "disponivel":
+        return "fa-solid fa-circle-check";
+      case "em-uso":
+        return "fa-solid fa-clock";
+      case "manutencao":
+        return "fa-solid fa-wrench";
+      case "descartado":
+        return "fa-solid fa-trash";
+      default:
+        return "fa-solid fa-circle";
+    }
+  };
+
   return (
     <MainLayout
       title="Pesquisar Itens"
-      subtitle="Busque itens por código, nome ou categoria"
+      subtitle="Busque itens por código, nome, categoria ou status"
       showAddButton={false}
     >
-      <Card className="border border-gray-200 mb-6">
-        <CardContent className="p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Pesquisar Itens</h3>
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
+      {/* Search Hero */}
+      <Card className="bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 border-0 shadow-lg mb-8">
+        <CardContent className="p-8">
+          <div className="flex items-center space-x-4 mb-6">
+            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
+              <i className="fa-solid fa-search text-white text-2xl"></i>
+            </div>
+            <div>
+              <h3 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
+                Busca Avançada de Itens
+              </h3>
+              <p className="text-gray-600 font-medium">
+                Use filtros avançados para encontrar exatamente o que procura
+              </p>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+            <div className="lg:col-span-2">
               <div className="relative">
-                <i className="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <i className="fa-solid fa-search text-gray-400 text-lg"></i>
+                </div>
                 <Input
                   type="text"
-                  placeholder="Pesquisar por código, nome ou categoria..."
+                  placeholder="Pesquisar por código, nome, categoria..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
+                  className="pl-12 pr-4 py-4 h-14 text-lg border-2 border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all duration-200"
                   data-testid="input-search"
                 />
               </div>
             </div>
-            <Select
-              value={selectedCategory}
-              onValueChange={setSelectedCategory}
-            >
-              <SelectTrigger className="w-full md:w-48" data-testid="select-category-filter">
-                <SelectValue placeholder="Todas as Categorias" />
+            
+            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <SelectTrigger className="h-14 border-2 border-gray-200 focus:border-blue-400" data-testid="select-category-filter">
+                <div className="flex items-center space-x-2">
+                  <i className="fa-solid fa-tags text-purple-500"></i>
+                  <SelectValue placeholder="Todas as Categorias" />
+                </div>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value={ALL}>Todas as Categorias</SelectItem>
                 {categories.map((category) => (
                   <SelectItem key={category.id} value={category.id}>
-                    {category.name}
+                    <div className="flex items-center space-x-2">
+                      <i className={`${category.icon} text-purple-500`}></i>
+                      <span>{category.name}</span>
+                    </div>
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            <Select
-              value={selectedStatus}
-              onValueChange={setSelectedStatus}
-            >
-              <SelectTrigger className="w-full md:w-48" data-testid="select-status-filter">
-                <SelectValue placeholder="Todos os Status" />
+            
+            <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+              <SelectTrigger className="h-14 border-2 border-gray-200 focus:border-blue-400" data-testid="select-status-filter">
+                <div className="flex items-center space-x-2">
+                  <i className="fa-solid fa-info-circle text-blue-500"></i>
+                  <SelectValue placeholder="Todos os Status" />
+                </div>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value={ALL}>Todos os Status</SelectItem>
-                <SelectItem value="disponivel">Disponível</SelectItem>
-                <SelectItem value="em-uso">Em Uso</SelectItem>
-                <SelectItem value="manutencao">Em Manutenção</SelectItem>
-                <SelectItem value="descartado">Descartado</SelectItem>
+                <SelectItem value="disponivel">
+                  <div className="flex items-center space-x-2">
+                    <i className="fa-solid fa-circle-check text-emerald-500"></i>
+                    <span>Disponível</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="em-uso">
+                  <div className="flex items-center space-x-2">
+                    <i className="fa-solid fa-clock text-blue-500"></i>
+                    <span>Em Uso</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="manutencao">
+                  <div className="flex items-center space-x-2">
+                    <i className="fa-solid fa-wrench text-amber-500"></i>
+                    <span>Em Manutenção</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="descartado">
+                  <div className="flex items-center space-x-2">
+                    <i className="fa-solid fa-trash text-red-500"></i>
+                    <span>Descartado</span>
+                  </div>
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -181,62 +225,92 @@ export default function Search() {
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {Array.from({ length: 6 }).map((_, i) => (
-            <Card key={i} className="border border-gray-200">
+            <Card key={i} className="border-0 shadow-lg">
               <CardContent className="p-6">
-                <Skeleton className="h-32 w-full" />
+                <div className="space-y-4">
+                  <Skeleton className="h-12 w-full" />
+                  <Skeleton className="h-20 w-full" />
+                  <Skeleton className="h-8 w-full" />
+                </div>
               </CardContent>
             </Card>
           ))}
         </div>
       ) : searchResults.length === 0 && hasFilters ? (
-        <Card className="border border-gray-200">
-          <CardContent className="p-12 text-center">
-            <i className="fas fa-search text-4xl text-gray-400 mb-4"></i>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Nenhum item encontrado</h3>
-            <p className="text-gray-500">Tente ajustar os filtros de pesquisa</p>
+        <Card className="bg-white border-0 shadow-xl">
+          <CardContent className="p-16 text-center">
+            <div className="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mx-auto mb-6">
+              <i className="fa-solid fa-search text-gray-400 text-3xl"></i>
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-3">Nenhum item encontrado</h3>
+            <p className="text-gray-500 mb-6">Tente ajustar os filtros de pesquisa ou use termos diferentes</p>
+            <Button 
+              onClick={() => {
+                setSearchQuery("");
+                setSelectedCategory(ALL);
+                setSelectedStatus(ALL);
+              }}
+              className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+            >
+              <i className="fa-solid fa-refresh mr-2"></i>
+              Limpar Filtros
+            </Button>
           </CardContent>
         </Card>
       ) : searchResults.length === 0 ? (
-        <Card className="border border-gray-200">
-          <CardContent className="p-12 text-center">
-            <i className="fas fa-search text-4xl text-gray-400 mb-4"></i>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Pesquisar Itens</h3>
-            <p className="text-gray-500">Digite algo no campo de pesquisa para encontrar itens</p>
+        <Card className="bg-white border-0 shadow-xl">
+          <CardContent className="p-16 text-center">
+            <div className="w-24 h-24 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <i className="fa-solid fa-search text-blue-500 text-3xl"></i>
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-3">Pronto para Pesquisar</h3>
+            <p className="text-gray-500">Digite algo no campo de pesquisa ou selecione filtros para encontrar itens</p>
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-4">
-          <div className="text-sm text-gray-600">
-            🔍 Encontrados {searchResults.length} resultado(s) para "{debouncedQuery}"
+        <div className="space-y-6">
+          <div className="flex items-center space-x-3 text-gray-600">
+            <i className="fa-solid fa-search text-blue-500"></i>
+            <span className="font-medium">
+              Encontrados <strong className="text-blue-600">{searchResults.length}</strong> resultado(s)
+              {debouncedQuery && (
+                <> para "<strong className="text-gray-900">{debouncedQuery}</strong>"</>
+              )}
+            </span>
           </div>
+          
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {searchResults.map((item) => (
               <Card
                 key={item.id}
-                className="border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
+                className="bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 group overflow-hidden"
                 data-testid={`search-result-${item.id}`}
               >
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center">
-                        <i className={`${item.category?.icon || 'fas fa-box'} text-primary-600 text-lg`}></i>
+                    <div className="flex items-center space-x-3 flex-1">
+                      <div className="w-14 h-14 bg-gradient-to-br from-blue-100 to-purple-100 rounded-2xl flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
+                        <i className={`${item.category?.icon || 'fa-solid fa-cube'} text-blue-600 text-lg`}></i>
                       </div>
-                      <div>
-                        <h4 className="font-semibold text-gray-900" data-testid={`search-item-name-${item.id}`}>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-bold text-gray-900 text-lg mb-1 group-hover:text-blue-700 transition-colors truncate" data-testid={`search-item-name-${item.id}`}>
                           {item.name}
                         </h4>
-                        <p className="text-sm text-gray-500" data-testid={`search-item-code-${item.id}`}>
-                          {item.internalCode}
-                        </p>
+                        <div className="flex items-center space-x-2">
+                          <div className="bg-gray-100 px-2 py-1 rounded-lg text-xs font-mono text-gray-700" data-testid={`search-item-code-${item.id}`}>
+                            {item.internalCode}
+                          </div>
+                        </div>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <QRCodeGenerator 
-                        value={`ITEM:${item.id}:${item.internalCode}`}
-                        size={32}
-                        className="cursor-pointer hover:scale-110 transition-transform"
-                      />
+                      <div className="p-1 bg-white rounded-lg shadow-sm border">
+                        <QRCodeGenerator 
+                          value={`ITEM:${item.id}:${item.internalCode}`}
+                          size={24}
+                          className="cursor-pointer hover:scale-110 transition-transform"
+                        />
+                      </div>
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -244,11 +318,11 @@ export default function Search() {
                               variant="ghost"
                               size="sm"
                               onClick={() => handleShowQR(item)}
-                              className="text-gray-400 hover:text-primary-600 transition-colors"
+                              className="w-8 h-8 p-0 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
                               data-testid={`button-qr-modal-${item.id}`}
                               aria-label="Ampliar QR Code"
                             >
-                              <i className="fas fa-expand-alt text-xs"></i>
+                              <i className="fa-solid fa-expand text-xs"></i>
                             </Button>
                           </TooltipTrigger>
                           <TooltipContent>Ampliar QR Code</TooltipContent>
@@ -257,67 +331,92 @@ export default function Search() {
                     </div>
                   </div>
                   
-                  <div className="space-y-2 mb-4">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Categoria:</span>
-                      <span className="font-medium text-gray-900">{item.category?.name}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Estoque:</span>
-                      <span className="font-medium text-gray-900">
-                        {item.currentStock} unidades
+                  <div className="space-y-3 mb-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-500 flex items-center">
+                        <i className="fa-solid fa-tags mr-2 text-purple-500"></i>
+                        Categoria:
                       </span>
+                      <Badge className="bg-gradient-to-r from-purple-100 to-blue-100 text-purple-800 border-purple-200 font-medium">
+                        <i className={`${item.category?.icon || 'fa-solid fa-tag'} mr-1 text-xs`}></i>
+                        {item.category?.name}
+                      </Badge>
                     </div>
+                    
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-500 flex items-center">
+                        <i className="fa-solid fa-warehouse mr-2 text-green-500"></i>
+                        Estoque:
+                      </span>
+                      <div className={`px-3 py-1 rounded-lg font-bold ${
+                        item.currentStock <= item.minStock 
+                          ? 'bg-red-100 text-red-800' 
+                          : 'bg-green-100 text-green-800'
+                      }`}>
+                        {item.currentStock} unidades
+                      </div>
+                    </div>
+                    
                     {item.location && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-500">Localização:</span>
-                        <span className="font-medium text-gray-900">{item.location}</span>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-500 flex items-center">
+                          <i className="fa-solid fa-location-dot mr-2 text-orange-500"></i>
+                          Localização:
+                        </span>
+                        <span className="font-medium text-gray-900 text-sm">{item.location}</span>
                       </div>
                     )}
-                    <div className="flex justify-between text-sm items-center">
-                      <span className="text-gray-500">Status:</span>
+                    
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-500 flex items-center">
+                        <i className="fa-solid fa-info-circle mr-2 text-blue-500"></i>
+                        Status:
+                      </span>
                       <Badge
-                        className={getStatusColor(item.status)}
+                        className={`${getStatusColor(item.status)} font-medium border px-3 py-1`}
                         data-testid={`search-item-status-${item.id}`}
                       >
+                        <i className={`${getStatusIcon(item.status)} mr-2 text-xs`}></i>
                         {getStatusLabel(item.status)}
                       </Badge>
                     </div>
                   </div>
                   
-                  <div className="flex space-x-2 mt-4 p-2 bg-gray-50 rounded border">
+                  <div className="flex space-x-2 pt-4 border-t border-gray-100">
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Button
                             onClick={() => handleEdit(item)}
-                            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm py-2"
+                            className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-medium shadow-sm"
                             data-testid={`button-edit-${item.id}`}
                             aria-label="Editar item"
                           >
-                            <i className="fas fa-edit mr-2"></i>
+                            <i className="fa-solid fa-edit mr-2 text-sm"></i>
                             Editar
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent>Editar item</TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
+                    
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Button
                             onClick={() => handleMovement(item)}
-                            className="flex-1 bg-primary-600 hover:bg-primary-700 text-white text-sm py-2"
+                            className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-medium shadow-sm"
                             data-testid={`button-movement-${item.id}`}
                             aria-label="Registrar movimentação"
                           >
-                            <i className="fas fa-exchange-alt mr-2"></i>
-                            Movimentar
+                            <i className="fa-solid fa-arrows-rotate mr-2 text-sm"></i>
+                            Mover
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent>Registrar movimentação</TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
+                    
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -325,11 +424,11 @@ export default function Search() {
                             variant="outline"
                             size="sm"
                             onClick={() => handleShowQR(item)}
-                            className="px-3 py-2"
+                            className="px-3 py-2 border-2 border-gray-200 hover:border-blue-300 hover:bg-blue-50"
                             data-testid={`button-view-${item.id}`}
                             aria-label="Ver detalhes"
                           >
-                            <i className="fas fa-eye"></i>
+                            <i className="fa-solid fa-eye text-gray-600"></i>
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent>Ver detalhes</TooltipContent>
