@@ -19,9 +19,26 @@ function handleUnauthorizedRedirect() {
 }
 
 function buildUrl(input: string): string {
-  const base = (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_API_URL) || '';
+  const rawBase = (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_API_URL) || '';
+  let base = rawBase;
+  try {
+    if (typeof window !== 'undefined') {
+      const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      if (isLocalhost) {
+        // Em dev local, use sempre same-origin (ignora qualquer VITE_API_URL)
+        base = '';
+      } else if (rawBase) {
+        // Em produção, apenas valida URL para evitar quebras
+        // (se inválida, cairá no uso como string abaixo)
+        // eslint-disable-next-line no-new
+        new URL(rawBase);
+      }
+    }
+  } catch {
+    // Se VITE_API_URL não for URL válida, usa como está (tratado abaixo)
+  }
+
   const path = input.startsWith('/') ? input : `/${input}`;
-  // Se base vier com trailing slash, evita duplicar
   if (!base) return path;
   return base.endsWith('/') ? `${base.slice(0, -1)}${path}` : `${base}${path}`;
 }
