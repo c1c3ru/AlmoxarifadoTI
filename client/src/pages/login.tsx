@@ -103,17 +103,18 @@ export default function Login() {
 
       <Card className="w-full max-w-md bg-white/80 backdrop-blur-lg border-0 shadow-2xl">
         <CardHeader className="text-center pb-6">
-          <div className="relative mx-auto mb-6">
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full blur-lg opacity-20"></div>
-            <div className="relative w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-lg">
-              <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-inner">
-                IFCE
-              </div>
-            </div>
+          <div className="flex items-center justify-center gap-3 mb-2">
+            <img
+              src="/assests/ifce_logo.png"
+              alt="IFCE"
+              className="h-10 w-10 object-contain drop-shadow-sm"
+              loading="eager"
+              decoding="async"
+            />
+            <CardTitle className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              SGAT-TI
+            </CardTitle>
           </div>
-          <CardTitle className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            SGAT-TI
-          </CardTitle>
           <p className="text-gray-600 font-medium">Sistema de Gestão de Almoxarifado de T.I.</p>
           <div className="w-16 h-1 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full mx-auto mt-2"></div>
         </CardHeader>
@@ -198,7 +199,7 @@ export default function Login() {
                         Esqueceu a senha?
                       </button>
                     </DialogTrigger>
-                    <DialogContent className="sm:max-w-md bg-white/95 backdrop-blur-lg">
+                    <DialogContent aria-describedby={undefined} className="sm:max-w-md bg-white shadow-2xl border border-gray-200">
                       <DialogHeader>
                         <DialogTitle className="text-xl font-bold text-center">Recuperar Acesso</DialogTitle>
                       </DialogHeader>

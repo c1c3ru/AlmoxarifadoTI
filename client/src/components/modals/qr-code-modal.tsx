@@ -25,7 +25,7 @@ export function QRCodeModal({ open, onOpenChange, item }: QRCodeModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md w-full">
+      <DialogContent className="max-w-md w-full bg-white shadow-2xl border border-gray-200">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <i className="fas fa-qrcode text-primary-600"></i>

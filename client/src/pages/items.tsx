@@ -23,6 +23,7 @@ export default function Items() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showQRModal, setShowQRModal] = useState(false);
   const [showMovementModal, setShowMovementModal] = useState(false);
+  const [movementTypePreset, setMovementTypePreset] = useState<"entrada" | "saida" | null>(null);
   const [selectedItem, setSelectedItem] = useState<ItemWithCategory | null>(null);
   
   const { user } = useAuth();
@@ -63,8 +64,9 @@ export default function Items() {
     setShowQRModal(true);
   };
 
-  const handleMovement = (item: ItemWithCategory) => {
+  const handleMovement = (item: ItemWithCategory, type: "entrada" | "saida") => {
     setSelectedItem(item);
+    setMovementTypePreset(type);
     setShowMovementModal(true);
   };
 
@@ -374,16 +376,34 @@ export default function Items() {
                               <TooltipTrigger asChild>
                                 <Button
                                   size="sm"
-                                  onClick={() => handleMovement(item)}
+                                  onClick={() => handleMovement(item, "entrada")}
                                   className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-sm"
-                                  data-testid={`button-movement-${item.id}`}
-                                  aria-label="Registrar movimentação"
+                                  data-testid={`button-entrada-${item.id}`}
+                                  aria-label="Registrar entrada"
                                 >
-                                  <i className="fa-solid fa-arrows-rotate mr-2 text-sm"></i>
-                                  Mover
+                                  <i className="fa-solid fa-arrow-down mr-2 text-sm"></i>
+                                  Entrada
                                 </Button>
                               </TooltipTrigger>
-                              <TooltipContent>Registrar movimentação</TooltipContent>
+                              <TooltipContent>Registrar entrada (adicionar ao estoque)</TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleMovement(item, "saida")}
+                                  className="bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white shadow-sm"
+                                  data-testid={`button-saida-${item.id}`}
+                                  aria-label="Registrar saída"
+                                >
+                                  <i className="fa-solid fa-arrow-up mr-2 text-sm"></i>
+                                  Saída
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Registrar saída (retirar do estoque)</TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
                           
@@ -441,8 +461,12 @@ export default function Items() {
 
       <MovementModal
         open={showMovementModal}
-        onOpenChange={setShowMovementModal}
+        onOpenChange={(open) => {
+          setShowMovementModal(open);
+          if (!open) setMovementTypePreset(null);
+        }}
         item={selectedItem}
+        initialType={movementTypePreset || undefined}
       />
     </MainLayout>
   );

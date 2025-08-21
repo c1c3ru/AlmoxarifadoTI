@@ -64,7 +64,10 @@ export function Sidebar() {
             </div>
             {(!isCollapsed || isMobile) && (
               <div className="transition-opacity duration-300">
-                <h1 className="text-lg font-semibold text-gray-900">SGAT-TI</h1>
+                <div className="flex items-center gap-2">
+                  <img src="/assests/ifce_logo.png" alt="IFCE" className="h-5 w-5 object-contain" />
+                  <h1 className="text-lg font-semibold text-gray-900">SGAT-TI</h1>
+                </div>
                 <p className="text-xs text-gray-500">Almoxarifado T.I.</p>
               </div>
             )}

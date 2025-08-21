@@ -1,6 +1,7 @@
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -26,17 +27,26 @@ interface MovementModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   item: ItemWithCategory | null;
+  initialType?: "entrada" | "saida";
 }
 
-export function MovementModal({ open, onOpenChange, item }: MovementModalProps) {
+export function MovementModal({ open, onOpenChange, item, initialType }: MovementModalProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const [selectedItemLocal, setSelectedItemLocal] = useState<ItemWithCategory | null>(null);
+
+  // Fetch items to allow selection when opened from Movements page without a preset item
+  const { data: items = [] } = useQuery<ItemWithCategory[]>({
+    queryKey: ["/api/items"],
+  });
+
+  const activeItem = item ?? selectedItemLocal;
 
   const form = useForm<MovementFormData>({
     resolver: zodResolver(movementSchema),
     defaultValues: {
-      type: "saida",
+      type: initialType || "saida",
       quantity: 1,
       destination: "",
       observation: "",
@@ -44,21 +54,32 @@ export function MovementModal({ open, onOpenChange, item }: MovementModalProps) 
   });
 
   const movementType = form.watch("type");
+
+  // When modal opens or initialType changes, reset defaults
+  // Ensures Entrada/Saída preselected from the triggering button
+  if (open && initialType && form.getValues("type") !== initialType) {
+    form.reset({
+      type: initialType,
+      quantity: 1,
+      destination: "",
+      observation: "",
+    });
+  }
   const quantity = form.watch("quantity");
 
   const createMovementMutation = useMutation({
     mutationFn: async (data: MovementFormData) => {
-      if (!item || !user) throw new Error("Item ou usuário não encontrado");
+      if (!activeItem || !user) throw new Error("Item ou usuário não encontrado");
       
       const movementData = {
-        itemId: item.id,
+        itemId: activeItem.id,
         userId: user.id,
         type: data.type,
         quantity: data.quantity,
-        previousStock: item.currentStock,
+        previousStock: activeItem.currentStock,
         newStock: data.type === "entrada" 
-          ? item.currentStock + data.quantity 
-          : item.currentStock - data.quantity,
+          ? activeItem.currentStock + data.quantity 
+          : activeItem.currentStock - data.quantity,
         destination: data.destination,
         observation: data.observation,
       };
@@ -76,6 +97,7 @@ export function MovementModal({ open, onOpenChange, item }: MovementModalProps) 
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] });
       onOpenChange(false);
       form.reset();
+      setSelectedItemLocal(null);
     },
     onError: (error: any) => {
       toast({
@@ -88,10 +110,10 @@ export function MovementModal({ open, onOpenChange, item }: MovementModalProps) 
 
   const onSubmit = (data: MovementFormData) => {
     // Validate stock for withdrawal
-    if (data.type === "saida" && item && data.quantity > item.currentStock) {
+    if (data.type === "saida" && activeItem && data.quantity > activeItem.currentStock) {
       toast({
         title: "Estoque insuficiente",
-        description: `Disponível: ${item.currentStock} unidades. Solicitado: ${data.quantity} unidades.`,
+        description: `Disponível: ${activeItem.currentStock} unidades. Solicitado: ${data.quantity} unidades.`,
         variant: "destructive",
       });
       return;
@@ -100,33 +122,60 @@ export function MovementModal({ open, onOpenChange, item }: MovementModalProps) 
     createMovementMutation.mutate(data);
   };
 
-  if (!item) return null;
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent aria-describedby={undefined} className="max-w-lg bg-white shadow-2xl border border-gray-200">
         <DialogHeader>
           <DialogTitle>Movimentar Item</DialogTitle>
         </DialogHeader>
         
-        <div className="mb-6">
-          <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
-            <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center">
-              <i className={`${item.category?.icon || 'fas fa-box'} text-primary-600`}></i>
-            </div>
-            <div>
-              <h4 className="font-semibold text-gray-900" data-testid="movement-item-name">
-                {item.name}
-              </h4>
-              <p className="text-sm text-gray-500">
-                Código: <span data-testid="movement-item-code">{item.internalCode}</span>
-              </p>
-              <p className="text-sm text-gray-500">
-                Estoque Atual: <span data-testid="movement-current-stock">{item.currentStock}</span> unidades
-              </p>
+        {!activeItem ? (
+          <div className="mb-2">
+            <Form {...form}>
+              <div className="space-y-4">
+                <div>
+                  <FormLabel>Selecione um item</FormLabel>
+                  <Select onValueChange={(val) => {
+                    const found = items.find((it) => String(it.id) === String(val));
+                    setSelectedItemLocal(found || null);
+                  }}>
+                    <FormControl>
+                      <SelectTrigger data-testid="select-movement-item">
+                        <SelectValue placeholder="Escolha o item" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {items.map((it) => (
+                        <SelectItem key={it.id} value={String(it.id)}>
+                          {it.name} ({it.internalCode})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </Form>
+          </div>
+        ) : (
+          <div className="mb-6">
+            <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
+              <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center">
+                <i className={`${activeItem.category?.icon || 'fas fa-box'} text-primary-600`}></i>
+              </div>
+              <div>
+                <h4 className="font-semibold text-gray-900" data-testid="movement-item-name">
+                  {activeItem.name}
+                </h4>
+                <p className="text-sm text-gray-500">
+                  Código: <span data-testid="movement-item-code">{activeItem.internalCode}</span>
+                </p>
+                <p className="text-sm text-gray-500">
+                  Estoque Atual: <span data-testid="movement-current-stock">{activeItem.currentStock}</span> unidades
+                </p>
+              </div>
             </div>
           </div>
-        </div>
+        )}
         
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -162,15 +211,15 @@ export function MovementModal({ open, onOpenChange, item }: MovementModalProps) 
                     <Input
                       type="number"
                       min="1"
-                      max={movementType === "saida" ? item.currentStock : undefined}
+                      max={movementType === "saida" && activeItem ? activeItem.currentStock : undefined}
                       {...field}
                       data-testid="input-movement-quantity"
                     />
                   </FormControl>
                   <FormMessage />
-                  {movementType === "saida" && (
+                  {movementType === "saida" && activeItem && (
                     <p className="text-xs text-gray-500">
-                      Máximo disponível: {item.currentStock} unidades
+                      Máximo disponível: {activeItem.currentStock} unidades
                     </p>
                   )}
                 </FormItem>
@@ -226,7 +275,7 @@ export function MovementModal({ open, onOpenChange, item }: MovementModalProps) 
               </Button>
               <Button
                 type="submit"
-                disabled={createMovementMutation.isPending}
+                disabled={createMovementMutation.isPending || !activeItem}
                 className={movementType === "entrada" ? "bg-success-600 hover:bg-success-700" : "bg-error-600 hover:bg-error-700"}
                 data-testid="button-confirm-movement"
               >

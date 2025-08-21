@@ -74,6 +74,7 @@ export default function Movements() {
             <Button 
               className="w-full bg-emerald-600 hover:bg-emerald-700 shadow-lg h-12 text-base font-semibold"
               data-testid="button-register-entry"
+              onClick={(e) => { e.stopPropagation(); handleNewMovement("entrada"); }}
             >
               <i className="fa-solid fa-plus mr-2"></i>
               Nova Entrada
@@ -92,6 +93,7 @@ export default function Movements() {
             <Button 
               className="w-full bg-red-600 hover:bg-red-700 shadow-lg h-12 text-base font-semibold"
               data-testid="button-register-exit"
+              onClick={(e) => { e.stopPropagation(); handleNewMovement("saida"); }}
             >
               <i className="fa-solid fa-minus mr-2"></i>
               Nova Saída
@@ -282,7 +284,7 @@ export default function Movements() {
           }
         }}
         item={selectedItem}
-        defaultType={movementType}
+        initialType={movementType || undefined}
       />
     </MainLayout>
   );
