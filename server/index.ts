@@ -39,7 +39,7 @@ app.use(
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || (
   process.env.NODE_ENV === 'production'
     ? ''
-    : 'http://localhost:3000,http://localhost:5173,http://localhost:4173'
+    : 'http://localhost:3000,http://localhost:5173,http://localhost:4173,http://localhost:5000'
 ))
   .split(',')
   .map(o => o.trim())
@@ -47,7 +47,12 @@ const allowedOrigins = (process.env.ALLOWED_ORIGINS || (
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Permite chamadas server-to-server ou mesma origem sem cabeçalho Origin
+    const isDev = app.get('env') === 'development';
+    if (isDev) {
+      // Em desenvolvimento, permite qualquer origem para facilitar Vite/HMR e mesma porta
+      return callback(null, true);
+    }
+    // Produção: permite chamadas server-to-server ou mesma origem sem cabeçalho Origin
     if (!origin) return callback(null, true);
     const isAllowed = allowedOrigins.includes(origin);
     return callback(isAllowed ? null : new Error('Not allowed by CORS'), isAllowed);
