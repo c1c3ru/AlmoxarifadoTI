@@ -339,6 +339,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { password: _, ...userWithoutPassword } = user;
       res.status(201).json(userWithoutPassword);
     } catch (error) {
+      // Tratamento específico para violações de UNIQUE (Postgres code 23505)
+      const anyErr = error as any;
+      const code = anyErr?.code || anyErr?.originalError?.code;
+      const detail: string = (anyErr?.detail || anyErr?.message || "").toString();
+      const constraint: string = (anyErr?.constraint || "").toString();
+
+      if (code === "23505" || /duplicate|unique constraint|violates unique/i.test(detail)) {
+        // Tentar identificar qual campo violou
+        const msg = detail.toLowerCase() + " " + constraint.toLowerCase();
+        if (/matricula/.test(msg)) {
+          return res.status(409).json({ message: "Matrícula já cadastrada" });
+        }
+        if (/username/.test(msg)) {
+          return res.status(409).json({ message: "Usuário já existe" });
+        }
+        if (/email/.test(msg)) {
+          return res.status(409).json({ message: "Email já cadastrado" });
+        }
+        return res.status(409).json({ message: "Registro duplicado" });
+      }
+
       console.error("Create user error:", error);
       res.status(500).json({ message: "Internal server error" });
     }

@@ -156,17 +156,37 @@ export default function RegisterUserPage() {
         const errBody = await res.json().catch(() => ({} as any));
         const rawMsg = (errBody?.message ?? "").toString();
         const msg = rawMsg.toLowerCase();
-        const isDupMatricula =
-          status === 409 ||
-          /matr[íi]cula/.test(msg) ||
-          /duplicate|unique constraint|violates unique/.test(msg);
 
-        if (isDupMatricula) {
-          form.setError("matricula", {
-            type: "manual",
-            message: "Matrícula já cadastrada",
-          });
+        // 1) Mapear erros de validação do backend (Zod)
+        const issues = Array.isArray(errBody?.errors) ? errBody.errors : [];
+        if (issues.length > 0) {
+          for (const issue of issues) {
+            const path = (issue?.path?.[0] ?? "") as keyof RegisterFormData;
+            const message = (issue?.message ?? "Campo inválido").toString();
+            if (path && form.getFieldState(path)) {
+              form.setError(path, { type: "server", message });
+            }
+          }
+        }
+
+        // 2) Duplicidade: matrícula / username / email
+        const looksLikeDuplicate =
+          status === 409 || /duplicate|unique constraint|violates unique/.test(msg);
+
+        if (looksLikeDuplicate || /matr[íi]cula/.test(msg)) {
+          form.setError("matricula", { type: "manual", message: "Matrícula já cadastrada" });
           throw new Error("Matrícula já cadastrada");
+        }
+
+        if (/username|usuário/.test(msg)) {
+          form.setError("email", { type: "manual", message: "Usuário já existe" });
+          // Também pode marcar username se existir no form, mas aqui username = email
+          throw new Error("Usuário já existe");
+        }
+
+        if (/email/.test(msg)) {
+          form.setError("email", { type: "manual", message: "Email já cadastrado" });
+          throw new Error("Email já cadastrado");
         }
 
         throw new Error(rawMsg || "Erro ao cadastrar usuário");
@@ -353,7 +373,7 @@ export default function RegisterUserPage() {
 
               <Button 
                 type="submit" 
-                className="w-full h-11 bg-primary-600 hover:bg-primary-700 text-white font-medium shadow-md" 
+                className="w-full h-12 rounded-lg bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white font-semibold shadow-lg transition disabled:from-primary-400 disabled:to-primary-400 disabled:text-white disabled:opacity-100 disabled:cursor-not-allowed disabled:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2" 
                 disabled={disabled} 
                 data-testid="button-submit"
               >
@@ -364,11 +384,17 @@ export default function RegisterUserPage() {
                   </>
                 ) : (
                   <>
-                    <i className="fa-solid fa-user-check mr-2"></i>
+                    <i className="fa-solid fa-user-check mr-2 text-white/90"></i>
                     Cadastrar Usuário
                   </>
                 )}
               </Button>
+
+              {disabled && (
+                <p className="text-xs text-gray-500 text-center -mt-1">
+                  Preencha os campos obrigatórios corretamente para habilitar o botão.
+                </p>
+              )}
 
               <div className="text-center pt-4 border-t border-gray-200">
                 <Link href="/login">
