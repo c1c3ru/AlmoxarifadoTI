@@ -18,6 +18,14 @@ function handleUnauthorizedRedirect() {
   }
 }
 
+function buildUrl(input: string): string {
+  const base = (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_API_URL) || '';
+  const path = input.startsWith('/') ? input : `/${input}`;
+  // Se base vier com trailing slash, evita duplicar
+  if (!base) return path;
+  return base.endsWith('/') ? `${base.slice(0, -1)}${path}` : `${base}${path}`;
+}
+
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     if (res.status === 401) {
@@ -33,12 +41,13 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
+  const finalUrl = buildUrl(url);
   const token = typeof localStorage !== 'undefined' ? localStorage.getItem('sgat-token') : null;
   const headers: Record<string, string> = {};
   if (data) headers["Content-Type"] = "application/json";
   if (token) headers["Authorization"] = `Bearer ${token}`;
 
-  const res = await fetch(url, {
+  const res = await fetch(finalUrl, {
     method,
     headers,
     body: data ? JSON.stringify(data) : undefined,
@@ -55,11 +64,12 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
+    const finalUrl = buildUrl(queryKey.join("/") as string);
     const token = typeof localStorage !== 'undefined' ? localStorage.getItem('sgat-token') : null;
     const headers: Record<string, string> = {};
     if (token) headers["Authorization"] = `Bearer ${token}`;
 
-    const res = await fetch(queryKey.join("/") as string, {
+    const res = await fetch(finalUrl, {
       credentials: "include",
       headers,
     });

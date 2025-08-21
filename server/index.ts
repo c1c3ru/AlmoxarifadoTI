@@ -7,7 +7,8 @@ import { setupVite, serveStatic, log } from "./vite";
 
 const app = express();
 
-// Helmet com CSP básica
+// Helmet com CSP básica (ajustada)
+const extraConnectSrc = (process.env.CSP_CONNECT_SRC || '').split(',').map(s => s.trim()).filter(Boolean);
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -20,10 +21,13 @@ app.use(
         "frame-ancestors": ["'self'"],
         "img-src": ["'self'", "data:", "https:"],
         "object-src": ["'none'"],
-        "script-src": ["'self'", "https://cdnjs.cloudflare.com"],
+        // Permite inline script temporariamente para compatibilidade com libs/componentes que injetam inline.
+        // Em produção ideal: migrar para nonces/hashes e remover 'unsafe-inline'.
+        "script-src": ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com"],
         "script-src-attr": ["'none'"],
         "style-src": ["'self'", "'unsafe-inline'", "https:"],
-        "connect-src": ["'self'"],
+        // Permite conexões ao próprio host, WebSocket (dev) e domínios extras via env CSV (CSP_CONNECT_SRC)
+        "connect-src": ["'self'", "ws:", ...extraConnectSrc],
       },
     },
     referrerPolicy: { policy: "no-referrer" },
