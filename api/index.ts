@@ -1,12 +1,10 @@
-import serverless from "serverless-http";
-
-let cachedHandler: any;
+let appPromise: Promise<any> | null = null;
 
 export default async function handler(req: any, res: any) {
-  if (!cachedHandler) {
+  if (!appPromise) {
     const { createApp } = await import("../dist/server/app.js");
-    const app = await createApp();
-    cachedHandler = serverless(app as any);
+    appPromise = createApp();
   }
-  return cachedHandler(req, res);
+  const app = await appPromise;
+  return app(req, res);
 }
