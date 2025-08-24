@@ -170,6 +170,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getItemByCode(code: string): Promise<ItemWithCategory | undefined> {
+    const sanitized = (code ?? "").trim();
     const result = await getDb().select({
       id: items.id,
       internalCode: items.internalCode,
@@ -186,7 +187,7 @@ export class DatabaseStorage implements IStorage {
     })
     .from(items)
     .leftJoin(categories, eq(items.categoryId, categories.id))
-    .where(eq(items.internalCode, code))
+    .where(eq(items.internalCode, sanitized))
     .limit(1);
     
     return result[0] as ItemWithCategory;
