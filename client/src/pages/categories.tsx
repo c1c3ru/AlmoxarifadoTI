@@ -220,7 +220,7 @@ export default function Categories() {
 
             {showAddModal && (
               <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
-                <DialogContent className="max-w-lg">
+                <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto bg-white shadow-2xl border border-gray-200">
                   <DialogHeader>
                     <DialogTitle className="text-xl font-semibold">
                       {editingCategory ? "Editar Categoria" : "Adicionar Nova Categoria"}

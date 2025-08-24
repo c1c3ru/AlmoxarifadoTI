@@ -120,7 +120,10 @@ export function AddItemModal({ open, onOpenChange }: AddItemModalProps) {
                       <SelectContent>
                         {categories.map((category) => (
                           <SelectItem key={category.id} value={category.id}>
-                            {category.name}
+                            <div className="flex items-center space-x-2">
+                              <i className={`${category.icon} text-purple-500`}></i>
+                              <span>{category.name}</span>
+                            </div>
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -199,10 +202,30 @@ export function AddItemModal({ open, onOpenChange }: AddItemModalProps) {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="disponivel">Disponível</SelectItem>
-                        <SelectItem value="em-uso">Em Uso</SelectItem>
-                        <SelectItem value="manutencao">Em Manutenção</SelectItem>
-                        <SelectItem value="descartado">Descartado</SelectItem>
+                        <SelectItem value="disponivel">
+                          <div className="flex items-center space-x-2">
+                            <i className="fa-solid fa-circle-check text-emerald-500"></i>
+                            <span>Disponível</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="em-uso">
+                          <div className="flex items-center space-x-2">
+                            <i className="fa-solid fa-clock text-blue-500"></i>
+                            <span>Em Uso</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="manutencao">
+                          <div className="flex items-center space-x-2">
+                            <i className="fa-solid fa-wrench text-amber-500"></i>
+                            <span>Em Manutenção</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="descartado">
+                          <div className="flex items-center space-x-2">
+                            <i className="fa-solid fa-trash text-red-500"></i>
+                            <span>Descartado</span>
+                          </div>
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />

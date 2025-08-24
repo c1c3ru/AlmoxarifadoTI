@@ -147,7 +147,10 @@ export function MovementModal({ open, onOpenChange, item, initialType }: Movemen
                     <SelectContent>
                       {items.map((it) => (
                         <SelectItem key={it.id} value={String(it.id)}>
-                          {it.name} ({it.internalCode})
+                          <div className="flex items-center space-x-2">
+                            <i className={`${it.category?.icon || 'fa-solid fa-cube'} text-purple-500`}></i>
+                            <span>{it.name} ({it.internalCode})</span>
+                          </div>
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -192,8 +195,18 @@ export function MovementModal({ open, onOpenChange, item, initialType }: Movemen
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="entrada">Entrada</SelectItem>
-                      <SelectItem value="saida">Saída</SelectItem>
+                      <SelectItem value="entrada">
+                        <div className="flex items-center space-x-2">
+                          <i className="fa-solid fa-arrow-down text-green-500"></i>
+                          <span>Entrada</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="saida">
+                        <div className="flex items-center space-x-2">
+                          <i className="fa-solid fa-arrow-up text-red-500"></i>
+                          <span>Saída</span>
+                        </div>
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />

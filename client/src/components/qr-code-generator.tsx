@@ -39,8 +39,9 @@ export function QRCodeGenerator({ value, size = 64, className = "" }: QRCodeGene
         
         // Fallback: desenhar um QR code simples
         const canvas = canvasRef.current;
-        const ctx = canvas.getContext('2d');
+        if (!canvas) return;
         
+        const ctx = canvas.getContext('2d');
         if (!ctx) return;
 
         ctx.clearRect(0, 0, size, size);
