@@ -17,6 +17,7 @@ export function QRScanner({ onScan, isActive, onActivate }: QRScannerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const scannerRef = useRef<QrScanner | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [detected, setDetected] = useState(false);
 
   useEffect(() => {
     QrScanner.WORKER_PATH = qrScannerWorkerUrl as unknown as string;
@@ -47,6 +48,11 @@ export function QRScanner({ onScan, isActive, onActivate }: QRScannerProps) {
         videoRef.current,
         (result: { data: string }) => {
           // Debounce: stop after first read
+          try {
+            setDetected(true);
+            // breve feedback visual antes do onScan
+            setTimeout(() => setDetected(false), 800);
+          } catch {}
           onScan(result.data);
         },
         {
@@ -78,7 +84,7 @@ export function QRScanner({ onScan, isActive, onActivate }: QRScannerProps) {
 
   if (!isActive) {
     return (
-      <Card className="aspect-square bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center">
+      <Card className="w-full max-w-xl mx-auto aspect-square bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center">
         <CardContent className="text-center p-6">
           <i className="fas fa-camera text-4xl text-gray-400 mb-4"></i>
           <p className="text-gray-500 mb-4">Clique para ativar a câmera</p>
@@ -96,8 +102,8 @@ export function QRScanner({ onScan, isActive, onActivate }: QRScannerProps) {
   }
 
   return (
-    <Card className="aspect-square rounded-lg overflow-hidden">
-      <CardContent className="p-0 relative">
+    <Card className="w-full max-w-xl mx-auto aspect-square rounded-lg overflow-hidden">
+      <CardContent className="p-0 relative bg-black">
         {error ? (
           <div className="h-full flex items-center justify-center bg-gray-100">
             <div className="text-center p-6">
@@ -116,14 +122,21 @@ export function QRScanner({ onScan, isActive, onActivate }: QRScannerProps) {
           <>
             <video
               ref={videoRef}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain bg-black"
               autoPlay
               playsInline
               muted
               data-testid="video-camera-feed"
             />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-48 h-48 border-2 border-white rounded-lg"></div>
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div
+                className={
+                  `w-56 h-56 max-w-[75%] max-h-[75%] rounded-lg shadow-[0_0_0_9999px_rgba(0,0,0,0.35)] ` +
+                  (detected
+                    ? "border-4 border-emerald-400 ring-4 ring-emerald-300/40 transition-all duration-200"
+                    : "border-2 border-white/90")
+                }
+              ></div>
             </div>
           </>
         )}
