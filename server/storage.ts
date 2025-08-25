@@ -9,7 +9,7 @@ import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
 import { eq, desc, asc, and, or, ilike, sql, count } from "drizzle-orm";
 import { randomUUID } from "crypto";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 
 let _db: ReturnType<typeof drizzle> | undefined;
 function getDb() {
