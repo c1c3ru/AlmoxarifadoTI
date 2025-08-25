@@ -9,7 +9,7 @@ import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
 import { eq, desc, asc, and, or, ilike, sql, count } from "drizzle-orm";
 import { randomUUID } from "crypto";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 
 let _db: ReturnType<typeof drizzle> | undefined;
 function getDb() {
@@ -59,6 +59,13 @@ export interface IStorage {
     todayMovements: number;
     activeUsers: number;
   }>;
+  updateUserLastSeen(userId: string): Promise<void>;
+  getOnlineUsers(windowMinutes?: number): Promise<Array<{
+    id: string;
+    username: string;
+    role: string;
+    lastSeenAt: Date;
+  }>>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -170,6 +177,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getItemByCode(code: string): Promise<ItemWithCategory | undefined> {
+    const sanitized = (code ?? "").trim();
     const result = await getDb().select({
       id: items.id,
       internalCode: items.internalCode,
@@ -186,7 +194,7 @@ export class DatabaseStorage implements IStorage {
     })
     .from(items)
     .leftJoin(categories, eq(items.categoryId, categories.id))
-    .where(eq(items.internalCode, code))
+    .where(eq(items.internalCode, sanitized))
     .limit(1);
     
     return result[0] as ItemWithCategory;
@@ -323,28 +331,49 @@ export class DatabaseStorage implements IStorage {
 
   // Movements
   async createMovement(movement: InsertMovement): Promise<Movement> {
-    const result = await getDb().insert(movements).values(movement).returning();
-    
-    // Update item stock
-    const newStock = movement.type === "entrada" 
-      ? movement.previousStock + movement.quantity
-      : movement.previousStock - movement.quantity;
-      
-    await getDb().update(items).set({
-      currentStock: newStock,
-      updatedAt: sql`now()`,
-    }).where(eq(items.id, movement.itemId));
-    
-    return result[0];
+    // Executa em transação para garantir consistência de estoque
+    return await getDb().transaction(async (tx) => {
+      // Busca o item atual para obter o estoque real
+      const [itemRow] = await tx
+        .select({
+          id: items.id,
+          currentStock: items.currentStock,
+        })
+        .from(items)
+        .where(eq(items.id, movement.itemId));
+
+      if (!itemRow) {
+        throw new Error("Item not found");
+      }
+
+      const previousStock = itemRow.currentStock ?? 0;
+      const computedNewStock = movement.type === "entrada"
+        ? previousStock + movement.quantity
+        : previousStock - movement.quantity;
+
+      if (computedNewStock < 0) {
+        throw new Error("Insufficient stock: operation would result in negative stock");
+      }
+
+      // Insere a movimentação usando os valores calculados no servidor
+      const [inserted] = await tx.insert(movements).values({
+        ...movement,
+        previousStock,
+        newStock: computedNewStock,
+      }).returning();
+
+      // Atualiza o estoque do item
+      await tx.update(items).set({
+        currentStock: computedNewStock,
+        updatedAt: sql`now()`,
+      }).where(eq(items.id, movement.itemId));
+
+      return inserted as Movement;
+    });
   }
 
   async getMovements(itemId?: string, limit: number = 50): Promise<MovementWithDetails[]> {
-    let whereCondition = undefined;
-    if (itemId) {
-      whereCondition = eq(movements.itemId, itemId);
-    }
-
-    const result = await getDb().select({
+    const baseSelect = getDb().select({
       id: movements.id,
       itemId: movements.itemId,
       userId: movements.userId,
@@ -362,10 +391,15 @@ export class DatabaseStorage implements IStorage {
     .from(movements)
     .leftJoin(items, eq(movements.itemId, items.id))
     .leftJoin(users, eq(movements.userId, users.id))
-    .leftJoin(categories, eq(items.categoryId, categories.id))
-    .where(whereCondition)
-    .orderBy(desc(movements.createdAt))
-    .limit(limit);
+    .leftJoin(categories, eq(items.categoryId, categories.id));
+
+    const qb = itemId
+      ? baseSelect.where(eq(movements.itemId, itemId))
+      : baseSelect;
+
+    const result = await qb
+      .orderBy(desc(movements.createdAt))
+      .limit(limit);
     
     return result as MovementWithDetails[];
   }
@@ -376,6 +410,8 @@ export class DatabaseStorage implements IStorage {
     todayMovements: number;
     activeUsers: number;
   }> {
+    // Garante existência da tabela de presença antes de consultar
+    await this.ensureUserActivityTable();
     const [totalItemsResult] = await getDb().select({ count: count() }).from(items);
     
     const [lowStockResult] = await getDb().select({ count: count() })
@@ -388,16 +424,64 @@ export class DatabaseStorage implements IStorage {
       .from(movements)
       .where(sql`${movements.createdAt} >= ${today}`);
     
-    const [activeUsersResult] = await getDb().select({ count: count() })
-      .from(users)
-      .where(eq(users.isActive, true));
+    // Usuários "online" por heartbeat: usuários com last_seen_at recente na tabela user_activity
+    const activeUsersResult = await getDb().execute(
+      sql`SELECT COUNT(*)::int AS count FROM user_activity WHERE last_seen_at >= now() - interval '10 minutes'`
+    );
+    const activeUsersRows = (activeUsersResult as any).rows ?? activeUsersResult;
+    const activeCount = Array.isArray(activeUsersRows) ? activeUsersRows[0]?.count : 0;
     
     return {
       totalItems: totalItemsResult.count,
       lowStock: lowStockResult.count,
       todayMovements: todayMovementsResult.count,
-      activeUsers: activeUsersResult.count,
+      activeUsers: Number(activeCount) || 0,
     };
+  }
+
+  async getOnlineUsers(windowMinutes: number = 10): Promise<Array<{
+    id: string;
+    username: string;
+    role: string;
+    lastSeenAt: Date;
+  }>> {
+    // Garante existência da tabela de presença antes de consultar
+    await this.ensureUserActivityTable();
+    const execResult = await getDb().execute(sql`
+      SELECT u.id, u.username, u.role, ua.last_seen_at AS "lastSeenAt"
+      FROM user_activity ua
+      JOIN ${users} u ON u.id = ua.user_id
+      WHERE ua.last_seen_at >= now() - (interval '1 minute' * ${windowMinutes})
+      ORDER BY ua.last_seen_at DESC
+    `);
+    const rows = (execResult as any).rows ?? execResult;
+    const out = (rows as any[]).map((r: any) => ({
+      id: String(r.id),
+      username: String(r.username),
+      role: String(r.role),
+      lastSeenAt: new Date(r.lastSeenAt ?? r.last_seen_at),
+    }));
+    return out;
+  }
+
+  async updateUserLastSeen(userId: string): Promise<void> {
+    // Cria tabela de atividade se não existir e faz upsert do last_seen_at
+    await getDb().transaction(async (tx) => {
+      await tx.execute(sql`CREATE TABLE IF NOT EXISTS user_activity (
+        user_id uuid PRIMARY KEY,
+        last_seen_at timestamp NOT NULL DEFAULT now()
+      )`);
+
+      await tx.execute(sql`INSERT INTO user_activity (user_id, last_seen_at) VALUES (${userId}, now())
+        ON CONFLICT (user_id) DO UPDATE SET last_seen_at = EXCLUDED.last_seen_at`);
+    });
+  }
+
+  private async ensureUserActivityTable(): Promise<void> {
+    await getDb().execute(sql`CREATE TABLE IF NOT EXISTS user_activity (
+      user_id uuid PRIMARY KEY,
+      last_seen_at timestamp NOT NULL DEFAULT now()
+    )`);
   }
 }
 

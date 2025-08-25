@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { buildApiUrl } from "@/lib/url";
 import { useQuery } from "@tanstack/react-query";
 import { MainLayout } from "@/components/layout/main-layout";
 import { Card, CardContent } from "@/components/ui/card";

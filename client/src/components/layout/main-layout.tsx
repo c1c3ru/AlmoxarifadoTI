@@ -2,6 +2,8 @@ import { Sidebar } from "./sidebar";
 import { Topbar } from "./topbar";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { cn } from "@/lib/utils";
+import { useEffect, useRef } from "react";
+import { apiRequest } from "@/lib/queryClient";
 
 interface MainLayoutProps {
   title: string;
@@ -19,6 +21,42 @@ export function MainLayout({
   showAddButton = true 
 }: MainLayoutProps) {
   const { isCollapsed, isMobile } = useSidebar();
+  const heartbeatRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    let stopped = false;
+    const sendHeartbeat = async () => {
+      try {
+        await apiRequest("POST", "/api/heartbeat");
+      } catch {}
+    };
+    const start = () => {
+      if (stopped) return;
+      // Envia imediatamente e agenda a cada 60s enquanto a aba estiver visível
+      sendHeartbeat();
+      heartbeatRef.current = window.setInterval(() => {
+        if (document.visibilityState === 'visible') sendHeartbeat();
+      }, 60000);
+    };
+    const stop = () => {
+      stopped = true;
+      if (heartbeatRef.current) window.clearInterval(heartbeatRef.current);
+      heartbeatRef.current = null;
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible' && !heartbeatRef.current) start();
+      if (document.visibilityState !== 'visible' && heartbeatRef.current) {
+        window.clearInterval(heartbeatRef.current);
+        heartbeatRef.current = null;
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    start();
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility);
+      stop();
+    };
+  }, []);
   
   return (
     <div className="flex min-h-screen bg-gray-50">

@@ -279,35 +279,32 @@ export default function Search() {
             </span>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
             {searchResults.map((item) => (
-              <Card
-                key={item.id}
-                className="bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 group overflow-hidden"
-                data-testid={`search-result-${item.id}`}
-              >
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center space-x-3 flex-1">
-                      <div className="w-14 h-14 bg-gradient-to-br from-blue-100 to-purple-100 rounded-2xl flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
-                        <i className={`${item.category?.icon || 'fa-solid fa-cube'} text-blue-600 text-lg`}></i>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-bold text-gray-900 text-lg mb-1 group-hover:text-blue-700 transition-colors truncate" data-testid={`search-item-name-${item.id}`}>
-                          {item.name}
-                        </h4>
-                        <div className="flex items-center space-x-2">
-                          <div className="bg-gray-100 px-2 py-1 rounded-lg text-xs font-mono text-gray-700" data-testid={`search-item-code-${item.id}`}>
-                            {item.internalCode}
-                          </div>
-                        </div>
+              <Card key={item.id} className="bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 h-full flex flex-col" data-testid={`search-item-${item.id}`}>
+                <CardContent className="p-4 sm:p-6 flex flex-col h-full">
+                  {/* Cabeçalho com título e ícone */}
+                  <div className="flex items-start space-x-3 mb-4">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-100 to-purple-100 rounded-xl flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow flex-shrink-0">
+                      <i className={`${item.category?.icon || 'fa-solid fa-cube'} text-blue-600 text-sm sm:text-base`}></i>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-bold text-gray-900 text-sm sm:text-base mb-1 group-hover:text-blue-700 transition-colors leading-tight" data-testid={`search-item-name-${item.id}`}>
+                        {item.name}
+                      </h4>
+                      <div className="bg-gray-100 px-2 py-1 rounded text-xs font-mono text-gray-700 inline-block" data-testid={`search-item-code-${item.id}`}>
+                        {item.internalCode}
                       </div>
                     </div>
+                  </div>
+                  
+                  {/* QR Code compacto */}
+                  <div className="flex justify-center mb-3 py-2 bg-gray-50 rounded">
                     <div className="flex items-center space-x-2">
-                      <div className="p-1 bg-white rounded-lg shadow-sm border">
+                      <div className="p-1 bg-white rounded shadow-sm border">
                         <QRCodeGenerator 
                           value={`ITEM:${item.id}:${item.internalCode}`}
-                          size={24}
+                          size={32}
                           className="cursor-pointer hover:scale-110 transition-transform"
                         />
                       </div>
@@ -318,7 +315,7 @@ export default function Search() {
                               variant="ghost"
                               size="sm"
                               onClick={() => handleShowQR(item)}
-                              className="w-8 h-8 p-0 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
+                              className="w-6 h-6 p-0 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
                               data-testid={`button-qr-modal-${item.id}`}
                               aria-label="Ampliar QR Code"
                             >
@@ -331,69 +328,69 @@ export default function Search() {
                     </div>
                   </div>
                   
-                  <div className="space-y-3 mb-4">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-500 flex items-center">
-                        <i className="fa-solid fa-tags mr-2 text-purple-500"></i>
-                        Categoria:
-                      </span>
-                      <Badge className="bg-gradient-to-r from-purple-100 to-blue-100 text-purple-800 border-purple-200 font-medium">
+                  {/* Informações do item - layout flex crescente */}
+                  <div className="flex-1 space-y-2 mb-3">
+                    {/* Categoria */}
+                    <div className="flex items-center gap-2">
+                      <i className="fa-solid fa-tags text-purple-500 text-xs"></i>
+                      <span className="text-xs text-gray-600 font-medium">Categoria:</span>
+                      <Badge className="bg-gradient-to-r from-purple-100 to-blue-100 text-purple-800 border-purple-200 font-medium text-xs ml-auto">
                         <i className={`${item.category?.icon || 'fa-solid fa-tag'} mr-1 text-xs`}></i>
                         {item.category?.name}
                       </Badge>
                     </div>
                     
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-500 flex items-center">
-                        <i className="fa-solid fa-warehouse mr-2 text-green-500"></i>
-                        Estoque:
-                      </span>
-                      <div className={`px-3 py-1 rounded-lg font-bold ${
+                    {/* Estoque */}
+                    <div className="flex items-center gap-2">
+                      <i className="fa-solid fa-warehouse text-green-500 text-xs"></i>
+                      <span className="text-xs text-gray-600 font-medium">Estoque:</span>
+                      <div className={`px-2 py-1 rounded font-bold text-xs ml-auto ${
                         item.currentStock <= item.minStock 
                           ? 'bg-red-100 text-red-800' 
                           : 'bg-green-100 text-green-800'
                       }`}>
-                        {item.currentStock} unidades
+                        {item.currentStock} un
                       </div>
                     </div>
                     
+                    {/* Localização */}
                     {item.location && (
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-500 flex items-center">
-                          <i className="fa-solid fa-location-dot mr-2 text-orange-500"></i>
-                          Localização:
+                      <div className="flex items-start gap-2">
+                        <i className="fa-solid fa-location-dot text-orange-500 text-xs mt-0.5"></i>
+                        <span className="text-xs text-gray-600 font-medium">Local:</span>
+                        <span className="font-medium text-gray-900 text-xs text-right ml-auto leading-tight">
+                          {item.location}
                         </span>
-                        <span className="font-medium text-gray-900 text-sm">{item.location}</span>
                       </div>
                     )}
                     
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-500 flex items-center">
-                        <i className="fa-solid fa-info-circle mr-2 text-blue-500"></i>
-                        Status:
-                      </span>
+                    {/* Status */}
+                    <div className="flex items-center gap-2">
+                      <i className="fa-solid fa-info-circle text-blue-500 text-xs"></i>
+                      <span className="text-xs text-gray-600 font-medium">Status:</span>
                       <Badge
-                        className={`${getStatusColor(item.status)} font-medium border px-3 py-1`}
+                        className={`${getStatusColor(item.status)} font-medium border px-2 py-1 text-xs ml-auto`}
                         data-testid={`search-item-status-${item.id}`}
                       >
-                        <i className={`${getStatusIcon(item.status)} mr-2 text-xs`}></i>
+                        <i className={`${getStatusIcon(item.status)} mr-1 text-xs`}></i>
                         {getStatusLabel(item.status)}
                       </Badge>
                     </div>
                   </div>
                   
-                  <div className="flex space-x-2 pt-4 border-t border-gray-100">
+                  <div className="flex flex-col space-y-2 pt-3 border-t border-gray-100 mt-auto">
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Button
                             onClick={() => handleEdit(item)}
-                            className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-medium shadow-sm"
+                            className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-medium shadow-sm text-sm"
                             data-testid={`button-edit-${item.id}`}
                             aria-label="Editar item"
                           >
                             <i className="fa-solid fa-edit mr-2 text-sm"></i>
-                            Editar
+                            <span className="hidden sm:inline">Editar</span>
+                            <span className="sm:hidden">Editar Item</span>
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent>Editar item</TooltipContent>
@@ -405,12 +402,13 @@ export default function Search() {
                         <TooltipTrigger asChild>
                           <Button
                             onClick={() => handleMovement(item)}
-                            className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-medium shadow-sm"
+                            className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-medium shadow-sm text-sm"
                             data-testid={`button-movement-${item.id}`}
                             aria-label="Registrar movimentação"
                           >
                             <i className="fa-solid fa-arrows-rotate mr-2 text-sm"></i>
-                            Mover
+                            <span className="hidden sm:inline">Mover</span>
+                            <span className="sm:hidden">Movimentação</span>
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent>Registrar movimentação</TooltipContent>
@@ -424,11 +422,12 @@ export default function Search() {
                             variant="outline"
                             size="sm"
                             onClick={() => handleShowQR(item)}
-                            className="px-3 py-2 border-2 border-gray-200 hover:border-blue-300 hover:bg-blue-50"
+                            className="sm:px-3 px-4 py-2 border-2 border-gray-200 hover:border-blue-300 hover:bg-blue-50 sm:flex-none flex-1"
                             data-testid={`button-view-${item.id}`}
                             aria-label="Ver detalhes"
                           >
-                            <i className="fa-solid fa-eye text-gray-600"></i>
+                            <i className="fa-solid fa-eye text-gray-600 sm:mr-0 mr-2"></i>
+                            <span className="sm:hidden">Ver Detalhes</span>
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent>Ver detalhes</TooltipContent>

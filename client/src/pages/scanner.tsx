@@ -15,6 +15,7 @@ import type { ItemWithCategory } from "@shared/schema";
 export default function Scanner() {
   const [isScanning, setIsScanning] = useState(false);
   const [scannedCode, setScannedCode] = useState<string | null>(null);
+  const [rawScannedCode, setRawScannedCode] = useState<string | null>(null);
   const [withdrawalQuantity, setWithdrawalQuantity] = useState(1);
   const [destination, setDestination] = useState("");
   
@@ -25,6 +26,11 @@ export default function Scanner() {
   const { data: scannedItem, isLoading: itemLoading } = useQuery<ItemWithCategory>({
     queryKey: ["/api/items/by-code", scannedCode],
     enabled: !!scannedCode,
+    queryFn: async () => {
+      if (!scannedCode) throw new Error("Código não definido");
+      const res = await apiRequest("GET", `/api/items/by-code/${encodeURIComponent(scannedCode)}`);
+      return res.json();
+    },
   });
 
   const createMovementMutation = useMutation({
@@ -57,10 +63,13 @@ export default function Scanner() {
       });
       queryClient.invalidateQueries({ queryKey: ["/api/items"] });
       queryClient.invalidateQueries({ queryKey: ["/api/movements"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/low-stock"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/recent-movements"] });
       
       // Reset form
       setScannedCode(null);
+      setRawScannedCode(null);
       setWithdrawalQuantity(1);
       setDestination("");
       setIsScanning(false);
@@ -75,8 +84,28 @@ export default function Scanner() {
   });
 
   const handleScan = (code: string) => {
-    setScannedCode(code);
-    setIsScanning(false);
+    try {
+      const raw = (code || "").trim();
+      // Tentar decodificar caso venha URL-encoded
+      const decoded = (() => {
+        try { return decodeURIComponent(raw); } catch { return raw; }
+      })();
+      // Extrair padrão ITEM:<uuid>:<internalCode> => usar apenas <internalCode>
+      let extracted = decoded;
+      const match = decoded.match(/^ITEM:([0-9a-fA-F-]{36}):(.+)$/);
+      if (match) {
+        extracted = match[2];
+      } else if (decoded.toUpperCase().startsWith("ITEM:")) {
+        // Fallback genérico: pegar o último segmento após ':'
+        const parts = decoded.split(":");
+        extracted = parts[parts.length - 1] || decoded;
+      }
+      extracted = extracted.trim().replace(/^"|"$/g, "");
+      setRawScannedCode(decoded);
+      setScannedCode(extracted);
+    } finally {
+      setIsScanning(false);
+    }
   };
 
   const handleConfirmWithdrawal = () => {
@@ -110,6 +139,7 @@ export default function Scanner() {
 
   const handleCancelScan = () => {
     setScannedCode(null);
+    setRawScannedCode(null);
     setWithdrawalQuantity(1);
     setDestination("");
     setIsScanning(false);
@@ -361,7 +391,7 @@ export default function Scanner() {
                   <div>
                     <p className="text-xl font-bold text-red-800 mb-1">Item não encontrado</p>
                     <p className="text-red-700 font-medium">
-                      O código "<strong>{scannedCode}</strong>" não corresponde a nenhum item cadastrado.
+                      O código "<strong>{rawScannedCode || scannedCode}</strong>" não corresponde a nenhum item cadastrado.
                     </p>
                   </div>
                 </div>

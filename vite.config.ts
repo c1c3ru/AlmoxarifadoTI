@@ -21,7 +21,7 @@ export default defineConfig({
       "@": path.resolve(import.meta.dirname, "client", "src"),
       "@shared": path.resolve(import.meta.dirname, "shared"),
       "@assets": path.resolve(import.meta.dirname, "attached_assets"),
-      "@publicAssets": path.resolve(import.meta.dirname, "assests"),
+      "@publicAssets": path.resolve(import.meta.dirname, "assets"),
     },
   },
   root: path.resolve(import.meta.dirname, "client"),
@@ -33,7 +33,7 @@ export default defineConfig({
     fs: {
       strict: true,
       allow: [
-        path.resolve(import.meta.dirname, "assests"),
+        path.resolve(import.meta.dirname, "assets"),
       ],
       deny: ["**/.*"],
     },

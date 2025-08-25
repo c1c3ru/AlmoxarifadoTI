@@ -177,31 +177,31 @@ export default function Items() {
             <table className="w-full">
               <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
                 <tr>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
+                  <th className="px-4 py-3 sm:px-6 sm:py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
                     <i className="fa-solid fa-cube mr-2 text-blue-500"></i>
                     Item
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
+                  <th className="hidden sm:table-cell px-4 py-3 sm:px-6 sm:py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
                     <i className="fa-solid fa-barcode mr-2 text-green-500"></i>
                     Código
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
+                  <th className="hidden md:table-cell px-4 py-3 sm:px-6 sm:py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
                     <i className="fa-solid fa-tags mr-2 text-purple-500"></i>
                     Categoria
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
+                  <th className="hidden md:table-cell px-4 py-3 sm:px-6 sm:py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
                     <i className="fa-solid fa-warehouse mr-2 text-orange-500"></i>
                     Estoque
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
+                  <th className="hidden sm:table-cell px-4 py-3 sm:px-6 sm:py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
                     <i className="fa-solid fa-info-circle mr-2 text-blue-500"></i>
                     Status
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
+                  <th className="hidden md:table-cell px-4 py-3 sm:px-6 sm:py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
                     <i className="fa-solid fa-qrcode mr-2 text-indigo-500"></i>
                     QR Code
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
+                  <th className="px-4 py-3 sm:px-6 sm:py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
                     <i className="fa-solid fa-cog mr-2 text-gray-500"></i>
                     Ações
                   </th>
@@ -256,23 +256,23 @@ export default function Items() {
                       className="hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-200 group"
                       data-testid={`item-row-${item.id}`}
                     >
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-3 sm:px-6 sm:py-4">
                         <div className="flex items-center space-x-4">
                           <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-purple-100 rounded-xl flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
                             <i className={`${item.category?.icon || 'fa-solid fa-cube'} text-blue-600 text-lg`}></i>
                           </div>
                           <div>
-                            <p className="font-semibold text-gray-900 group-hover:text-blue-700 transition-colors" data-testid={`item-name-${item.id}`}>
+                            <p className="font-semibold text-gray-900 group-hover:text-blue-700 transition-colors truncate max-w-[160px] sm:max-w-[240px] md:max-w-none" data-testid={`item-name-${item.id}`}>
                               {item.name}
                             </p>
                             {item.serialNumber && (
-                              <p className="text-sm text-gray-500 flex items-center mt-1">
+                              <p className="text-sm text-gray-500 flex items-center mt-1 truncate max-w-[200px] sm:max-w-[260px] md:max-w-none">
                                 <i className="fa-solid fa-hashtag mr-1 text-xs"></i>
                                 {item.serialNumber}
                               </p>
                             )}
                             {item.location && (
-                              <p className="text-xs text-gray-400 flex items-center mt-1">
+                              <p className="text-xs text-gray-400 flex items-center mt-1 truncate max-w-[200px] sm:max-w-[260px] md:max-w-none">
                                 <i className="fa-solid fa-location-dot mr-1"></i>
                                 {item.location}
                               </p>
@@ -280,12 +280,12 @@ export default function Items() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="hidden sm:table-cell px-4 py-3 sm:px-6 sm:py-4">
                         <div className="bg-gray-50 px-3 py-1 rounded-lg border font-mono text-sm text-gray-900" data-testid={`item-code-${item.id}`}>
                           {item.internalCode}
                         </div>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="hidden md:table-cell px-4 py-3 sm:px-6 sm:py-4">
                         <Badge
                           className="bg-gradient-to-r from-purple-100 to-blue-100 text-purple-800 border-purple-200 font-medium"
                           data-testid={`item-category-${item.id}`}
@@ -294,7 +294,7 @@ export default function Items() {
                           {item.category?.name}
                         </Badge>
                       </td>
-                      <td className="px-6 py-4" data-testid={`item-stock-${item.id}`}>
+                      <td className="hidden md:table-cell px-4 py-3 sm:px-6 sm:py-4" data-testid={`item-stock-${item.id}`}>
                         <div className="flex items-center space-x-2">
                           <div className={`px-3 py-1 rounded-lg font-bold text-lg ${
                             item.currentStock <= item.minStock 
@@ -314,7 +314,7 @@ export default function Items() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="hidden sm:table-cell px-4 py-3 sm:px-6 sm:py-4">
                         <Badge
                           className={`${getStatusColor(item.status)} font-medium flex items-center w-fit`}
                           data-testid={`item-status-${item.id}`}
@@ -323,7 +323,7 @@ export default function Items() {
                           {getStatusLabel(item.status)}
                         </Badge>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="hidden md:table-cell px-4 py-3 sm:px-6 sm:py-4">
                         <div className="flex items-center space-x-2">
                           <div className="p-1 bg-white rounded-lg shadow-sm border">
                             <QRCodeGenerator 
@@ -351,8 +351,8 @@ export default function Items() {
                           </TooltipProvider>
                         </div>
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center space-x-2">
+                      <td className="px-4 py-3 sm:px-6 sm:py-4">
+                        <div className="flex flex-wrap items-center gap-2">
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>

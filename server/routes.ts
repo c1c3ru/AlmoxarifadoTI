@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import { 
   insertUserSchema, insertCategorySchema, insertItemSchema, insertMovementSchema 
 } from "@shared/schema";
@@ -16,6 +16,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     standardHeaders: true,
     legacyHeaders: false,
     message: { message: "Muitas tentativas. Tente novamente mais tarde." },
+  });
+
+  // Lista de usuários online com última atividade
+  app.get("/api/users/online", authenticateJWT, async (req, res) => {
+    try {
+      const windowMinutes = Number(req.query.windowMinutes || 10);
+      const online = await storage.getOnlineUsers(windowMinutes);
+      res.json(online);
+    } catch (error) {
+      console.error("Get online users error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Heartbeat para presença online
+  app.post("/api/heartbeat", authenticateJWT, async (req, res) => {
+    try {
+      const user = (req as any).user as { sub: string } | undefined;
+      if (!user?.sub) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      await storage.updateUserLastSeen(user.sub);
+      return res.status(204).send();
+    } catch (error) {
+      console.error("Heartbeat error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
   });
 
   const importLimiter = rateLimit({

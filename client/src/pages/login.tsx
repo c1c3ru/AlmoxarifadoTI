@@ -1,4 +1,5 @@
 import { useState } from "react";
+import ifceLogo from "@publicAssets/ifce_logo.png";
 import { Link } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -105,7 +106,7 @@ export default function Login() {
         <CardHeader className="text-center pb-6">
           <div className="flex items-center justify-center gap-3 mb-2">
             <img
-              src="/assests/ifce_logo.png"
+              src={ifceLogo}
               alt="IFCE"
               className="h-10 w-10 object-contain drop-shadow-sm"
               loading="eager"

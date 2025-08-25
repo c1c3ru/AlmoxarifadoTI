@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { buildApiUrl } from "@/lib/url";
 import { useQuery } from "@tanstack/react-query";
 import { MainLayout } from "@/components/layout/main-layout";
 import { MovementModal } from "@/components/modals/movement-modal";
@@ -21,9 +22,41 @@ export default function Movements() {
   });
 
   const itemIdParam = selectedItemFilter === ALL ? undefined : selectedItemFilter;
-  const { data: movements = [], isLoading } = useQuery<MovementWithDetails[]>({
-    queryKey: ["/api/movements", { itemId: itemIdParam }],
+  const { data: movements = [], isLoading, isError, error } = useQuery<MovementWithDetails[]>({
+    queryKey: ["/api/movements", { itemId: itemIdParam, limit: 100 }],
+    // Garante atualização ao entrar na página mesmo com staleTime global infinito
+    refetchOnMount: "always",
   });
+
+  const normalizeIcon = (icon?: string, fallback: string = 'fa-solid fa-box') => {
+    if (!icon || typeof icon !== 'string' || icon.trim().length === 0) return fallback;
+    const v = icon.trim();
+    // Se já vier completo (ex.: "fa-solid fa-laptop"), usa direto
+    if (v.startsWith('fa-')) return `fa-solid ${v}`;
+    if (v.startsWith('fa ')) return `fa-solid ${v.slice(3)}`;
+    if (v.startsWith('fa-solid') || v.startsWith('fa-regular') || v.startsWith('fa-brands')) return v;
+    // Se vier só o nome (ex.: "fa-laptop" sem estilo) ou "laptop", normaliza com fa-solid
+    return v.includes('fa-') ? `fa-solid ${v}` : `fa-solid fa-${v}`;
+  };
+
+  // Itens recentes com base nas movimentações (únicos por itemId)
+  const recentItems = (() => {
+    const seen = new Set<string>();
+    const result: Array<{ id: string; name?: string; internalCode?: string; icon?: string } > = [];
+    for (const mv of movements) {
+      const id = mv.itemId as string;
+      if (!id || seen.has(id)) continue;
+      seen.add(id);
+      result.push({
+        id,
+        name: mv.item?.name,
+        internalCode: mv.item?.internalCode,
+        icon: mv.category?.icon,
+      });
+      if (result.length >= 10) break;
+    }
+    return result;
+  })();
 
   const handleNewMovement = (type: "entrada" | "saida", item?: ItemWithCategory) => {
     setMovementType(type);
@@ -136,14 +169,43 @@ export default function Movements() {
                   <SelectValue placeholder="Filtrar por item" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={ALL}>Todos os itens</SelectItem>
+                  <div className="px-2 py-1 text-xs text-gray-500">Filtro</div>
+                  <SelectItem value={ALL}>
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded bg-gray-200 flex items-center justify-center">
+                        <i className="fa-solid fa-list text-gray-600 text-xs"></i>
+                      </div>
+                      <span>Todos os itens</span>
+                    </div>
+                  </SelectItem>
+
+                  {recentItems.length > 0 && (
+                    <div className="px-2 py-1 text-xs text-gray-500 mt-2">Recentes</div>
+                  )}
+                  {recentItems.map((it) => (
+                    <SelectItem key={`recent-${it.id}`} value={it.id}>
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded bg-blue-100 flex items-center justify-center">
+                          <i className={`${normalizeIcon(it.icon)} text-blue-600 text-xs`}></i>
+                        </div>
+                        <span className="truncate">{it.name} ({it.internalCode})</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+
+                  <div className="px-2 py-1 text-xs text-gray-500 mt-2">Todos</div>
                   {items
                     .filter((item) => typeof item.id === 'string' && item.id.trim().length > 0)
                     .map((item) => (
-                    <SelectItem key={item.id} value={item.id}>
-                      {item.name} ({item.internalCode})
-                    </SelectItem>
-                  ))}
+                      <SelectItem key={item.id} value={item.id}>
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 rounded bg-gray-100 flex items-center justify-center">
+                            <i className={`${normalizeIcon(item.category?.icon)} text-gray-600 text-xs`}></i>
+                          </div>
+                          <span className="truncate">{item.name} ({item.internalCode})</span>
+                        </div>
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </div>
@@ -163,6 +225,11 @@ export default function Movements() {
                   <Skeleton className="h-6 w-16" />
                 </div>
               ))}
+            </div>
+          ) : isError ? (
+            <div className="text-center py-8">
+              <p className="text-red-600 font-medium">Erro ao carregar movimentações.</p>
+              <p className="text-sm text-gray-500 mt-1">{(error as any)?.message || "Tente novamente mais tarde."}</p>
             </div>
           ) : movements.length === 0 ? (
             <div className="text-center py-16">
@@ -211,6 +278,9 @@ export default function Movements() {
                     
                     <div className="flex-1">
                       <div className="flex items-center space-x-3 mb-2">
+                        <div className="w-6 h-6 rounded bg-blue-100 flex items-center justify-center shrink-0">
+                          <i className={`${normalizeIcon(movement.category?.icon)} text-blue-600 text-xs`}></i>
+                        </div>
                         <p className="font-bold text-gray-900 text-lg group-hover:text-blue-700 transition-colors" data-testid={`movement-item-${movement.id}`}>
                           {movement.item?.name}
                         </p>

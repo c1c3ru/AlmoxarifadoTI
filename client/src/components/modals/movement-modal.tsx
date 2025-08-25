@@ -94,7 +94,9 @@ export function MovementModal({ open, onOpenChange, item, initialType }: Movemen
       });
       queryClient.invalidateQueries({ queryKey: ["/api/items"] });
       queryClient.invalidateQueries({ queryKey: ["/api/movements"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/low-stock"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/recent-movements"] });
       onOpenChange(false);
       form.reset();
       setSelectedItemLocal(null);
@@ -147,7 +149,10 @@ export function MovementModal({ open, onOpenChange, item, initialType }: Movemen
                     <SelectContent>
                       {items.map((it) => (
                         <SelectItem key={it.id} value={String(it.id)}>
-                          {it.name} ({it.internalCode})
+                          <div className="flex items-center space-x-2">
+                            <i className={`${it.category?.icon || 'fa-solid fa-cube'} text-purple-500`}></i>
+                            <span>{it.name} ({it.internalCode})</span>
+                          </div>
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -192,8 +197,18 @@ export function MovementModal({ open, onOpenChange, item, initialType }: Movemen
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="entrada">Entrada</SelectItem>
-                      <SelectItem value="saida">Saída</SelectItem>
+                      <SelectItem value="entrada">
+                        <div className="flex items-center space-x-2">
+                          <i className="fa-solid fa-arrow-down text-green-500"></i>
+                          <span>Entrada</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="saida">
+                        <div className="flex items-center space-x-2">
+                          <i className="fa-solid fa-arrow-up text-red-500"></i>
+                          <span>Saída</span>
+                        </div>
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -211,7 +226,9 @@ export function MovementModal({ open, onOpenChange, item, initialType }: Movemen
                     <Input
                       type="number"
                       min="1"
-                      max={movementType === "saida" && activeItem ? activeItem.currentStock : undefined}
+                      max={movementType === "saida"
+                        ? (activeItem ? activeItem.currentStock : 0)
+                        : 99999}
                       {...field}
                       data-testid="input-movement-quantity"
                     />
@@ -220,6 +237,11 @@ export function MovementModal({ open, onOpenChange, item, initialType }: Movemen
                   {movementType === "saida" && activeItem && (
                     <p className="text-xs text-gray-500">
                       Máximo disponível: {activeItem.currentStock} unidades
+                    </p>
+                  )}
+                  {movementType === "entrada" && (
+                    <p className="text-xs text-gray-500">
+                      Máximo permitido: 99.999 unidades
                     </p>
                   )}
                 </FormItem>

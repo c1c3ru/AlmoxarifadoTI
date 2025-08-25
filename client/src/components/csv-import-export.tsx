@@ -298,7 +298,7 @@ Monitor LED 19,"Monitor LED 19 polegadas",8,2,"Sala B - Mesa 1"`;
             Importar CSV
           </Button>
         </DialogTrigger>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white shadow-2xl border border-gray-200">
           <DialogHeader>
             <DialogTitle>Importar Inventário via CSV</DialogTitle>
             <DialogDescription>

@@ -13,9 +13,19 @@ interface DashboardStats {
   activeUsers: number;
 }
 
+interface OnlineUser {
+  id: string;
+  username: string;
+  role: string;
+  lastSeenAt: string | Date;
+}
+
 export default function Dashboard() {
   const { data: stats, isLoading: statsLoading } = useQuery<DashboardStats>({
     queryKey: ["/api/dashboard/stats"],
+    // Atualiza periodicamente para refletir usuários online
+    refetchInterval: 60000,
+    refetchOnWindowFocus: true,
   });
 
   const { data: lowStockItems = [], isLoading: lowStockLoading } = useQuery<ItemWithCategory[]>({
@@ -28,6 +38,12 @@ export default function Dashboard() {
 
   const { data: categories = [] } = useQuery<(any & { itemCount: number })[]>({
     queryKey: ["/api/categories/with-counts"],
+  });
+
+  const { data: onlineUsers = [], isLoading: onlineLoading } = useQuery<OnlineUser[]>({
+    queryKey: ["/api/users/online"],
+    refetchInterval: 60000,
+    refetchOnWindowFocus: true,
   });
 
   const formatTimestamp = (timestamp: string | Date) => {
@@ -143,6 +159,53 @@ export default function Dashboard() {
             <div className="absolute bottom-0 right-0 w-20 h-20 bg-violet-200/30 rounded-full -mb-10 -mr-10"></div>
           </CardContent>
         </Card>
+
+        {/* Online Users */}
+        <Card className="bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+          <CardContent className="p-6">
+            <div className="flex items-center space-x-3 mb-6">
+              <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-violet-600 rounded-lg flex items-center justify-center">
+                <i className="fa-solid fa-signal text-white text-sm"></i>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900">Usuários Online</h3>
+            </div>
+            <div className="space-y-3">
+              {onlineLoading ? (
+                Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="flex items-center space-x-4 p-3 rounded-xl">
+                    <Skeleton className="w-10 h-10 rounded-full" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-4 w-1/3" />
+                      <Skeleton className="h-3 w-1/4" />
+                    </div>
+                  </div>
+                ))
+              ) : onlineUsers.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  Nenhum usuário online no momento
+                </div>
+              ) : (
+                onlineUsers.slice(0, 8).map((u) => (
+                  <div key={u.id} className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition-all duration-200">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 rounded-full bg-violet-100 text-violet-700 flex items-center justify-center font-semibold">
+                        {u.username.slice(0, 2).toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">{u.username}</p>
+                        <p className="text-xs text-gray-500">{u.role}</p>
+                      </div>
+                    </div>
+                    <div className="text-right text-xs text-gray-500">
+                      Última atividade: {formatTimestamp(u.lastSeenAt)}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
       </div>
 
       {/* Critical Alerts Section */}
