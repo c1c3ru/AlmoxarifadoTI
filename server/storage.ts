@@ -415,15 +415,20 @@ export class DatabaseStorage implements IStorage {
       .from(movements)
       .where(sql`${movements.createdAt} >= ${today}`);
     
-    const [activeUsersResult] = await getDb().select({ count: count() })
-      .from(users)
-      .where(eq(users.isActive, true));
+    // Usuários "online": usuários que tiveram atividade recente (ex.: qualquer requisição de movimentação)
+    // Critério: movimentações nos últimos 10 minutos por usuário (distinct)
+    const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
+    const [activeUsersResult] = await getDb().select({
+      count: sql<number>`COUNT(DISTINCT ${movements.userId})`,
+    })
+      .from(movements)
+      .where(sql`${movements.createdAt} >= ${tenMinutesAgo}`);
     
     return {
       totalItems: totalItemsResult.count,
       lowStock: lowStockResult.count,
       todayMovements: todayMovementsResult.count,
-      activeUsers: activeUsersResult.count,
+      activeUsers: Number(activeUsersResult.count) || 0,
     };
   }
 }
