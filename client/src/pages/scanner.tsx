@@ -63,7 +63,9 @@ export default function Scanner() {
       });
       queryClient.invalidateQueries({ queryKey: ["/api/items"] });
       queryClient.invalidateQueries({ queryKey: ["/api/movements"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/low-stock"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/recent-movements"] });
       
       // Reset form
       setScannedCode(null);

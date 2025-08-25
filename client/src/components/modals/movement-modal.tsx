@@ -94,7 +94,9 @@ export function MovementModal({ open, onOpenChange, item, initialType }: Movemen
       });
       queryClient.invalidateQueries({ queryKey: ["/api/items"] });
       queryClient.invalidateQueries({ queryKey: ["/api/movements"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/low-stock"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/recent-movements"] });
       onOpenChange(false);
       form.reset();
       setSelectedItemLocal(null);
@@ -224,7 +226,9 @@ export function MovementModal({ open, onOpenChange, item, initialType }: Movemen
                     <Input
                       type="number"
                       min="1"
-                      max={movementType === "saida" && activeItem ? activeItem.currentStock : undefined}
+                      max={movementType === "saida"
+                        ? (activeItem ? activeItem.currentStock : 0)
+                        : 99999}
                       {...field}
                       data-testid="input-movement-quantity"
                     />
@@ -233,6 +237,11 @@ export function MovementModal({ open, onOpenChange, item, initialType }: Movemen
                   {movementType === "saida" && activeItem && (
                     <p className="text-xs text-gray-500">
                       Máximo disponível: {activeItem.currentStock} unidades
+                    </p>
+                  )}
+                  {movementType === "entrada" && (
+                    <p className="text-xs text-gray-500">
+                      Máximo permitido: 99.999 unidades
                     </p>
                   )}
                 </FormItem>

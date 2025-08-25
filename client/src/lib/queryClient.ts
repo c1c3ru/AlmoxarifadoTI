@@ -1,4 +1,5 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { buildApiUrl } from "@/lib/url";
 
 let isRedirecting401 = false;
 function handleUnauthorizedRedirect() {
@@ -81,7 +82,18 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const finalUrl = buildUrl(queryKey.join("/") as string);
+    // Suporte a queryKey com params objeto: ["/api/route", { a: 1 }]
+    let pathOrUrl = "";
+    if (Array.isArray(queryKey) && queryKey.length > 0) {
+      const base = String(queryKey[0] ?? "");
+      const maybeParams = queryKey[1] as any;
+      if (maybeParams && typeof maybeParams === "object" && !Array.isArray(maybeParams)) {
+        pathOrUrl = buildApiUrl(base, maybeParams);
+      } else {
+        pathOrUrl = base;
+      }
+    }
+    const finalUrl = buildUrl(pathOrUrl);
     const token = typeof localStorage !== 'undefined' ? localStorage.getItem('sgat-token') : null;
     const headers: Record<string, string> = {};
     if (token) headers["Authorization"] = `Bearer ${token}`;

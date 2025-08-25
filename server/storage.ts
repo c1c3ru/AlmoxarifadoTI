@@ -340,12 +340,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getMovements(itemId?: string, limit: number = 50): Promise<MovementWithDetails[]> {
-    let whereCondition = undefined;
-    if (itemId) {
-      whereCondition = eq(movements.itemId, itemId);
-    }
-
-    const result = await getDb().select({
+    const baseSelect = getDb().select({
       id: movements.id,
       itemId: movements.itemId,
       userId: movements.userId,
@@ -363,10 +358,15 @@ export class DatabaseStorage implements IStorage {
     .from(movements)
     .leftJoin(items, eq(movements.itemId, items.id))
     .leftJoin(users, eq(movements.userId, users.id))
-    .leftJoin(categories, eq(items.categoryId, categories.id))
-    .where(whereCondition)
-    .orderBy(desc(movements.createdAt))
-    .limit(limit);
+    .leftJoin(categories, eq(items.categoryId, categories.id));
+
+    const qb = itemId
+      ? baseSelect.where(eq(movements.itemId, itemId))
+      : baseSelect;
+
+    const result = await qb
+      .orderBy(desc(movements.createdAt))
+      .limit(limit);
     
     return result as MovementWithDetails[];
   }
