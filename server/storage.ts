@@ -410,6 +410,8 @@ export class DatabaseStorage implements IStorage {
     todayMovements: number;
     activeUsers: number;
   }> {
+    // Garante existência da tabela de presença antes de consultar
+    await this.ensureUserActivityTable();
     const [totalItemsResult] = await getDb().select({ count: count() }).from(items);
     
     const [lowStockResult] = await getDb().select({ count: count() })
@@ -443,6 +445,8 @@ export class DatabaseStorage implements IStorage {
     role: string;
     lastSeenAt: Date;
   }>> {
+    // Garante existência da tabela de presença antes de consultar
+    await this.ensureUserActivityTable();
     const execResult = await getDb().execute(sql`
       SELECT u.id, u.username, u.role, ua.last_seen_at AS "lastSeenAt"
       FROM user_activity ua
@@ -471,6 +475,13 @@ export class DatabaseStorage implements IStorage {
       await tx.execute(sql`INSERT INTO user_activity (user_id, last_seen_at) VALUES (${userId}, now())
         ON CONFLICT (user_id) DO UPDATE SET last_seen_at = EXCLUDED.last_seen_at`);
     });
+  }
+
+  private async ensureUserActivityTable(): Promise<void> {
+    await getDb().execute(sql`CREATE TABLE IF NOT EXISTS user_activity (
+      user_id uuid PRIMARY KEY,
+      last_seen_at timestamp NOT NULL DEFAULT now()
+    )`);
   }
 }
 
