@@ -42,90 +42,115 @@ export function ThermalQRPrinter({ open, onOpenChange, items }: ThermalQRPrinter
     const printContent = printRef.current;
     if (!printContent) return;
 
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
-
-    const paperConfig = PAPER_CONFIGS[config.paperWidth];
+    // Clone the content to avoid modifying the original
+    const clonedContent = printContent.cloneNode(true) as HTMLElement;
     
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>QR Codes - Impressão Térmica</title>
-          <style>
-            * {
-              margin: 0;
-              padding: 0;
-              box-sizing: border-box;
-            }
-            
-            @page {
-              size: ${paperConfig.width}mm auto;
-              margin: 2mm;
-            }
-            
-            body {
-              font-family: 'Courier New', monospace;
-              font-size: 7px;
-              line-height: 1.1;
-              width: ${paperConfig.width - 2}mm;
-              padding: 1mm;
-            }
-            
-            .qr-grid {
-              display: grid;
-              grid-template-columns: repeat(${config.codesPerRow}, 1fr);
-              gap: 1.5mm;
-              width: 100%;
-              justify-items: center;
-            }
-            
-            .qr-item {
-              text-align: center;
-              page-break-inside: avoid;
-              margin-bottom: 1.5mm;
-              display: flex;
-              flex-direction: column;
-              align-items: center;
-            }
-            
-            .qr-code {
-              width: ${config.size * 0.264583}mm;
-              height: ${config.size * 0.264583}mm;
-              margin: 0 auto ${config.showText ? '0.5mm' : '0'};
-              image-rendering: pixelated;
-              image-rendering: -moz-crisp-edges;
-              image-rendering: crisp-edges;
-            }
-            
-            .qr-text {
-              font-size: 5px;
-              font-weight: bold;
-              word-break: break-all;
-              max-width: ${config.size * 0.264583}mm;
-              margin: 0;
-              padding: 0;
-              line-height: 1;
-            }
-            
-            @media print {
-              body { -webkit-print-color-adjust: exact; }
-            }
-          </style>
-        </head>
-        <body>
-          ${printContent.innerHTML}
-        </body>
-      </html>
-    `);
-
-    printWindow.document.close();
-    printWindow.focus();
+    // Convert all canvas elements to images in the cloned content
+    const canvases = printContent.querySelectorAll('canvas');
+    const clonedCanvases = clonedContent.querySelectorAll('canvas');
     
-    setTimeout(() => {
-      printWindow.print();
-      printWindow.close();
-    }, 250);
+    const imagePromises = Array.from(canvases).map((canvas, index) => {
+      return new Promise<void>((resolve) => {
+        const img = document.createElement('img');
+        img.src = canvas.toDataURL('image/png');
+        img.className = canvas.className;
+        img.style.cssText = canvas.style.cssText;
+        img.style.imageRendering = 'pixelated';
+        
+        // Replace canvas with image in the cloned content
+        const clonedCanvas = clonedCanvases[index];
+        clonedCanvas.parentNode?.replaceChild(img, clonedCanvas);
+        resolve();
+      });
+    });
+
+    Promise.all(imagePromises).then(() => {
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) return;
+
+      const paperConfig = PAPER_CONFIGS[config.paperWidth];
+      
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>QR Codes - Impressão Térmica</title>
+            <style>
+              * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+              }
+              
+              @page {
+                size: ${paperConfig.width}mm auto;
+                margin: 2mm;
+              }
+              
+              body {
+                font-family: 'Courier New', monospace;
+                font-size: 7px;
+                line-height: 1.1;
+                width: ${paperConfig.width - 2}mm;
+                padding: 1mm;
+              }
+              
+              .qr-grid {
+                display: grid;
+                grid-template-columns: repeat(${config.codesPerRow}, 1fr);
+                gap: 1.5mm;
+                width: 100%;
+                justify-items: center;
+              }
+              
+              .qr-item {
+                text-align: center;
+                page-break-inside: avoid;
+                margin-bottom: 1.5mm;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+              }
+              
+              .qr-code {
+                width: ${config.size * 0.264583}mm;
+                height: ${config.size * 0.264583}mm;
+                margin: 0 auto ${config.showText ? '0.5mm' : '0'};
+                image-rendering: pixelated;
+                image-rendering: -moz-crisp-edges;
+                image-rendering: crisp-edges;
+              }
+              
+              .qr-text {
+                font-size: 5px;
+                font-weight: bold;
+                word-break: break-all;
+                max-width: ${config.size * 0.264583}mm;
+                margin: 0;
+                padding: 0;
+                line-height: 1;
+              }
+              
+              @media print {
+                body { -webkit-print-color-adjust: exact; }
+                img { -webkit-print-color-adjust: exact; }
+              }
+            </style>
+          </head>
+          <body>
+            ${clonedContent.innerHTML}
+          </body>
+        </html>
+      `);
+
+      printWindow.document.close();
+      printWindow.focus();
+      
+      setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+      }, 250);
+    });
   };
 
   const updateConfig = (key: keyof QRCodeConfig, value: any) => {
