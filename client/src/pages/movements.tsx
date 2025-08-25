@@ -28,6 +28,17 @@ export default function Movements() {
     refetchOnMount: "always",
   });
 
+  const normalizeIcon = (icon?: string, fallback: string = 'fa-solid fa-box') => {
+    if (!icon || typeof icon !== 'string' || icon.trim().length === 0) return fallback;
+    const v = icon.trim();
+    // Se já vier completo (ex.: "fa-solid fa-laptop"), usa direto
+    if (v.startsWith('fa-')) return `fa-solid ${v}`;
+    if (v.startsWith('fa ')) return `fa-solid ${v.slice(3)}`;
+    if (v.startsWith('fa-solid') || v.startsWith('fa-regular') || v.startsWith('fa-brands')) return v;
+    // Se vier só o nome (ex.: "fa-laptop" sem estilo) ou "laptop", normaliza com fa-solid
+    return v.includes('fa-') ? `fa-solid ${v}` : `fa-solid fa-${v}`;
+  };
+
   // Itens recentes com base nas movimentações (únicos por itemId)
   const recentItems = (() => {
     const seen = new Set<string>();
@@ -175,7 +186,7 @@ export default function Movements() {
                     <SelectItem key={`recent-${it.id}`} value={it.id}>
                       <div className="flex items-center gap-2">
                         <div className="w-6 h-6 rounded bg-blue-100 flex items-center justify-center">
-                          <i className={`${it.icon || 'fa-solid fa-box'} text-blue-600 text-xs`}></i>
+                          <i className={`${normalizeIcon(it.icon)} text-blue-600 text-xs`}></i>
                         </div>
                         <span className="truncate">{it.name} ({it.internalCode})</span>
                       </div>
@@ -189,7 +200,7 @@ export default function Movements() {
                       <SelectItem key={item.id} value={item.id}>
                         <div className="flex items-center gap-2">
                           <div className="w-6 h-6 rounded bg-gray-100 flex items-center justify-center">
-                            <i className={`fa-solid fa-box text-gray-600 text-xs`}></i>
+                            <i className={`${normalizeIcon(item.category?.icon)} text-gray-600 text-xs`}></i>
                           </div>
                           <span className="truncate">{item.name} ({item.internalCode})</span>
                         </div>
@@ -268,7 +279,7 @@ export default function Movements() {
                     <div className="flex-1">
                       <div className="flex items-center space-x-3 mb-2">
                         <div className="w-6 h-6 rounded bg-blue-100 flex items-center justify-center shrink-0">
-                          <i className={`${movement.category?.icon || 'fa-solid fa-box'} text-blue-600 text-xs`}></i>
+                          <i className={`${normalizeIcon(movement.category?.icon)} text-blue-600 text-xs`}></i>
                         </div>
                         <p className="font-bold text-gray-900 text-lg group-hover:text-blue-700 transition-colors" data-testid={`movement-item-${movement.id}`}>
                           {movement.item?.name}
