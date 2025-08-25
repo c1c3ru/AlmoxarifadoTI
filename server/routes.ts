@@ -1,12 +1,14 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import { authenticateJWT, isAuthEnabled, generateToken } from "./auth";
 import { storage } from "./storage";
+import { emailService } from "./email";
+import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import { 
   insertUserSchema, insertCategorySchema, insertItemSchema, insertMovementSchema 
 } from "@shared/schema";
 import rateLimit from "express-rate-limit";
-import { authenticateJWT, isAuthEnabled, generateToken } from "./auth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Rate limiters
@@ -52,7 +54,115 @@ export async function registerRoutes(app: Express): Promise<Server> {
     legacyHeaders: false,
     message: { message: "Muitas importações. Tente novamente mais tarde." },
   });
-  // Authentication routes
+  // Authentication 
+  // Temporary storage for password reset codes (in production, use Redis or database)
+  const resetCodes = new Map<string, { code: string; expires: number; userId: string }>();
+
+  // Password recovery endpoint
+  app.post("/api/password-recovery", async (req, res) => {
+    try {
+      const { usernameOrEmail } = req.body;
+      
+      if (!usernameOrEmail) {
+        return res.status(400).json({ message: "Username ou email é obrigatório" });
+      }
+
+      // Find user by username or email
+      const users = await storage.getAllUsers();
+      const user = users.find((u: any) => 
+        u.username === usernameOrEmail || u.email === usernameOrEmail
+      );
+
+      if (!user) {
+        // Don't reveal if user exists or not for security
+        return res.status(200).json({ 
+          message: "Se existir uma conta para este usuário/email, enviaremos instruções de recuperação." 
+        });
+      }
+
+      // Generate 6-digit reset code
+      const resetCode = crypto.randomInt(100000, 999999).toString();
+      const expires = Date.now() + 15 * 60 * 1000; // 15 minutes
+
+      // Store reset code using the same identifier that was provided in the request
+      resetCodes.set(usernameOrEmail, { code: resetCode, expires, userId: user.id.toString() });
+
+      // Debug log
+      console.log(`[password-recovery] Generated code ${resetCode} for user ${usernameOrEmail} (stored with key: ${usernameOrEmail})`);
+
+      // Send email
+      const emailSent = await emailService.sendPasswordResetEmail(user.email, resetCode, user.username);
+      
+      if (!emailSent) {
+        console.error('[password-recovery] Failed to send email to:', user.email);
+        return res.status(500).json({ message: "Erro interno. Tente novamente mais tarde." });
+      }
+
+      res.status(200).json({ 
+        message: "Se existir uma conta para este usuário/email, enviaremos instruções de recuperação." 
+      });
+    } catch (error) {
+      console.error('[password-recovery] Error:', error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
+  // Password reset endpoint
+  app.post("/api/password-reset", async (req, res) => {
+    try {
+      const { username, code, newPassword } = req.body;
+      
+      console.log(`[password-reset] === RESET ATTEMPT START ===`);
+      console.log(`[password-reset] Request body:`, { username, code: code ? `${code.length} chars` : 'undefined', newPassword: newPassword ? 'provided' : 'undefined' });
+      console.log(`[password-reset] All stored reset codes:`, Array.from(resetCodes.entries()));
+      
+      if (!username || !code || !newPassword) {
+        console.log(`[password-reset] Missing required fields`);
+        return res.status(400).json({ message: "Todos os campos são obrigatórios" });
+      }
+
+      // Check if reset code exists and is valid
+      const resetData = resetCodes.get(username);
+      console.log(`[password-reset] Attempting reset for user: ${username}`);
+      console.log(`[password-reset] Provided code: "${code}" (type: ${typeof code})`);
+      console.log(`[password-reset] Stored data:`, resetData);
+      console.log(`[password-reset] Current time: ${Date.now()}, Expires: ${resetData?.expires}`);
+      
+      if (!resetData) {
+        console.log(`[password-reset] No reset data found for username: ${username}`);
+        return res.status(400).json({ message: "Código inválido ou expirado" });
+      }
+      
+      if (resetData.code !== code) {
+        console.log(`[password-reset] Code mismatch - stored: "${resetData.code}" (type: ${typeof resetData.code}), provided: "${code}" (type: ${typeof code})`);
+        return res.status(400).json({ message: "Código inválido ou expirado" });
+      }
+      
+      if (Date.now() > resetData.expires) {
+        console.log(`[password-reset] Code expired - current: ${Date.now()}, expires: ${resetData.expires}`);
+        return res.status(400).json({ message: "Código inválido ou expirado" });
+      }
+
+      console.log(`[password-reset] All validations passed, updating password`);
+
+      // Hash new password
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+      // Update user password
+      await storage.updateUserPassword(resetData.userId, hashedPassword);
+
+      // Remove used reset code
+      resetCodes.delete(username);
+
+      console.log(`[password-reset] Password reset successful for user: ${username}`);
+      res.status(200).json({ message: "Senha redefinida com sucesso" });
+    } catch (error) {
+      console.error('[password-reset] Error:', error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
+  // Rota de login
   app.post("/api/auth/login", loginLimiter, async (req, res) => {
     try {
       const { username, password } = req.body;
@@ -355,7 +465,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/users", authenticateJWT, async (req, res) => {
+  app.post("/api/users", async (req, res) => {
     try {
       const validation = insertUserSchema.safeParse(req.body);
       if (!validation.success) {

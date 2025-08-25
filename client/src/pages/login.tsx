@@ -24,13 +24,13 @@ const recoverSchema = z.object({
 
 const resetSchema = z
   .object({
-    username: z.string().min(1, "Usuário é obrigatório"),
+    usernameOrEmail: z.string().min(1, "Usuário ou email é obrigatório"),
     code: z.string().min(4, "Código inválido"),
-    newPassword: z.string().min(6, "Senha deve ter ao menos 6 caracteres"),
-    confirmPassword: z.string().min(6, "Confirme a nova senha"),
+    newPassword: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
+    confirmPassword: z.string().min(6, "Confirmação obrigatória"),
   })
-  .refine((v) => v.newPassword === v.confirmPassword, {
-    message: "As senhas não conferem",
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Senhas não coincidem",
     path: ["confirmPassword"],
   });
 
@@ -56,7 +56,7 @@ export default function Login() {
 
   const resetForm = useForm<z.infer<typeof resetSchema>>({
     resolver: zodResolver(resetSchema),
-    defaultValues: { username: "", code: "", newPassword: "", confirmPassword: "" },
+    defaultValues: { usernameOrEmail: "", code: "", newPassword: "", confirmPassword: "" },
   });
 
   const onSubmit = async (data: LoginFormData) => {
@@ -82,19 +82,75 @@ export default function Login() {
   };
 
   const onRecover = async (data: z.infer<typeof recoverSchema>) => {
-    toast({
-      title: "Solicitação enviada",
-      description: `Se existir uma conta para "${data.usernameOrEmail}", enviaremos instruções de recuperação.`,
-    });
-    recoverForm.reset();
+    try {
+      const response = await fetch('/api/password-recovery', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ usernameOrEmail: data.usernameOrEmail }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        toast({
+          title: "Solicitação enviada",
+          description: result.message,
+        });
+        recoverForm.reset();
+      } else {
+        toast({
+          title: "Erro",
+          description: result.message || "Erro ao processar solicitação",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro de conexão. Tente novamente.",
+        variant: "destructive",
+      });
+    }
   };
 
   const onReset = async (data: z.infer<typeof resetSchema>) => {
-    toast({
-      title: "Senha redefinida",
-      description: "Se o código for válido, a senha foi atualizada.",
-    });
-    resetForm.reset();
+    try {
+      const response = await fetch('/api/password-reset', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: data.usernameOrEmail,
+          code: data.code,
+          newPassword: data.newPassword,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        toast({
+          title: "Senha redefinida",
+          description: result.message,
+        });
+        resetForm.reset();
+      } else {
+        toast({
+          title: "Erro",
+          description: result.message || "Erro ao redefinir senha",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro de conexão. Tente novamente.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -246,12 +302,12 @@ export default function Login() {
                             <form onSubmit={resetForm.handleSubmit(onReset)} className="space-y-4">
                               <FormField
                                 control={resetForm.control}
-                                name="username"
+                                name="usernameOrEmail"
                                 render={({ field }) => (
                                   <FormItem>
-                                    <FormLabel className="font-semibold">Usuário</FormLabel>
+                                    <FormLabel className="font-semibold">Usuário ou Email</FormLabel>
                                     <FormControl>
-                                      <Input placeholder="Seu usuário" {...field} className="h-10" />
+                                      <Input placeholder="Seu usuário ou email" {...field} className="h-10" />
                                     </FormControl>
                                     <FormMessage />
                                   </FormItem>

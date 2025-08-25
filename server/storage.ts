@@ -99,6 +99,10 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
+  async updateUserPassword(id: string, hashedPassword: string): Promise<void> {
+    await getDb().update(users).set({ password: hashedPassword }).where(eq(users.id, id));
+  }
+
   async getAllUsers(): Promise<User[]> {
     return await getDb().select().from(users).orderBy(asc(users.name));
   }

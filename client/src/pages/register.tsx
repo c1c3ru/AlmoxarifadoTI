@@ -42,7 +42,7 @@ const registerSchema = z
   })
   .superRefine((val, ctx) => {
     // Validação de matrícula baseada no perfil
-    const techLen = 15; // Técnico: 202523310400001 -> 15 caracteres
+    const techLen = 14; // Técnico: 20252331040000 -> 14 caracteres
     const adminLen = 7;  // Administrador: 1678389 -> 7 caracteres
     
     if (val.role === "tech" && val.matricula.length !== techLen) {
@@ -125,8 +125,8 @@ export default function RegisterUserPage() {
       };
     }
     return {
-      placeholder: "Ex: 202523310400001 (15 dígitos)",
-      maxLength: 15,
+      placeholder: "Ex: 20252331040000 (14 dígitos)",
+      maxLength: 14,
       description: "Matrícula do técnico em informática"
     };
   }, [selectedRole]);
@@ -225,150 +225,353 @@ export default function RegisterUserPage() {
               <FormField
                 control={form.control}
                 name="role"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-medium text-gray-700">
-                      Perfil do Usuário *
-                    </FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger data-testid="select-role" className="h-11">
-                          <SelectValue placeholder="Selecione o perfil" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="tech">
-                          <div className="flex items-center">
-                            <i className="fa-solid fa-screwdriver-wrench mr-2 text-blue-600"></i>
-                            Técnico em Informática
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="admin">
-                          <div className="flex items-center">
-                            <i className="fa-solid fa-user-tie mr-2 text-purple-600"></i>
-                            Administrador
-                          </div>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                render={({ field, fieldState }) => {
+                  const hasError = fieldState.error;
+                  const isEmpty = !field.value;
+                  return (
+                    <FormItem>
+                      <FormLabel className={`text-sm font-medium flex items-center ${
+                        hasError ? 'text-red-600' : isEmpty ? 'text-orange-600' : 'text-gray-700'
+                      }`}>
+                        <i className={`fa-solid fa-user-tag mr-2 ${
+                          hasError ? 'text-red-500' : isEmpty ? 'text-orange-500' : 'text-blue-500'
+                        }`}></i>
+                        Perfil do Usuário *
+                      </FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger data-testid="select-role" className={`h-11 transition-colors ${
+                            hasError ? 'border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-200' : 
+                            isEmpty ? 'border-orange-300 bg-orange-50 focus:border-orange-500 focus:ring-orange-200' :
+                            'border-green-300 bg-green-50 focus:border-green-500 focus:ring-green-200'
+                          }`}>
+                            <SelectValue placeholder="Selecione o perfil" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="tech">
+                            <div className="flex items-center">
+                              <i className="fa-solid fa-screwdriver-wrench mr-2 text-blue-600"></i>
+                              Técnico em Informática
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="admin">
+                            <div className="flex items-center">
+                              <i className="fa-solid fa-user-tie mr-2 text-purple-600"></i>
+                              Administrador
+                            </div>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage className="text-red-600 font-medium flex items-center mt-2">
+                        {hasError && <i className="fa-solid fa-exclamation-triangle mr-2"></i>}
+                      </FormMessage>
+                      {isEmpty && !hasError && (
+                        <p className="text-orange-600 text-sm flex items-center mt-2">
+                          <i className="fa-solid fa-info-circle mr-2"></i>
+                          Campo obrigatório
+                        </p>
+                      )}
+                    </FormItem>
+                  );
+                }}
               />
 
               <FormField
                 control={form.control}
                 name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-medium text-gray-700">Nome Completo *</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="Digite o nome completo" 
-                        {...field} 
-                        data-testid="input-name"
-                        className="h-11 placeholder:text-gray-400"
-                        maxLength={100}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                render={({ field, fieldState }) => {
+                  const hasError = fieldState.error;
+                  const isEmpty = !field.value?.trim();
+                  const isValid = field.value?.trim() && !hasError;
+                  return (
+                    <FormItem>
+                      <FormLabel className={`text-sm font-medium flex items-center ${
+                        hasError ? 'text-red-600' : isEmpty ? 'text-orange-600' : 'text-gray-700'
+                      }`}>
+                        <i className={`fa-solid fa-user mr-2 ${
+                          hasError ? 'text-red-500' : isEmpty ? 'text-orange-500' : isValid ? 'text-green-500' : 'text-blue-500'
+                        }`}></i>
+                        Nome Completo *
+                      </FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Input 
+                            placeholder="Digite o nome completo" 
+                            {...field} 
+                            data-testid="input-name"
+                            className={`h-11 placeholder:text-gray-400 pr-10 transition-colors ${
+                              hasError ? 'border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-200' : 
+                              isEmpty ? 'border-orange-300 bg-orange-50 focus:border-orange-500 focus:ring-orange-200' :
+                              isValid ? 'border-green-300 bg-green-50 focus:border-green-500 focus:ring-green-200' :
+                              'border-gray-300'
+                            }`}
+                            maxLength={100}
+                          />
+                          {isValid && (
+                            <i className="fa-solid fa-check absolute right-3 top-1/2 transform -translate-y-1/2 text-green-500"></i>
+                          )}
+                          {hasError && (
+                            <i className="fa-solid fa-exclamation-triangle absolute right-3 top-1/2 transform -translate-y-1/2 text-red-500"></i>
+                          )}
+                          {isEmpty && !hasError && (
+                            <i className="fa-solid fa-info-circle absolute right-3 top-1/2 transform -translate-y-1/2 text-orange-500"></i>
+                          )}
+                        </div>
+                      </FormControl>
+                      <FormMessage className="text-red-600 font-medium flex items-center mt-2">
+                        {hasError && <i className="fa-solid fa-exclamation-triangle mr-2"></i>}
+                      </FormMessage>
+                      {isEmpty && !hasError && (
+                        <p className="text-orange-600 text-sm flex items-center mt-2">
+                          <i className="fa-solid fa-info-circle mr-2"></i>
+                          Campo obrigatório
+                        </p>
+                      )}
+                    </FormItem>
+                  );
+                }}
               />
 
               <FormField
                 control={form.control}
                 name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-medium text-gray-700">Email Institucional *</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="email" 
-                        placeholder="usuario@instituicao.edu.br" 
-                        {...field} 
-                        data-testid="input-email"
-                        className="h-11 placeholder:text-gray-400"
-                        maxLength={255}
-                        autoComplete="email"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                render={({ field, fieldState }) => {
+                  const hasError = fieldState.error;
+                  const isEmpty = !field.value?.trim();
+                  const isValid = field.value?.trim() && !hasError;
+                  return (
+                    <FormItem>
+                      <FormLabel className={`text-sm font-medium flex items-center ${
+                        hasError ? 'text-red-600' : isEmpty ? 'text-orange-600' : 'text-gray-700'
+                      }`}>
+                        <i className={`fa-solid fa-envelope mr-2 ${
+                          hasError ? 'text-red-500' : isEmpty ? 'text-orange-500' : isValid ? 'text-green-500' : 'text-blue-500'
+                        }`}></i>
+                        Email Institucional *
+                      </FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Input 
+                            type="email" 
+                            placeholder="usuario@instituicao.edu.br" 
+                            {...field} 
+                            data-testid="input-email"
+                            className={`h-11 placeholder:text-gray-400 pr-10 transition-colors ${
+                              hasError ? 'border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-200' : 
+                              isEmpty ? 'border-orange-300 bg-orange-50 focus:border-orange-500 focus:ring-orange-200' :
+                              isValid ? 'border-green-300 bg-green-50 focus:border-green-500 focus:ring-green-200' :
+                              'border-gray-300'
+                            }`}
+                            maxLength={255}
+                            autoComplete="email"
+                          />
+                          {isValid && (
+                            <i className="fa-solid fa-check absolute right-3 top-1/2 transform -translate-y-1/2 text-green-500"></i>
+                          )}
+                          {hasError && (
+                            <i className="fa-solid fa-exclamation-triangle absolute right-3 top-1/2 transform -translate-y-1/2 text-red-500"></i>
+                          )}
+                          {isEmpty && !hasError && (
+                            <i className="fa-solid fa-info-circle absolute right-3 top-1/2 transform -translate-y-1/2 text-orange-500"></i>
+                          )}
+                        </div>
+                      </FormControl>
+                      <FormMessage className="text-red-600 font-medium flex items-center mt-2">
+                        {hasError && <i className="fa-solid fa-exclamation-triangle mr-2"></i>}
+                      </FormMessage>
+                      {isEmpty && !hasError && (
+                        <p className="text-orange-600 text-sm flex items-center mt-2">
+                          <i className="fa-solid fa-info-circle mr-2"></i>
+                          Campo obrigatório
+                        </p>
+                      )}
+                    </FormItem>
+                  );
+                }}
               />
 
               <FormField
                 control={form.control}
                 name="matricula"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-medium text-gray-700">
-                      Matrícula {selectedRole === 'admin' ? 'Administrativa' : 'de Técnico'} *
-                    </FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder={matriculaConfig.placeholder}
-                        {...field} 
-                        data-testid="input-matricula"
-                        className="h-11 placeholder:text-gray-400"
-                        maxLength={matriculaConfig.maxLength}
-                        pattern="[0-9]*"
-                        inputMode="numeric"
-                        autoComplete="off"
-                      />
-                    </FormControl>
-                    <p className="text-xs text-gray-500 mt-1">{matriculaConfig.description}</p>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                render={({ field, fieldState }) => {
+                  const hasError = fieldState.error;
+                  const isEmpty = !field.value?.trim();
+                  const isValid = field.value?.trim() && !hasError;
+                  return (
+                    <FormItem>
+                      <FormLabel className={`text-sm font-medium flex items-center ${
+                        hasError ? 'text-red-600' : isEmpty ? 'text-orange-600' : 'text-gray-700'
+                      }`}>
+                        <i className={`fa-solid fa-id-card mr-2 ${
+                          hasError ? 'text-red-500' : isEmpty ? 'text-orange-500' : isValid ? 'text-green-500' : 'text-blue-500'
+                        }`}></i>
+                        Matrícula {selectedRole === 'admin' ? 'Administrativa' : 'de Técnico'} *
+                      </FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Input 
+                            placeholder={matriculaConfig.placeholder}
+                            {...field} 
+                            data-testid="input-matricula"
+                            className={`h-11 placeholder:text-gray-400 pr-10 transition-colors ${
+                              hasError ? 'border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-200' : 
+                              isEmpty ? 'border-orange-300 bg-orange-50 focus:border-orange-500 focus:ring-orange-200' :
+                              isValid ? 'border-green-300 bg-green-50 focus:border-green-500 focus:ring-green-200' :
+                              'border-gray-300'
+                            }`}
+                            maxLength={matriculaConfig.maxLength}
+                            pattern="[0-9]*"
+                            inputMode="numeric"
+                            autoComplete="off"
+                          />
+                          {isValid && (
+                            <i className="fa-solid fa-check absolute right-3 top-1/2 transform -translate-y-1/2 text-green-500"></i>
+                          )}
+                          {hasError && (
+                            <i className="fa-solid fa-exclamation-triangle absolute right-3 top-1/2 transform -translate-y-1/2 text-red-500"></i>
+                          )}
+                          {isEmpty && !hasError && (
+                            <i className="fa-solid fa-info-circle absolute right-3 top-1/2 transform -translate-y-1/2 text-orange-500"></i>
+                          )}
+                        </div>
+                      </FormControl>
+                      <p className={`text-xs mt-1 ${
+                        hasError ? 'text-red-500' : isEmpty ? 'text-orange-500' : 'text-gray-500'
+                      }`}>{matriculaConfig.description}</p>
+                      <FormMessage className="text-red-600 font-medium flex items-center mt-2">
+                        {hasError && <i className="fa-solid fa-exclamation-triangle mr-2"></i>}
+                      </FormMessage>
+                      {isEmpty && !hasError && (
+                        <p className="text-orange-600 text-sm flex items-center mt-2">
+                          <i className="fa-solid fa-info-circle mr-2"></i>
+                          Campo obrigatório
+                        </p>
+                      )}
+                    </FormItem>
+                  );
+                }}
               />
 
               <FormField
                 control={form.control}
                 name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-medium text-gray-700">Senha de Acesso *</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="password" 
-                        placeholder="Crie uma senha segura"
-                        {...field} 
-                        data-testid="input-password"
-                        className="h-11 placeholder:text-gray-400"
-                        maxLength={128}
-                        autoComplete="new-password"
-                      />
-                    </FormControl>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Mín. 8 caracteres, com maiúscula, minúscula, número e símbolo
-                    </p>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                render={({ field, fieldState }) => {
+                  const hasError = fieldState.error;
+                  const isEmpty = !field.value?.trim();
+                  const isValid = field.value?.trim() && !hasError;
+                  return (
+                    <FormItem>
+                      <FormLabel className={`text-sm font-medium flex items-center ${
+                        hasError ? 'text-red-600' : isEmpty ? 'text-orange-600' : 'text-gray-700'
+                      }`}>
+                        <i className={`fa-solid fa-lock mr-2 ${
+                          hasError ? 'text-red-500' : isEmpty ? 'text-orange-500' : isValid ? 'text-green-500' : 'text-blue-500'
+                        }`}></i>
+                        Senha de Acesso *
+                      </FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Input 
+                            type="password" 
+                            placeholder="Crie uma senha segura"
+                            {...field} 
+                            data-testid="input-password"
+                            className={`h-11 placeholder:text-gray-400 pr-10 transition-colors ${
+                              hasError ? 'border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-200' : 
+                              isEmpty ? 'border-orange-300 bg-orange-50 focus:border-orange-500 focus:ring-orange-200' :
+                              isValid ? 'border-green-300 bg-green-50 focus:border-green-500 focus:ring-green-200' :
+                              'border-gray-300'
+                            }`}
+                            maxLength={128}
+                            autoComplete="new-password"
+                          />
+                          {isValid && (
+                            <i className="fa-solid fa-check absolute right-3 top-1/2 transform -translate-y-1/2 text-green-500"></i>
+                          )}
+                          {hasError && (
+                            <i className="fa-solid fa-exclamation-triangle absolute right-3 top-1/2 transform -translate-y-1/2 text-red-500"></i>
+                          )}
+                          {isEmpty && !hasError && (
+                            <i className="fa-solid fa-info-circle absolute right-3 top-1/2 transform -translate-y-1/2 text-orange-500"></i>
+                          )}
+                        </div>
+                      </FormControl>
+                      <p className={`text-xs mt-1 ${
+                        hasError ? 'text-red-500' : isEmpty ? 'text-orange-500' : 'text-gray-500'
+                      }`}>
+                        Mín. 8 caracteres, com maiúscula, minúscula, número e símbolo
+                      </p>
+                      <FormMessage className="text-red-600 font-medium flex items-center mt-2">
+                        {hasError && <i className="fa-solid fa-exclamation-triangle mr-2"></i>}
+                      </FormMessage>
+                      {isEmpty && !hasError && (
+                        <p className="text-orange-600 text-sm flex items-center mt-2">
+                          <i className="fa-solid fa-info-circle mr-2"></i>
+                          Campo obrigatório
+                        </p>
+                      )}
+                    </FormItem>
+                  );
+                }}
               />
 
               <FormField
                 control={form.control}
                 name="confirmPassword"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-medium text-gray-700">Confirmar Senha *</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="password" 
-                        placeholder="Digite a senha novamente"
-                        {...field} 
-                        data-testid="input-confirm-password"
-                        className="h-11 placeholder:text-gray-400"
-                        maxLength={128}
-                        autoComplete="new-password"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                render={({ field, fieldState }) => {
+                  const hasError = fieldState.error;
+                  const isEmpty = !field.value?.trim();
+                  const isValid = field.value?.trim() && !hasError;
+                  return (
+                    <FormItem>
+                      <FormLabel className={`text-sm font-medium flex items-center ${
+                        hasError ? 'text-red-600' : isEmpty ? 'text-orange-600' : 'text-gray-700'
+                      }`}>
+                        <i className={`fa-solid fa-lock-open mr-2 ${
+                          hasError ? 'text-red-500' : isEmpty ? 'text-orange-500' : isValid ? 'text-green-500' : 'text-blue-500'
+                        }`}></i>
+                        Confirmar Senha *
+                      </FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Input 
+                            type="password" 
+                            placeholder="Digite a senha novamente"
+                            {...field} 
+                            data-testid="input-confirm-password"
+                            className={`h-11 placeholder:text-gray-400 pr-10 transition-colors ${
+                              hasError ? 'border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-200' : 
+                              isEmpty ? 'border-orange-300 bg-orange-50 focus:border-orange-500 focus:ring-orange-200' :
+                              isValid ? 'border-green-300 bg-green-50 focus:border-green-500 focus:ring-green-200' :
+                              'border-gray-300'
+                            }`}
+                            maxLength={128}
+                            autoComplete="new-password"
+                          />
+                          {isValid && (
+                            <i className="fa-solid fa-check absolute right-3 top-1/2 transform -translate-y-1/2 text-green-500"></i>
+                          )}
+                          {hasError && (
+                            <i className="fa-solid fa-exclamation-triangle absolute right-3 top-1/2 transform -translate-y-1/2 text-red-500"></i>
+                          )}
+                          {isEmpty && !hasError && (
+                            <i className="fa-solid fa-info-circle absolute right-3 top-1/2 transform -translate-y-1/2 text-orange-500"></i>
+                          )}
+                        </div>
+                      </FormControl>
+                      <FormMessage className="text-red-600 font-medium flex items-center mt-2">
+                        {hasError && <i className="fa-solid fa-exclamation-triangle mr-2"></i>}
+                      </FormMessage>
+                      {isEmpty && !hasError && (
+                        <p className="text-orange-600 text-sm flex items-center mt-2">
+                          <i className="fa-solid fa-info-circle mr-2"></i>
+                          Campo obrigatório
+                        </p>
+                      )}
+                    </FormItem>
+                  );
+                }}
               />
 
               <Button 
@@ -391,9 +594,12 @@ export default function RegisterUserPage() {
               </Button>
 
               {disabled && (
-                <p className="text-xs text-gray-500 text-center -mt-1">
-                  Preencha os campos obrigatórios corretamente para habilitar o botão.
-                </p>
+                <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 -mt-1">
+                  <p className="text-sm text-orange-700 text-center flex items-center justify-center">
+                    <i className="fa-solid fa-info-circle mr-2"></i>
+                    Preencha todos os campos obrigatórios corretamente para habilitar o cadastro.
+                  </p>
+                </div>
               )}
 
               <div className="text-center pt-4 border-t border-gray-200">
