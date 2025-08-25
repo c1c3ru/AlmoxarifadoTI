@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { useAuth } from "@/hooks/use-auth";
 import type { ItemWithCategory, MovementWithDetails } from "@shared/schema";
 
 interface DashboardStats {
@@ -21,6 +22,9 @@ interface OnlineUser {
 }
 
 export default function Dashboard() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
+
   const { data: stats, isLoading: statsLoading } = useQuery<DashboardStats>({
     queryKey: ["/api/dashboard/stats"],
     // Atualiza periodicamente para refletir usuários online
@@ -34,6 +38,7 @@ export default function Dashboard() {
 
   const { data: recentMovements = [], isLoading: movementsLoading } = useQuery<MovementWithDetails[]>({
     queryKey: ["/api/dashboard/recent-movements"],
+    enabled: isAdmin, // Only load movements for admins
   });
 
   const { data: categories = [] } = useQuery<(any & { itemCount: number })[]>({
@@ -264,76 +269,78 @@ export default function Dashboard() {
 
       {/* Content Grid */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-        {/* Recent Activities */}
-        <Card className="bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
-          <CardContent className="p-6">
-            <div className="flex items-center space-x-3 mb-6">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
-                <i className="fa-solid fa-clock-rotate-left text-white text-sm"></i>
-              </div>
-              <h3 className="text-xl font-bold text-gray-900">Atividades Recentes</h3>
-            </div>
-            
-            <div className="space-y-4">
-              {movementsLoading ? (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="flex items-center space-x-4 p-3 rounded-xl">
-                    <Skeleton className="w-12 h-12 rounded-xl" />
-                    <div className="flex-1 space-y-2">
-                      <Skeleton className="h-4 w-3/4" />
-                      <Skeleton className="h-3 w-1/2" />
-                    </div>
-                  </div>
-                ))
-              ) : recentMovements.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <i className="fa-solid fa-inbox text-gray-400 text-xl"></i>
-                  </div>
-                  <p className="text-gray-500 font-medium">Nenhuma movimentação recente</p>
-                  <p className="text-sm text-gray-400">As atividades aparecerão aqui</p>
+        {/* Recent Activities - Only for Admins */}
+        {isAdmin && (
+          <Card className="bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+            <CardContent className="p-6">
+              <div className="flex items-center space-x-3 mb-6">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                  <i className="fa-solid fa-clock-rotate-left text-white text-sm"></i>
                 </div>
-              ) : (
-                recentMovements.map((movement) => (
-                  <div
-                    key={movement.id}
-                    className="flex items-center space-x-4 p-3 rounded-xl hover:bg-gray-50 transition-all duration-200 group"
-                    data-testid={`movement-${movement.id}`}
-                  >
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-md ${
-                      movement.type === "entrada" 
-                        ? "bg-gradient-to-br from-emerald-400 to-emerald-500" 
-                        : "bg-gradient-to-br from-red-400 to-red-500"
-                    }`}>
-                      <i className={`fa-solid ${
-                        movement.type === "entrada" 
-                          ? "fa-arrow-down text-white" 
-                          : "fa-arrow-up text-white"
-                      }`}></i>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-gray-900 truncate">{movement.item?.name}</p>
-                      <div className="flex items-center space-x-2 text-sm text-gray-500">
-                        <span className="font-medium">
-                          {movement.type === "entrada" ? "+" : "-"}{movement.quantity}
-                        </span>
-                        {movement.destination && (
-                          <>
-                            <span>•</span>
-                            <span className="truncate">{movement.destination}</span>
-                          </>
-                        )}
+                <h3 className="text-xl font-bold text-gray-900">Atividades Recentes - Todos os Usuários</h3>
+              </div>
+              
+              <div className="space-y-4">
+                {movementsLoading ? (
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <div key={i} className="flex items-center space-x-4 p-3 rounded-xl">
+                      <Skeleton className="w-12 h-12 rounded-xl" />
+                      <div className="flex-1 space-y-2">
+                        <Skeleton className="h-4 w-3/4" />
+                        <Skeleton className="h-3 w-1/2" />
                       </div>
-                      <p className="text-xs text-gray-400 mt-1">
-                        {formatTimestamp(movement.createdAt)} • {movement.user?.name}
-                      </p>
                     </div>
+                  ))
+                ) : recentMovements.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <i className="fa-solid fa-inbox text-gray-400 text-xl"></i>
+                    </div>
+                    <p className="text-gray-500 font-medium">Nenhuma movimentação recente</p>
+                    <p className="text-sm text-gray-400">As atividades aparecerão aqui</p>
                   </div>
-                ))
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                ) : (
+                  recentMovements.map((movement) => (
+                    <div
+                      key={movement.id}
+                      className="flex items-center space-x-4 p-3 rounded-xl hover:bg-gray-50 transition-all duration-200 group"
+                      data-testid={`movement-${movement.id}`}
+                    >
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-md ${
+                        movement.type === "entrada" 
+                          ? "bg-gradient-to-br from-emerald-400 to-emerald-500" 
+                          : "bg-gradient-to-br from-red-400 to-red-500"
+                      }`}>
+                        <i className={`fa-solid ${
+                          movement.type === "entrada" 
+                            ? "fa-arrow-down text-white" 
+                            : "fa-arrow-up text-white"
+                        }`}></i>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-gray-900 truncate">{movement.item?.name}</p>
+                        <div className="flex items-center space-x-2 text-sm text-gray-500">
+                          <span className="font-medium">
+                            {movement.type === "entrada" ? "+" : "-"}{movement.quantity}
+                          </span>
+                          {movement.destination && (
+                            <>
+                              <span>•</span>
+                              <span className="truncate">{movement.destination}</span>
+                            </>
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-400 mt-1">
+                          {formatTimestamp(movement.createdAt)} • {movement.user?.name || movement.user?.username}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Categories Overview */}
         <Card className="bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">

@@ -41,6 +41,8 @@ const mapIconClass = (iconClass: string) => {
     "fas fa-headphones": "fa-solid fa-headphones",
     "fas fa-speaker": "fa-solid fa-volume-high",
     "fas fa-usb": "fa-solid fa-usb",
+    "fas fa-screwdriver-wrench": "fa-solid fa-screwdriver-wrench",
+    "fas fa-stethoscope": "fa-solid fa-stethoscope",
     "fas fa-boxes": "fa-solid fa-boxes-stacked",
     "fas fa-tags": "fa-solid fa-tags",
     "fas fa-plus": "fa-solid fa-plus",
@@ -68,6 +70,8 @@ const iconOptions = [
   { value: "fas fa-headphones", label: "Fones" },
   { value: "fas fa-speaker", label: "Alto-falantes" },
   { value: "fas fa-usb", label: "USB" },
+  { value: "fas fa-screwdriver-wrench", label: "Ferramentas e Equipamentos de Teste e Diagnósticos" },
+  { value: "fas fa-stethoscope", label: "Diagnóstico" },
   { value: "fas fa-boxes", label: "Geral" },
 ];
 
