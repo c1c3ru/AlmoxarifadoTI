@@ -60,6 +60,12 @@ export interface IStorage {
     activeUsers: number;
   }>;
   updateUserLastSeen(userId: string): Promise<void>;
+  getOnlineUsers(windowMinutes?: number): Promise<Array<{
+    id: string;
+    username: string;
+    role: string;
+    lastSeenAt: Date;
+  }>>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -417,10 +423,11 @@ export class DatabaseStorage implements IStorage {
       .where(sql`${movements.createdAt} >= ${today}`);
     
     // Usuários "online" por heartbeat: usuários com last_seen_at recente na tabela user_activity
-    const activeUsersRows = await getDb().execute(
+    const activeUsersResult = await getDb().execute(
       sql`SELECT COUNT(*)::int AS count FROM user_activity WHERE last_seen_at >= now() - interval '10 minutes'`
     );
-    const activeCount = Array.isArray(activeUsersRows) && (activeUsersRows as any[])[0]?.count;
+    const activeUsersRows = (activeUsersResult as any).rows ?? activeUsersResult;
+    const activeCount = Array.isArray(activeUsersRows) ? activeUsersRows[0]?.count : 0;
     
     return {
       totalItems: totalItemsResult.count,
@@ -428,6 +435,29 @@ export class DatabaseStorage implements IStorage {
       todayMovements: todayMovementsResult.count,
       activeUsers: Number(activeCount) || 0,
     };
+  }
+
+  async getOnlineUsers(windowMinutes: number = 10): Promise<Array<{
+    id: string;
+    username: string;
+    role: string;
+    lastSeenAt: Date;
+  }>> {
+    const execResult = await getDb().execute(sql`
+      SELECT u.id, u.username, u.role, ua.last_seen_at AS "lastSeenAt"
+      FROM user_activity ua
+      JOIN ${users} u ON u.id = ua.user_id
+      WHERE ua.last_seen_at >= now() - (interval '1 minute' * ${windowMinutes})
+      ORDER BY ua.last_seen_at DESC
+    `);
+    const rows = (execResult as any).rows ?? execResult;
+    const out = (rows as any[]).map((r: any) => ({
+      id: String(r.id),
+      username: String(r.username),
+      role: String(r.role),
+      lastSeenAt: new Date(r.lastSeenAt ?? r.last_seen_at),
+    }));
+    return out;
   }
 
   async updateUserLastSeen(userId: string): Promise<void> {

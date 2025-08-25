@@ -18,6 +18,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     message: { message: "Muitas tentativas. Tente novamente mais tarde." },
   });
 
+  // Lista de usuários online com última atividade
+  app.get("/api/users/online", authenticateJWT, async (req, res) => {
+    try {
+      const windowMinutes = Number(req.query.windowMinutes || 10);
+      const online = await storage.getOnlineUsers(windowMinutes);
+      res.json(online);
+    } catch (error) {
+      console.error("Get online users error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Heartbeat para presença online
   app.post("/api/heartbeat", authenticateJWT, async (req, res) => {
     try {
