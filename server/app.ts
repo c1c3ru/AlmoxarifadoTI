@@ -14,6 +14,10 @@ function log(message: string) {
 export async function createApp() {
   const app = express();
 
+  // Confiar no proxy da Vercel/edge para que req.ip e X-Forwarded-For funcionem corretamente
+  // Necessário para express-rate-limit evitar validação ERR_ERL_UNEXPECTED_X_FORWARDED_FOR
+  app.set("trust proxy", 1);
+
   // Helmet com CSP básica (ajustada)
   const extraConnectSrc = (process.env.CSP_CONNECT_SRC || '')
     .split(',')
