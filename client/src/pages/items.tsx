@@ -226,9 +226,10 @@ export default function Items() {
                     <i className="fa-solid fa-info-circle mr-2 text-blue-500"></i>
                     Status
                   </th>
-                  <th className="hidden md:table-cell px-4 py-3 sm:px-6 sm:py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
-                    <i className="fa-solid fa-qrcode mr-2 text-indigo-500"></i>
-                    QR Code
+                  <th className="px-2 py-3 sm:px-4 md:px-6 sm:py-4 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">
+                    <i className="fa-solid fa-qrcode mr-1 sm:mr-2 text-indigo-500"></i>
+                    <span className="hidden sm:inline">QR Code</span>
+                    <span className="sm:hidden">QR</span>
                   </th>
                   <th className="px-4 py-3 sm:px-6 sm:py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
                     <i className="fa-solid fa-cog mr-2 text-gray-500"></i>
@@ -366,13 +367,18 @@ export default function Items() {
                           {getStatusLabel(item.status)}
                         </Badge>
                       </td>
-                      <td className="hidden md:table-cell px-4 py-3 sm:px-6 sm:py-4">
-                        <div className="flex items-center space-x-2">
-                          <div className="p-1 bg-white rounded-lg shadow-sm border">
+                      <td className="px-2 py-3 sm:px-4 md:px-6 sm:py-4">
+                        <div className="flex items-center justify-center space-x-1 sm:space-x-2">
+                          <div className="p-0.5 sm:p-1 bg-white rounded-lg shadow-sm border">
+                            <QRCodeGenerator 
+                              value={`ITEM:${item.id}:${item.internalCode}`}
+                              size={24}
+                              className="cursor-pointer hover:scale-110 transition-transform sm:hidden"
+                            />
                             <QRCodeGenerator 
                               value={`ITEM:${item.id}:${item.internalCode}`}
                               size={32}
-                              className="cursor-pointer hover:scale-110 transition-transform"
+                              className="cursor-pointer hover:scale-110 transition-transform hidden sm:block"
                             />
                           </div>
                           <TooltipProvider>
@@ -382,7 +388,7 @@ export default function Items() {
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => handleShowQR(item)}
-                                  className="text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 w-8 h-8 p-0"
+                                  className="text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 w-6 h-6 sm:w-8 sm:h-8 p-0"
                                   data-testid={`button-qr-modal-${item.id}`}
                                   aria-label="Ver QR em tamanho maior"
                                 >
@@ -396,6 +402,27 @@ export default function Items() {
                       </td>
                       <td className="px-4 py-3 sm:px-6 sm:py-4">
                         <div className="flex flex-wrap items-center gap-2">
+                          {/* QR Code button for mobile/tablet screens */}
+                          <div className="lg:hidden">
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleShowQR(item)}
+                                    className="border-indigo-200 text-indigo-600 hover:bg-indigo-50 hover:border-indigo-300"
+                                    data-testid={`button-qr-mobile-${item.id}`}
+                                    aria-label="Ver QR Code"
+                                  >
+                                    <i className="fa-solid fa-qrcode text-sm"></i>
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Ver QR Code</TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          </div>
+
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
