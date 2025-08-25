@@ -335,45 +335,42 @@ export class DatabaseStorage implements IStorage {
 
   // Movements
   async createMovement(movement: InsertMovement): Promise<Movement> {
-    // Executa em transação para garantir consistência de estoque
-    return await getDb().transaction(async (tx) => {
-      // Busca o item atual para obter o estoque real
-      const [itemRow] = await tx
-        .select({
-          id: items.id,
-          currentStock: items.currentStock,
-        })
-        .from(items)
-        .where(eq(items.id, movement.itemId));
+    // Busca o item atual para obter o estoque real
+    const [itemRow] = await getDb()
+      .select({
+        id: items.id,
+        currentStock: items.currentStock,
+      })
+      .from(items)
+      .where(eq(items.id, movement.itemId));
 
-      if (!itemRow) {
-        throw new Error("Item not found");
-      }
+    if (!itemRow) {
+      throw new Error("Item not found");
+    }
 
-      const previousStock = itemRow.currentStock ?? 0;
-      const computedNewStock = movement.type === "entrada"
-        ? previousStock + movement.quantity
-        : previousStock - movement.quantity;
+    const previousStock = itemRow.currentStock ?? 0;
+    const computedNewStock = movement.type === "entrada"
+      ? previousStock + movement.quantity
+      : previousStock - movement.quantity;
 
-      if (computedNewStock < 0) {
-        throw new Error("Insufficient stock: operation would result in negative stock");
-      }
+    if (computedNewStock < 0) {
+      throw new Error("Insufficient stock: operation would result in negative stock");
+    }
 
-      // Insere a movimentação usando os valores calculados no servidor
-      const [inserted] = await tx.insert(movements).values({
-        ...movement,
-        previousStock,
-        newStock: computedNewStock,
-      }).returning();
+    // Insere a movimentação usando os valores calculados no servidor
+    const [inserted] = await getDb().insert(movements).values({
+      ...movement,
+      previousStock,
+      newStock: computedNewStock,
+    }).returning();
 
-      // Atualiza o estoque do item
-      await tx.update(items).set({
-        currentStock: computedNewStock,
-        updatedAt: sql`now()`,
-      }).where(eq(items.id, movement.itemId));
+    // Atualiza o estoque do item
+    await getDb().update(items).set({
+      currentStock: computedNewStock,
+      updatedAt: sql`now()`,
+    }).where(eq(items.id, movement.itemId));
 
-      return inserted as Movement;
-    });
+    return inserted as Movement;
   }
 
   async getMovements(itemId?: string, limit: number = 50): Promise<MovementWithDetails[]> {
