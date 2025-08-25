@@ -18,6 +18,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     message: { message: "Muitas tentativas. Tente novamente mais tarde." },
   });
 
+  // Heartbeat para presença online
+  app.post("/api/heartbeat", authenticateJWT, async (req, res) => {
+    try {
+      const user = (req as any).user as { sub: string } | undefined;
+      if (!user?.sub) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      await storage.updateUserLastSeen(user.sub);
+      return res.status(204).send();
+    } catch (error) {
+      console.error("Heartbeat error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   const importLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     limit: 5,

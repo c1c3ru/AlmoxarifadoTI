@@ -16,6 +16,9 @@ interface DashboardStats {
 export default function Dashboard() {
   const { data: stats, isLoading: statsLoading } = useQuery<DashboardStats>({
     queryKey: ["/api/dashboard/stats"],
+    // Atualiza periodicamente para refletir usuários online
+    refetchInterval: 60000,
+    refetchOnWindowFocus: true,
   });
 
   const { data: lowStockItems = [], isLoading: lowStockLoading } = useQuery<ItemWithCategory[]>({

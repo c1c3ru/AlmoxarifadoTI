@@ -59,6 +59,7 @@ export interface IStorage {
     todayMovements: number;
     activeUsers: number;
   }>;
+  updateUserLastSeen(userId: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -415,21 +416,31 @@ export class DatabaseStorage implements IStorage {
       .from(movements)
       .where(sql`${movements.createdAt} >= ${today}`);
     
-    // Usuários "online": usuários que tiveram atividade recente (ex.: qualquer requisição de movimentação)
-    // Critério: movimentações nos últimos 10 minutos por usuário (distinct)
-    const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
-    const [activeUsersResult] = await getDb().select({
-      count: sql<number>`COUNT(DISTINCT ${movements.userId})`,
-    })
-      .from(movements)
-      .where(sql`${movements.createdAt} >= ${tenMinutesAgo}`);
+    // Usuários "online" por heartbeat: usuários com last_seen_at recente na tabela user_activity
+    const activeUsersRows = await getDb().execute(
+      sql`SELECT COUNT(*)::int AS count FROM user_activity WHERE last_seen_at >= now() - interval '10 minutes'`
+    );
+    const activeCount = Array.isArray(activeUsersRows) && (activeUsersRows as any[])[0]?.count;
     
     return {
       totalItems: totalItemsResult.count,
       lowStock: lowStockResult.count,
       todayMovements: todayMovementsResult.count,
-      activeUsers: Number(activeUsersResult.count) || 0,
+      activeUsers: Number(activeCount) || 0,
     };
+  }
+
+  async updateUserLastSeen(userId: string): Promise<void> {
+    // Cria tabela de atividade se não existir e faz upsert do last_seen_at
+    await getDb().transaction(async (tx) => {
+      await tx.execute(sql`CREATE TABLE IF NOT EXISTS user_activity (
+        user_id uuid PRIMARY KEY,
+        last_seen_at timestamp NOT NULL DEFAULT now()
+      )`);
+
+      await tx.execute(sql`INSERT INTO user_activity (user_id, last_seen_at) VALUES (${userId}, now())
+        ON CONFLICT (user_id) DO UPDATE SET last_seen_at = EXCLUDED.last_seen_at`);
+    });
   }
 }
 
