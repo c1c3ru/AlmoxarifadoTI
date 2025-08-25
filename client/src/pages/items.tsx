@@ -4,6 +4,7 @@ import { MainLayout } from "@/components/layout/main-layout";
 import { AddItemModal } from "@/components/modals/add-item-modal";
 import { EditItemModal } from "@/components/modals/edit-item-modal";
 import { QRCodeModal } from "@/components/modals/qr-code-modal";
+import { ThermalQRPrinter } from "@/components/thermal-qr-printer";
 import { MovementModal } from "@/components/modals/movement-modal";
 import { QRCodeGenerator } from "@/components/qr-code-generator";
 import { CSVImportExport } from "@/components/csv-import-export";
@@ -23,8 +24,10 @@ export default function Items() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showQRModal, setShowQRModal] = useState(false);
   const [showMovementModal, setShowMovementModal] = useState(false);
+  const [showThermalPrinter, setShowThermalPrinter] = useState(false);
   const [movementTypePreset, setMovementTypePreset] = useState<"entrada" | "saida" | null>(null);
   const [selectedItem, setSelectedItem] = useState<ItemWithCategory | null>(null);
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   
   const { user } = useAuth();
   const { toast } = useToast();
@@ -166,9 +169,21 @@ export default function Items() {
               </div>
               <h3 className="text-xl font-bold text-gray-900">Itens Cadastrados</h3>
             </div>
-            <Badge className="bg-blue-100 text-blue-800 font-semibold px-3 py-1">
-              {items.length} itens
-            </Badge>
+            <div className="flex items-center space-x-3">
+              {selectedItems.size > 0 && (
+                <Button
+                  onClick={() => setShowThermalPrinter(true)}
+                  className="bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white shadow-lg"
+                  data-testid="button-thermal-print"
+                >
+                  <i className="fa-solid fa-print mr-2"></i>
+                  Imprimir QR ({selectedItems.size})
+                </Button>
+              )}
+              <Badge className="bg-blue-100 text-blue-800 font-semibold px-3 py-1">
+                {items.length} itens
+              </Badge>
+            </div>
           </div>
         </div>
         
@@ -178,8 +193,22 @@ export default function Items() {
               <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
                 <tr>
                   <th className="px-4 py-3 sm:px-6 sm:py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
-                    <i className="fa-solid fa-cube mr-2 text-blue-500"></i>
-                    Item
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        checked={selectedItems.size === items.length && items.length > 0}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedItems(new Set(items.map(item => item.id)));
+                          } else {
+                            setSelectedItems(new Set());
+                          }
+                        }}
+                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <i className="fa-solid fa-cube text-blue-500"></i>
+                      <span>Item</span>
+                    </div>
                   </th>
                   <th className="hidden sm:table-cell px-4 py-3 sm:px-6 sm:py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
                     <i className="fa-solid fa-barcode mr-2 text-green-500"></i>
@@ -258,6 +287,20 @@ export default function Items() {
                     >
                       <td className="px-4 py-3 sm:px-6 sm:py-4">
                         <div className="flex items-center space-x-4">
+                          <input
+                            type="checkbox"
+                            checked={selectedItems.has(item.id)}
+                            onChange={(e) => {
+                              const newSelected = new Set(selectedItems);
+                              if (e.target.checked) {
+                                newSelected.add(item.id);
+                              } else {
+                                newSelected.delete(item.id);
+                              }
+                              setSelectedItems(newSelected);
+                            }}
+                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          />
                           <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-purple-100 rounded-xl flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
                             <i className={`${item.category?.icon || 'fa-solid fa-cube'} text-blue-600 text-lg`}></i>
                           </div>
@@ -467,6 +510,12 @@ export default function Items() {
         }}
         item={selectedItem}
         initialType={movementTypePreset || undefined}
+      />
+
+      <ThermalQRPrinter
+        open={showThermalPrinter}
+        onOpenChange={setShowThermalPrinter}
+        items={items.filter(item => selectedItems.has(item.id))}
       />
     </MainLayout>
   );
