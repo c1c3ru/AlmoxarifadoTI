@@ -57,6 +57,7 @@ const mapIconClass = (iconClass: string) => {
 
 const iconOptions = [
   { value: "fas fa-desktop", label: "Computador" },
+  { value: "fas fa-tablet", label: "Tablet" },
   { value: "fas fa-mouse", label: "Mouse" },
   { value: "fas fa-keyboard", label: "Teclado" },
   { value: "fas fa-monitor", label: "Monitor" },
