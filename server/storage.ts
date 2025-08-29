@@ -466,16 +466,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateUserLastSeen(userId: string): Promise<void> {
-    // Cria tabela de atividade se não existir e faz upsert do last_seen_at
-    await getDb().transaction(async (tx) => {
-      await tx.execute(sql`CREATE TABLE IF NOT EXISTS user_activity (
-        user_id uuid PRIMARY KEY,
-        last_seen_at timestamp NOT NULL DEFAULT now()
-      )`);
+    // neon-http não suporta transações; executar em chamadas simples
+    // Garante a tabela e faz upsert do last_seen_at
+    await getDb().execute(sql`CREATE TABLE IF NOT EXISTS user_activity (
+      user_id uuid PRIMARY KEY,
+      last_seen_at timestamp NOT NULL DEFAULT now()
+    )`);
 
-      await tx.execute(sql`INSERT INTO user_activity (user_id, last_seen_at) VALUES (${userId}, now())
-        ON CONFLICT (user_id) DO UPDATE SET last_seen_at = EXCLUDED.last_seen_at`);
-    });
+    await getDb().execute(sql`INSERT INTO user_activity (user_id, last_seen_at) VALUES (${userId}, now())
+      ON CONFLICT (user_id) DO UPDATE SET last_seen_at = EXCLUDED.last_seen_at`);
   }
 
   private async ensureUserActivityTable(): Promise<void> {

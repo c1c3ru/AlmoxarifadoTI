@@ -38,7 +38,6 @@ export default function Scanner() {
       itemId: string;
       quantity: number;
       destination?: string;
-      previousStock: number;
     }) => {
       if (!user) throw new Error("Usuário não encontrado");
       
@@ -47,8 +46,6 @@ export default function Scanner() {
         userId: user.id,
         type: "saida" as const,
         quantity: data.quantity,
-        previousStock: data.previousStock,
-        newStock: data.previousStock - data.quantity,
         destination: data.destination,
         observation: "Baixa via QR Scanner",
       };
@@ -133,7 +130,6 @@ export default function Scanner() {
       itemId: scannedItem.id,
       quantity: withdrawalQuantity,
       destination: destination.trim() || undefined,
-      previousStock: scannedItem.currentStock,
     });
   };
 
