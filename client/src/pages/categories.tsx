@@ -215,11 +215,11 @@ export default function Categories() {
               <p className="text-sm text-gray-500">Visualize e gerencie todas as categorias do sistema</p>
             </div>
             <Button 
-              className="bg-primary-600 hover:bg-primary-700 shadow-md"
+              className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 shadow-lg hover:shadow-xl rounded-full px-4"
               data-testid="button-add-category"
               onClick={handleOpenModal}
             >
-              <i className={mapIconClass("fas fa-plus")}></i>
+              <i className={mapIconClass("fas fa-tags")}></i>
               <span className="ml-2">Nova Categoria</span>
             </Button>
 

@@ -129,6 +129,9 @@ export default function Items() {
       title="Gerenciar Itens"
       subtitle="Cadastro e controle de itens do almoxarifado"
       onAddItem={() => setShowAddModal(true)}
+      addButtonLabel="Novo Item"
+      addButtonIconClass="fa-solid fa-plus"
+      addButtonClassName="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 shadow-lg hover:shadow-xl"
     >
       {/* Hero Section with CSV */}
       <Card className="bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 border-0 shadow-lg mb-8">

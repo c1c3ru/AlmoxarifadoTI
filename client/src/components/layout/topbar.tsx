@@ -7,9 +7,12 @@ interface TopbarProps {
   subtitle: string;
   onAddItem?: () => void;
   showAddButton?: boolean;
+  addButtonLabel?: string;
+  addButtonIconClass?: string;
+  addButtonClassName?: string;
 }
 
-export function Topbar({ title, subtitle, onAddItem, showAddButton = true }: TopbarProps) {
+export function Topbar({ title, subtitle, onAddItem, showAddButton = true, addButtonLabel, addButtonIconClass, addButtonClassName }: TopbarProps) {
   const { toggle, isMobile } = useSidebar();
   
   return (
@@ -35,9 +38,20 @@ export function Topbar({ title, subtitle, onAddItem, showAddButton = true }: Top
           </div>
         </div>
         {showAddButton && onAddItem && (
-          <Button onClick={onAddItem} data-testid="button-add" className="text-sm md:text-base">
-            <i className="fas fa-plus mr-2"></i>
-            <span className="hidden sm:inline">Adicionar</span>
+          <Button
+            onClick={onAddItem}
+            data-testid="button-add"
+            className={cn(
+              "text-sm md:text-base",
+              // Estilo padrão suave e moderno; pode ser sobrescrito via addButtonClassName
+              "bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 text-white shadow-md hover:shadow-lg",
+              "hover:from-black hover:to-gray-900 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-gray-900",
+              "rounded-full px-4 py-2 transition-all",
+              addButtonClassName
+            )}
+          >
+            <i className={cn(addButtonIconClass || "fas fa-plus", "mr-2")}></i>
+            <span className="hidden sm:inline">{addButtonLabel || "Adicionar"}</span>
             <span className="sm:hidden">+</span>
           </Button>
         )}

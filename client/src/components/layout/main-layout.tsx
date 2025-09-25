@@ -11,6 +11,9 @@ interface MainLayoutProps {
   children: React.ReactNode;
   onAddItem?: () => void;
   showAddButton?: boolean;
+  addButtonLabel?: string;
+  addButtonIconClass?: string;
+  addButtonClassName?: string;
 }
 
 export function MainLayout({ 
@@ -18,7 +21,10 @@ export function MainLayout({
   subtitle, 
   children, 
   onAddItem, 
-  showAddButton = true 
+  showAddButton = true,
+  addButtonLabel,
+  addButtonIconClass,
+  addButtonClassName
 }: MainLayoutProps) {
   const { isCollapsed, isMobile } = useSidebar();
   const heartbeatRef = useRef<number | null>(null);
@@ -74,6 +80,9 @@ export function MainLayout({
           subtitle={subtitle} 
           onAddItem={onAddItem}
           showAddButton={showAddButton}
+          addButtonLabel={addButtonLabel}
+          addButtonIconClass={addButtonIconClass}
+          addButtonClassName={addButtonClassName}
         />
         <div className="p-4 md:p-6">
           {children}
