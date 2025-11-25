@@ -5,7 +5,9 @@ import { storage } from "./storage";
 const JWT_SECRET: Secret = (process.env.JWT_SECRET || "change-me-in-prod") as Secret;
 
 export function isAuthEnabled() {
-  return process.env.ENABLE_JWT === "true";
+  const enabled = process.env.ENABLE_JWT === "true";
+  console.log("[auth] isAuthEnabled check - ENABLE_JWT:", process.env.ENABLE_JWT, "result:", enabled);
+  return enabled;
 }
 
 export interface JwtPayload {
