@@ -1,4 +1,8 @@
-import "dotenv/config";
+// Carrega .env apenas em desenvolvimento, não em produção (Vercel)
+if (process.env.NODE_ENV !== "production") {
+  require("dotenv/config");
+}
+
 import type { Request, Response, NextFunction } from "express";
 import { setupVite, serveStatic, log } from "./vite";
 import { createDevServer } from "./app";
