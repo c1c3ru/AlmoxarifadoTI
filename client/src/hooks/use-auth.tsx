@@ -37,13 +37,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Se o servidor estiver com JWT habilitado, virá um token
       if (data.token) {
         localStorage.setItem("sgat-token", data.token as string);
+        console.log("[auth] Token salvo no localStorage:", data.token.substring(0, 20) + "...");
       } else {
         // Garante limpeza caso tenha token antigo
         localStorage.removeItem("sgat-token");
+        console.log("[auth] Nenhum token recebido do servidor");
       }
+      console.log("[auth] Login bem-sucedido para:", username);
       return true;
     } catch (error) {
-      console.error("Login failed:", error);
+      console.error("[auth] Login failed:", error);
       return false;
     }
   };
