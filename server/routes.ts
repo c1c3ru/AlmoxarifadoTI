@@ -210,7 +210,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Dashboard routes
-  app.get("/api/dashboard/stats", async (req, res) => {
+  app.get("/api/dashboard/stats", authenticateJWT, async (req, res) => {
     try {
       const stats = await storage.getDashboardStats();
       res.json(stats);
@@ -220,7 +220,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/dashboard/low-stock", async (req, res) => {
+  app.get("/api/dashboard/low-stock", authenticateJWT, async (req, res) => {
     try {
       const lowStockItems = await storage.getLowStockItems();
       res.json(lowStockItems);
@@ -230,7 +230,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/dashboard/recent-movements", async (req, res) => {
+  app.get("/api/dashboard/recent-movements", authenticateJWT, async (req, res) => {
     try {
       const recentMovements = await storage.getMovements(undefined, 10);
       res.json(recentMovements);
@@ -241,7 +241,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Categories routes
-  app.get("/api/categories", async (req, res) => {
+  app.get("/api/categories", authenticateJWT, async (req, res) => {
     try {
       const categories = await storage.getAllCategories();
       // Debug: log how many categories and their names to diagnose discrepancies
@@ -255,7 +255,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/categories/with-counts", async (req, res) => {
+  app.get("/api/categories/with-counts", authenticateJWT, async (req, res) => {
     try {
       const categoriesWithCounts = await storage.getCategoriesWithItemCount();
       res.json(categoriesWithCounts);
@@ -315,7 +315,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Items routes
-  app.get("/api/items", async (req, res) => {
+  app.get("/api/items", authenticateJWT, async (req, res) => {
     try {
       const items = await storage.getAllItems();
       res.json(items);
@@ -325,7 +325,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/items/search", async (req, res) => {
+  app.get("/api/items/search", authenticateJWT, async (req, res) => {
     try {
       const { q = "", category = "", status = "" } = req.query;
       const items = await storage.searchItems(
@@ -340,7 +340,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/items/by-code/:code", async (req, res) => {
+  app.get("/api/items/by-code/:code", authenticateJWT, async (req, res) => {
     try {
       const { code } = req.params;
       const item = await storage.getItemByCode(code);
@@ -354,7 +354,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/items/:id", async (req, res) => {
+  app.get("/api/items/:id", authenticateJWT, async (req, res) => {
     try {
       const { id } = req.params;
       const item = await storage.getItem(id);
@@ -418,7 +418,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Movements routes
-  app.get("/api/movements", async (req, res) => {
+  app.get("/api/movements", authenticateJWT, async (req, res) => {
     try {
       const { itemId, limit } = req.query;
       const movements = await storage.getMovements(
