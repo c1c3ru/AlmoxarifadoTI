@@ -56,7 +56,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   // Authentication 
   // Temporary storage for password reset codes (in production, use Redis or database)
-  const resetCodes = new Map<string, { code: string; expires: number; userId: string }>();
+  const resetCodes = new Map<string, { code: string; expires: number; userId: string; username: string; email: string }>();
 
   // Password recovery endpoint
   app.post("/api/password-recovery", async (req, res) => {
@@ -82,13 +82,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Generate 6-digit reset code
       const resetCode = crypto.randomInt(100000, 999999).toString();
-      const expires = Date.now() + 15 * 60 * 1000; // 15 minutes
+      const expires = Date.now() + 60 * 60 * 1000; // 60 minutes
 
-      // Store reset code using the same identifier that was provided in the request
-      resetCodes.set(usernameOrEmail, { code: resetCode, expires, userId: user.id.toString() });
+      // Store reset code using the user ID as key to avoid username/email mismatch issues
+      resetCodes.set(user.id.toString(), { code: resetCode, expires, userId: user.id.toString(), username: user.username, email: user.email });
 
       // Debug log
-      console.log(`[password-recovery] Generated code ${resetCode} for user ${usernameOrEmail} (stored with key: ${usernameOrEmail})`);
+      console.log(`[password-recovery] Generated code ${resetCode} for user ${user.username} (ID: ${user.id})`);
 
       // Send email
       const emailSent = await emailService.sendPasswordResetEmail(user.email, resetCode, user.username);
@@ -110,26 +110,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Password reset endpoint
   app.post("/api/password-reset", async (req, res) => {
     try {
-      const { username, code, newPassword } = req.body;
+      const { usernameOrEmail, code, newPassword } = req.body;
       
       console.log(`[password-reset] === RESET ATTEMPT START ===`);
-      console.log(`[password-reset] Request body:`, { username, code: code ? `${code.length} chars` : 'undefined', newPassword: newPassword ? 'provided' : 'undefined' });
+      console.log(`[password-reset] Request body:`, { usernameOrEmail, code: code ? `${code.length} chars` : 'undefined', newPassword: newPassword ? 'provided' : 'undefined' });
       console.log(`[password-reset] All stored reset codes:`, Array.from(resetCodes.entries()));
       
-      if (!username || !code || !newPassword) {
+      if (!usernameOrEmail || !code || !newPassword) {
         console.log(`[password-reset] Missing required fields`);
         return res.status(400).json({ message: "Todos os campos são obrigatórios" });
       }
 
-      // Check if reset code exists and is valid
-      const resetData = resetCodes.get(username);
-      console.log(`[password-reset] Attempting reset for user: ${username}`);
+      // Find the user by username or email
+      const users = await storage.getAllUsers();
+      const user = users.find((u: any) => 
+        u.username === usernameOrEmail || u.email === usernameOrEmail
+      );
+
+      if (!user) {
+        console.log(`[password-reset] User not found: ${usernameOrEmail}`);
+        return res.status(400).json({ message: "Código inválido ou expirado" });
+      }
+
+      // Check if reset code exists and is valid using user ID
+      const resetData = resetCodes.get(user.id.toString());
+      console.log(`[password-reset] Attempting reset for user: ${usernameOrEmail} (ID: ${user.id})`);
       console.log(`[password-reset] Provided code: "${code}" (type: ${typeof code})`);
       console.log(`[password-reset] Stored data:`, resetData);
       console.log(`[password-reset] Current time: ${Date.now()}, Expires: ${resetData?.expires}`);
       
       if (!resetData) {
-        console.log(`[password-reset] No reset data found for username: ${username}`);
+        console.log(`[password-reset] No reset data found for user ID: ${user.id}`);
         return res.status(400).json({ message: "Código inválido ou expirado" });
       }
       
@@ -152,9 +163,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.updateUserPassword(resetData.userId, hashedPassword);
 
       // Remove used reset code
-      resetCodes.delete(username);
+      resetCodes.delete(user.id.toString());
 
-      console.log(`[password-reset] Password reset successful for user: ${username}`);
+      console.log(`[password-reset] Password reset successful for user: ${usernameOrEmail}`);
       res.status(200).json({ message: "Senha redefinida com sucesso" });
     } catch (error) {
       console.error('[password-reset] Error:', error);

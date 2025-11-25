@@ -123,7 +123,7 @@ export default function Login() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          username: data.usernameOrEmail,
+          usernameOrEmail: data.usernameOrEmail,
           code: data.code,
           newPassword: data.newPassword,
         }),
