@@ -20,18 +20,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     message: { message: "Muitas tentativas. Tente novamente mais tarde." },
   });
 
-  // Debug endpoint para verificar variáveis de ambiente
-  app.get("/api/debug/env", (req, res) => {
-    res.json({
-      NODE_ENV: process.env.NODE_ENV,
-      VERCEL: process.env.VERCEL,
-      ENABLE_JWT: process.env.ENABLE_JWT,
-      JWT_SECRET: process.env.JWT_SECRET ? "***SET***" : "NOT SET",
-      DATABASE_URL: process.env.DATABASE_URL ? "***SET***" : "NOT SET",
-      timestamp: new Date().toISOString(),
-    });
-  });
-
   // Lista de usuários online com última atividade
   app.get("/api/users/online", authenticateJWT, async (req, res) => {
     try {
@@ -190,42 +178,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { username, password } = req.body;
       
-      console.log("[login] Login attempt for user:", username);
-      
       if (!username || !password) {
         return res.status(400).json({ message: "Username and password are required" });
       }
 
       const user = await storage.getUserByUsername(username);
       if (!user || !user.isActive) {
-        console.log("[login] User not found or inactive:", username);
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
       const isValidPassword = await bcrypt.compare(password, user.password);
       if (!isValidPassword) {
-        console.log("[login] Invalid password for user:", username);
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
       // Don't send password in response
       const { password: _, ...userWithoutPassword } = user;
       
-      // Sempre gera e retorna o token se JWT estiver habilitado
-      const authEnabled = isAuthEnabled();
-      console.log("[login] Auth enabled:", authEnabled);
-      
-      if (authEnabled) {
+      if (isAuthEnabled()) {
         const token = generateToken({
           sub: user.id,
           username: user.username,
           role: user.role,
         });
-        console.log("[login] Token generated successfully for user:", username);
         return res.json({ user: userWithoutPassword, token });
       }
       
-      console.log("[login] Auth disabled, returning user without token");
       res.json({ user: userWithoutPassword });
     } catch (error) {
       console.error("Login error:", error);

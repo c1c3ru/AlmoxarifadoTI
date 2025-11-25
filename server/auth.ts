@@ -4,17 +4,9 @@ import { storage } from "./storage";
 
 const JWT_SECRET: Secret = (process.env.JWT_SECRET || "change-me-in-prod") as Secret;
 
-// Log das variáveis de ambiente no carregamento do módulo
-console.log('[auth] Module loaded - JWT_SECRET:', process.env.JWT_SECRET ? '***SET***' : 'NOT SET');
-console.log('[auth] Module loaded - ENABLE_JWT:', process.env.ENABLE_JWT);
-
 export function isAuthEnabled() {
-  // Verifica explicitamente a variável de ambiente
   const enableJwtValue = process.env.ENABLE_JWT;
-  const enabled = enableJwtValue === "true" || enableJwtValue === "1";
-  
-  console.log("[auth] isAuthEnabled check - ENABLE_JWT:", enableJwtValue, "result:", enabled);
-  return enabled;
+  return enableJwtValue === "true" || enableJwtValue === "1";
 }
 
 export interface JwtPayload {

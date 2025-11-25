@@ -15,16 +15,6 @@ function log(message: string) {
   } catch {}
 }
 
-// Log environment variables on startup
-console.log("[startup] ========== ENVIRONMENT VARIABLES ==========");
-console.log("[startup] NODE_ENV:", process.env.NODE_ENV);
-console.log("[startup] VERCEL:", process.env.VERCEL);
-console.log("[startup] ENABLE_JWT:", process.env.ENABLE_JWT);
-console.log("[startup] ENABLE_JWT type:", typeof process.env.ENABLE_JWT);
-console.log("[startup] JWT_SECRET exists:", !!process.env.JWT_SECRET);
-console.log("[startup] DATABASE_URL exists:", !!process.env.DATABASE_URL);
-console.log("[startup] ==========================================");
-
 export async function createApp() {
   const app = express();
 
