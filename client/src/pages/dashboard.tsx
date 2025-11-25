@@ -196,8 +196,8 @@ export default function Dashboard() {
                       <div className="w-10 h-10 rounded-full bg-violet-100 text-violet-700 flex items-center justify-center font-semibold">
                         {u.username.slice(0, 2).toUpperCase()}
                       </div>
-                      <div>
-                        <p className="font-medium text-gray-900">{u.username}</p>
+                      <div className="min-w-0">
+                        <p className="font-medium text-gray-900 truncate">{u.username}</p>
                         <p className="text-xs text-gray-500">{u.role}</p>
                       </div>
                     </div>
