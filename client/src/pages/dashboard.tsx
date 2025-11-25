@@ -191,9 +191,9 @@ export default function Dashboard() {
                 </div>
               ) : (
                 onlineUsers.slice(0, 8).map((u) => (
-                  <div key={u.id} className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition-all duration-200">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 rounded-full bg-violet-100 text-violet-700 flex items-center justify-center font-semibold">
+                  <div key={u.id} className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition-all duration-200 gap-3">
+                    <div className="flex items-center space-x-3 min-w-0">
+                      <div className="w-10 h-10 rounded-full bg-violet-100 text-violet-700 flex items-center justify-center font-semibold flex-shrink-0">
                         {u.username.slice(0, 2).toUpperCase()}
                       </div>
                       <div className="min-w-0">
@@ -201,8 +201,8 @@ export default function Dashboard() {
                         <p className="text-xs text-gray-500">{u.role}</p>
                       </div>
                     </div>
-                    <div className="text-right text-xs text-gray-500">
-                      Última atividade: {formatTimestamp(u.lastSeenAt)}
+                    <div className="text-right text-xs text-gray-500 flex-shrink-0 max-w-xs">
+                      <p className="truncate">{formatTimestamp(u.lastSeenAt)}</p>
                     </div>
                   </div>
                 ))
