@@ -515,6 +515,132 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Rota para usuário alterar sua própria senha
+  app.put("/api/users/me/password", authenticateJWT, async (req, res) => {
+    try {
+      const user = (req as any).user as { sub: string } | undefined;
+      if (!user?.sub) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const { currentPassword, newPassword } = req.body;
+      
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({ message: "Senha atual e nova senha são obrigatórias" });
+      }
+
+      if (newPassword.length < 6) {
+        return res.status(400).json({ message: "A nova senha deve ter pelo menos 6 caracteres" });
+      }
+
+      // Buscar usuário e verificar senha atual
+      const dbUser = await storage.getUser(user.sub);
+      if (!dbUser) {
+        return res.status(404).json({ message: "Usuário não encontrado" });
+      }
+
+      const isValidPassword = await bcrypt.compare(currentPassword, dbUser.password);
+      if (!isValidPassword) {
+        return res.status(401).json({ message: "Senha atual incorreta" });
+      }
+
+      // Atualizar senha
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      await storage.updateUserPassword(user.sub, hashedPassword);
+
+      res.status(200).json({ message: "Senha alterada com sucesso" });
+    } catch (error) {
+      console.error("Change password error:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
+  // Rota para atualizar usuário
+  app.put("/api/users/:id", authenticateJWT, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const validation = insertUserSchema.partial().safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json({ message: "Invalid user data", errors: validation.error.issues });
+      }
+
+      // Se password está presente e vazio, remover do update
+      const updateData = { ...validation.data };
+      if (updateData.password === "" || updateData.password === null || updateData.password === undefined) {
+        delete updateData.password;
+      }
+
+      const user = await storage.updateUser(id, updateData);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const { password: _, ...userWithoutPassword } = user;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      const anyErr = error as any;
+      const code = anyErr?.code || anyErr?.originalError?.code;
+      const detail: string = (anyErr?.detail || anyErr?.message || "").toString();
+      const constraint: string = (anyErr?.constraint || "").toString();
+
+      if (code === "23505" || /duplicate|unique constraint|violates unique/i.test(detail)) {
+        const msg = detail.toLowerCase() + " " + constraint.toLowerCase();
+        if (/matricula/.test(msg)) {
+          return res.status(409).json({ message: "Matrícula já cadastrada" });
+        }
+        if (/username/.test(msg)) {
+          return res.status(409).json({ message: "Usuário já existe" });
+        }
+        if (/email/.test(msg)) {
+          return res.status(409).json({ message: "Email já cadastrado" });
+        }
+        return res.status(409).json({ message: "Registro duplicado" });
+      }
+
+      console.error("Update user error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Rota para deletar usuário
+  app.delete("/api/users/:id", authenticateJWT, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const currentUser = (req as any).user as { sub: string; role: string } | undefined;
+      
+      if (!currentUser) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      // Verificar se é admin
+      if (currentUser.role !== "admin") {
+        return res.status(403).json({ message: "Apenas administradores podem deletar usuários" });
+      }
+
+      // Não permitir que o admin delete a si mesmo
+      if (currentUser.sub === id) {
+        return res.status(400).json({ message: "Você não pode deletar sua própria conta" });
+      }
+
+      const success = await storage.deleteUser(id);
+      if (!success) {
+        return res.status(404).json({ message: "Usuário não encontrado" });
+      }
+
+      res.status(204).send();
+    } catch (error: any) {
+      // Verificar se é erro de constraint (usuário tem movimentações)
+      if (error?.code === "23503" || /foreign key constraint|violates foreign key/i.test(error?.message || "")) {
+        return res.status(409).json({ 
+          message: "Não é possível deletar este usuário pois ele possui movimentações registradas no sistema" 
+        });
+      }
+
+      console.error("Delete user error:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
   // CSV Export/Import routes
   app.get("/api/inventory/export", authenticateJWT, async (req, res) => {
     try {

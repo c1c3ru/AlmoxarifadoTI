@@ -7,6 +7,7 @@ import { MainLayout } from "@/components/layout/main-layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -15,11 +16,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/hooks/use-auth";
 import type { User } from "@shared/schema";
 
 const userSchema = z.object({
   username: z.string().min(3, "Username deve ter pelo menos 3 caracteres"),
-  password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
+  password: z.string().refine((val) => val === "" || val.length >= 6, {
+    message: "Senha deve ter pelo menos 6 caracteres ou estar vazia",
+  }),
   name: z.string().min(1, "Nome é obrigatório"),
   role: z.enum(["admin", "tech"]),
   isActive: z.boolean(),
@@ -30,9 +34,11 @@ type UserFormData = z.infer<typeof userSchema>;
 export default function Users() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [deletingUser, setDeletingUser] = useState<User | null>(null);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user: currentUser } = useAuth();
 
   const { data: users = [], isLoading } = useQuery<User[]>({
     queryKey: ["/api/users"],
@@ -112,9 +118,37 @@ export default function Users() {
     },
   });
 
+  const deleteUserMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await apiRequest("DELETE", `/api/users/${id}`);
+      return response;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Usuário deletado com sucesso",
+        description: "O usuário foi removido do sistema.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      setDeletingUser(null);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao deletar usuário",
+        description: error.message || "Não foi possível deletar o usuário. Verifique se ele possui movimentações registradas.",
+        variant: "destructive",
+      });
+      setDeletingUser(null);
+    },
+  });
+
   const onSubmit = (data: UserFormData) => {
     if (editingUser) {
-      updateUserMutation.mutate({ id: editingUser.id, data });
+      // Remove password from data if it's empty (to keep current password)
+      const updateData = { ...data };
+      if (!updateData.password || updateData.password.trim() === "") {
+        delete updateData.password;
+      }
+      updateUserMutation.mutate({ id: editingUser.id, data: updateData });
     } else {
       createUserMutation.mutate(data);
     }
@@ -493,6 +527,58 @@ export default function Users() {
                       <i className="fa-solid fa-edit mr-2"></i>
                       Editar
                     </Button>
+                    <AlertDialog open={deletingUser?.id === user.id} onOpenChange={(open) => !open && setDeletingUser(null)}>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => setDeletingUser(user)}
+                          disabled={currentUser?.id === user.id}
+                          className="shadow-md"
+                          data-testid={`button-delete-${user.id}`}
+                        >
+                          <i className="fa-solid fa-trash mr-2"></i>
+                          Deletar
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Tem certeza que deseja deletar o usuário <strong>{user.name}</strong> ({user.username})?
+                            <br />
+                            <br />
+                            Esta ação não pode ser desfeita. Se o usuário possuir movimentações registradas no sistema, a exclusão não será permitida.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel onClick={() => setDeletingUser(null)}>
+                            Cancelar
+                          </AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => {
+                              if (deletingUser) {
+                                deleteUserMutation.mutate(deletingUser.id);
+                              }
+                            }}
+                            className="bg-red-600 hover:bg-red-700"
+                            disabled={deleteUserMutation.isPending}
+                          >
+                            {deleteUserMutation.isPending ? (
+                              <>
+                                <i className="fa-solid fa-spinner fa-spin mr-2"></i>
+                                Deletando...
+                              </>
+                            ) : (
+                              <>
+                                <i className="fa-solid fa-trash mr-2"></i>
+                                Deletar
+                              </>
+                            )}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 </div>
               ))}

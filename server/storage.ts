@@ -31,6 +31,7 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: string, user: Partial<InsertUser>): Promise<User | undefined>;
   getAllUsers(): Promise<User[]>;
+  deleteUser(id: string): Promise<boolean>;
   
   // Categories
   getCategory(id: string): Promise<Category | undefined>;
@@ -105,6 +106,25 @@ export class DatabaseStorage implements IStorage {
 
   async getAllUsers(): Promise<User[]> {
     return await getDb().select().from(users).orderBy(asc(users.name));
+  }
+
+  async deleteUser(id: string): Promise<boolean> {
+    // Verificar se o usuário tem movimentações
+    const userMovements = await getDb()
+      .select({ count: sql<number>`count(*)::int` })
+      .from(movements)
+      .where(eq(movements.userId, id));
+    
+    const movementCount = userMovements[0]?.count || 0;
+    
+    if (movementCount > 0) {
+      // Se tem movimentações, não pode deletar (será tratado pela rota)
+      throw new Error("Usuário possui movimentações registradas");
+    }
+    
+    // Deletar o usuário
+    const result = await getDb().delete(users).where(eq(users.id, id)).returning();
+    return result.length > 0;
   }
 
   // Categories

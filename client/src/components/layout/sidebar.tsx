@@ -1,11 +1,31 @@
+import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import ifceLogo from "@publicAssets/ifce_logo.png";
 import { useAuth } from "@/hooks/use-auth";
 import { isAdmin } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { cn } from "@/lib/utils";
+
+const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, "Senha atual é obrigatória"),
+  newPassword: z.string().min(6, "A nova senha deve ter pelo menos 6 caracteres"),
+  confirmPassword: z.string().min(6, "Confirmação de senha é obrigatória"),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "As senhas não coincidem",
+  path: ["confirmPassword"],
+});
+
+type ChangePasswordFormData = z.infer<typeof changePasswordSchema>;
 
 const menuItems = [
   { route: "/", label: "Dashboard", icon: "fas fa-chart-line" },
@@ -25,6 +45,48 @@ export function Sidebar() {
   const [location] = useLocation();
   const { user, logout } = useAuth();
   const { isCollapsed, isMobile, isOpen, close } = useSidebar();
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const { toast } = useToast();
+
+  const changePasswordForm = useForm<ChangePasswordFormData>({
+    resolver: zodResolver(changePasswordSchema),
+    defaultValues: {
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    },
+  });
+
+  const onChangePassword = async (data: ChangePasswordFormData) => {
+    try {
+      const response = await apiRequest("PUT", "/api/users/me/password", {
+        currentPassword: data.currentPassword,
+        newPassword: data.newPassword,
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Senha alterada com sucesso",
+          description: "Sua senha foi atualizada.",
+        });
+        changePasswordForm.reset();
+        setShowChangePassword(false);
+      } else {
+        const result = await response.json();
+        toast({
+          title: "Erro ao alterar senha",
+          description: result.message || "Não foi possível alterar a senha",
+          variant: "destructive",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Erro ao alterar senha",
+        description: error.message || "Erro de conexão. Tente novamente.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const isActiveRoute = (route: string) => {
     if (route === "/") return location === "/";
@@ -167,20 +229,119 @@ export function Sidebar() {
                     {user?.role === "admin" ? "Administrador" : "Técnico"}
                   </p>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={logout}
-                  className="text-gray-400 hover:text-gray-600 transition-opacity duration-300"
-                  data-testid="button-logout"
-                >
-                  <i className="fas fa-sign-out-alt"></i>
-                </Button>
+                <div className="flex items-center space-x-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowChangePassword(true)}
+                    className="text-gray-400 hover:text-gray-600 transition-opacity duration-300"
+                    data-testid="button-change-password"
+                    title="Alterar senha"
+                  >
+                    <i className="fas fa-key"></i>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={logout}
+                    className="text-gray-400 hover:text-gray-600 transition-opacity duration-300"
+                    data-testid="button-logout"
+                    title="Sair"
+                  >
+                    <i className="fas fa-sign-out-alt"></i>
+                  </Button>
+                </div>
               </>
             )}
           </div>
         </div>
       </aside>
+
+      {/* Change Password Dialog */}
+      <Dialog open={showChangePassword} onOpenChange={setShowChangePassword}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Alterar Senha</DialogTitle>
+          </DialogHeader>
+          <Form {...changePasswordForm}>
+            <form onSubmit={changePasswordForm.handleSubmit(onChangePassword)} className="space-y-4">
+              <FormField
+                control={changePasswordForm.control}
+                name="currentPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Senha Atual</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="password"
+                        placeholder="Digite sua senha atual"
+                        {...field}
+                        className="h-11"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={changePasswordForm.control}
+                name="newPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nova Senha</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="password"
+                        placeholder="Digite a nova senha (mín. 6 caracteres)"
+                        {...field}
+                        className="h-11"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={changePasswordForm.control}
+                name="confirmPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Confirmar Nova Senha</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="password"
+                        placeholder="Confirme a nova senha"
+                        {...field}
+                        className="h-11"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="flex justify-end space-x-2 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setShowChangePassword(false);
+                    changePasswordForm.reset();
+                  }}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  type="submit"
+                  className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+                >
+                  <i className="fa-solid fa-key mr-2"></i>
+                  Alterar Senha
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
