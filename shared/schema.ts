@@ -14,6 +14,7 @@ export const users = pgTable("users", {
   matricula: text("matricula").notNull().unique(),
   role: text("role", { enum: ["admin", "tech"] }).notNull().default("tech"),
   isActive: boolean("is_active").notNull().default(true),
+  deletedAt: timestamp("deleted_at"), // Timestamp de quando foi deletado (soft delete)
   createdAt: timestamp("created_at").notNull().default(sql`now()`),
 });
 

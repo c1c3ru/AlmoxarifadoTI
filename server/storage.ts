@@ -7,13 +7,17 @@ import {
 } from "@shared/schema";
 import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
-import { eq, desc, asc, and, or, ilike, sql, count } from "drizzle-orm";
+import { eq, desc, asc, and, or, ilike, sql, count, isNull } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import bcrypt from "bcryptjs";
 
 let _db: ReturnType<typeof drizzle> | undefined;
+let _migrationChecked = false;
+
 function getDb() {
-  if (_db) return _db;
+  if (_db) {
+    return _db;
+  }
   const url = process.env.DATABASE_URL;
   if (!url) {
     // Throwing here will be caught by route try/catch (since it's not at module top-level anymore)
@@ -21,7 +25,42 @@ function getDb() {
   }
   const client = neon(url);
   _db = drizzle(client);
+  
+  // Garantir que a coluna deleted_at existe (migração automática) - apenas uma vez
+  if (!_migrationChecked) {
+    ensureDeletedAtColumn().catch(err => {
+      console.warn("Warning: Could not ensure deleted_at column exists:", err);
+    });
+    _migrationChecked = true;
+  }
+  
   return _db;
+}
+
+async function ensureDeletedAtColumn() {
+  try {
+    // Usar o client diretamente para evitar recursão
+    const url = process.env.DATABASE_URL;
+    if (!url) return;
+    
+    const client = neon(url);
+    // Verificar se a coluna existe e criar se não existir
+    await client`
+      DO $$ 
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns 
+          WHERE table_name = 'users' AND column_name = 'deleted_at'
+        ) THEN
+          ALTER TABLE users ADD COLUMN deleted_at TIMESTAMP;
+          CREATE INDEX IF NOT EXISTS idx_users_deleted_at ON users(deleted_at) WHERE deleted_at IS NULL;
+        END IF;
+      END $$;
+    `;
+  } catch (error) {
+    // Se falhar, apenas logar (não quebrar a aplicação)
+    console.warn("Warning: Could not ensure deleted_at column exists:", error);
+  }
 }
 
 export interface IStorage {
@@ -31,7 +70,7 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: string, user: Partial<InsertUser>): Promise<User | undefined>;
   getAllUsers(): Promise<User[]>;
-  deleteUser(id: string): Promise<boolean>;
+  deleteUser(id: string): Promise<{ success: boolean; softDelete: boolean }>;
   
   // Categories
   getCategory(id: string): Promise<Category | undefined>;
@@ -72,12 +111,18 @@ export interface IStorage {
 export class DatabaseStorage implements IStorage {
   // Users
   async getUser(id: string): Promise<User | undefined> {
+    // Permitir buscar usuários deletados também (para validações)
     const result = await getDb().select().from(users).where(eq(users.id, id)).limit(1);
     return result[0];
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    const result = await getDb().select().from(users).where(eq(users.username, username)).limit(1);
+    // Filtrar usuários deletados na busca por username (para login)
+    const result = await getDb()
+      .select()
+      .from(users)
+      .where(and(eq(users.username, username), isNull(users.deletedAt)))
+      .limit(1);
     return result[0];
   }
 
@@ -105,10 +150,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllUsers(): Promise<User[]> {
-    return await getDb().select().from(users).orderBy(asc(users.name));
+    // Filtrar apenas usuários não deletados (deletedAt IS NULL)
+    return await getDb()
+      .select()
+      .from(users)
+      .where(isNull(users.deletedAt))
+      .orderBy(asc(users.name));
   }
 
-  async deleteUser(id: string): Promise<boolean> {
+  async deleteUser(id: string): Promise<{ success: boolean; softDelete: boolean }> {
     try {
       // Verificar se o usuário tem movimentações
       const [movementCountResult] = await getDb()
@@ -119,17 +169,36 @@ export class DatabaseStorage implements IStorage {
       const movementCount = movementCountResult?.count || 0;
       
       if (movementCount > 0) {
-        // Se tem movimentações, não pode deletar (será tratado pela rota)
-        throw new Error("Usuário possui movimentações registradas");
+        // Se tem movimentações, fazer soft delete (marcar como deletado e desativar)
+        // Isso mantém a integridade referencial e preserva o histórico
+        const result = await getDb()
+          .update(users)
+          .set({ 
+            isActive: false,
+            deletedAt: sql`now()`
+          })
+          .where(eq(users.id, id))
+          .returning();
+        
+        return { success: result.length > 0, softDelete: true };
       }
       
-      // Deletar o usuário
+      // Se não tem movimentações, deletar fisicamente
       const result = await getDb().delete(users).where(eq(users.id, id)).returning();
-      return result.length > 0;
+      return { success: result.length > 0, softDelete: false };
     } catch (error: any) {
-      // Se for erro de foreign key constraint do banco, relançar com mensagem apropriada
+      // Se for erro de foreign key constraint do banco, fazer soft delete como fallback
       if (error?.code === "23503" || /foreign key constraint|violates foreign key/i.test(error?.message || "")) {
-        throw new Error("Usuário possui movimentações registradas");
+        const result = await getDb()
+          .update(users)
+          .set({ 
+            isActive: false,
+            deletedAt: sql`now()`
+          })
+          .where(eq(users.id, id))
+          .returning();
+        
+        return { success: result.length > 0, softDelete: true };
       }
       // Relançar outros erros
       throw error;

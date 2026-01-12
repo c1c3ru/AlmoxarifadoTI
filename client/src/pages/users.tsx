@@ -121,24 +121,39 @@ export default function Users() {
   const deleteUserMutation = useMutation({
     mutationFn: async (id: string) => {
       const response = await apiRequest("DELETE", `/api/users/${id}`);
-      // DELETE retorna 204 (No Content), então não precisa fazer .json()
+      
+      // DELETE pode retornar 204 (hard delete) ou 200 (soft delete)
       if (response.status === 204) {
-        return { success: true };
+        return { success: true, softDelete: false };
       }
+      
+      // Se retornar 200, é soft delete (usuário desativado)
+      if (response.status === 200) {
+        const data = await response.json();
+        return { success: true, softDelete: true, message: data.message };
+      }
+      
       return response.json();
     },
-    onSuccess: () => {
-      toast({
-        title: "Usuário deletado com sucesso",
-        description: "O usuário foi removido do sistema.",
-      });
+    onSuccess: (data: any) => {
+      if (data.softDelete) {
+        toast({
+          title: "Usuário desativado",
+          description: data.message || "O usuário foi desativado. Como ele possui movimentações registradas, o registro foi mantido para preservar o histórico.",
+        });
+      } else {
+        toast({
+          title: "Usuário deletado com sucesso",
+          description: "O usuário foi removido do sistema.",
+        });
+      }
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
       setDeletingUser(null);
     },
     onError: (error: any) => {
       toast({
         title: "Erro ao deletar usuário",
-        description: error.message || "Não foi possível deletar o usuário. Verifique se ele possui movimentações registradas.",
+        description: error.message || "Não foi possível deletar o usuário.",
         variant: "destructive",
       });
       setDeletingUser(null);
@@ -513,13 +528,23 @@ export default function Users() {
                     </div>
                   </div>
                   <div className="flex items-center space-x-4">
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm font-medium text-gray-600">Status:</span>
+                    <div className="flex items-center space-x-3 bg-gray-50 px-4 py-2 rounded-lg border border-gray-200">
+                      <div className="flex items-center space-x-2">
+                        {user.isActive ? (
+                          <i className="fa-solid fa-circle-check text-green-600 text-lg"></i>
+                        ) : (
+                          <i className="fa-solid fa-circle-xmark text-red-600 text-lg"></i>
+                        )}
+                        <span className="text-sm font-semibold text-gray-700">
+                          {user.isActive ? "Ativo" : "Inativo"}
+                        </span>
+                      </div>
                       <Switch
                         checked={user.isActive}
                         onCheckedChange={() => handleToggleStatus(user)}
                         disabled={toggleUserStatusMutation.isPending}
                         data-testid={`switch-active-${user.id}`}
+                        className="data-[state=checked]:bg-green-600"
                       />
                     </div>
                     <Button

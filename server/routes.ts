@@ -628,27 +628,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Usuário não encontrado" });
       }
 
-      const success = await storage.deleteUser(id);
-      if (!success) {
+      const result = await storage.deleteUser(id);
+      if (!result.success) {
         return res.status(404).json({ message: "Usuário não encontrado" });
       }
 
+      // Se foi soft delete (desativado), retornar mensagem informativa
+      if (result.softDelete) {
+        return res.status(200).json({ 
+          message: "Usuário desativado com sucesso. Como ele possui movimentações registradas, o registro foi mantido no sistema para preservar o histórico.",
+          softDelete: true
+        });
+      }
+
+      // Se foi hard delete (deletado fisicamente)
       res.status(204).send();
     } catch (error: any) {
-      // Verificar se é erro de constraint (usuário tem movimentações)
-      if (error?.code === "23503" || /foreign key constraint|violates foreign key/i.test(error?.message || "")) {
-        return res.status(409).json({ 
-          message: "Não é possível deletar este usuário pois ele possui movimentações registradas no sistema" 
-        });
-      }
-
-      // Verificar se é o erro que lançamos manualmente quando há movimentações
-      if (error?.message && /movimentações/i.test(error.message)) {
-        return res.status(409).json({ 
-          message: "Não é possível deletar este usuário pois ele possui movimentações registradas no sistema" 
-        });
-      }
-
       console.error("Delete user error:", error);
       res.status(500).json({ 
         message: error?.message || "Erro interno do servidor",
