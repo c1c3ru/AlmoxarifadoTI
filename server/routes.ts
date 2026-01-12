@@ -622,6 +622,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Você não pode deletar sua própria conta" });
       }
 
+      // Verificar se o usuário existe antes de tentar deletar
+      const userToDelete = await storage.getUser(id);
+      if (!userToDelete) {
+        return res.status(404).json({ message: "Usuário não encontrado" });
+      }
+
       const success = await storage.deleteUser(id);
       if (!success) {
         return res.status(404).json({ message: "Usuário não encontrado" });
@@ -636,8 +642,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
+      // Verificar se é o erro que lançamos manualmente quando há movimentações
+      if (error?.message && /movimentações/i.test(error.message)) {
+        return res.status(409).json({ 
+          message: "Não é possível deletar este usuário pois ele possui movimentações registradas no sistema" 
+        });
+      }
+
       console.error("Delete user error:", error);
-      res.status(500).json({ message: "Erro interno do servidor" });
+      res.status(500).json({ 
+        message: error?.message || "Erro interno do servidor",
+        error: process.env.NODE_ENV === "development" ? String(error) : undefined
+      });
     }
   });
 

@@ -109,22 +109,31 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteUser(id: string): Promise<boolean> {
-    // Verificar se o usuário tem movimentações
-    const userMovements = await getDb()
-      .select({ count: sql<number>`count(*)::int` })
-      .from(movements)
-      .where(eq(movements.userId, id));
-    
-    const movementCount = userMovements[0]?.count || 0;
-    
-    if (movementCount > 0) {
-      // Se tem movimentações, não pode deletar (será tratado pela rota)
-      throw new Error("Usuário possui movimentações registradas");
+    try {
+      // Verificar se o usuário tem movimentações
+      const [movementCountResult] = await getDb()
+        .select({ count: count() })
+        .from(movements)
+        .where(eq(movements.userId, id));
+      
+      const movementCount = movementCountResult?.count || 0;
+      
+      if (movementCount > 0) {
+        // Se tem movimentações, não pode deletar (será tratado pela rota)
+        throw new Error("Usuário possui movimentações registradas");
+      }
+      
+      // Deletar o usuário
+      const result = await getDb().delete(users).where(eq(users.id, id)).returning();
+      return result.length > 0;
+    } catch (error: any) {
+      // Se for erro de foreign key constraint do banco, relançar com mensagem apropriada
+      if (error?.code === "23503" || /foreign key constraint|violates foreign key/i.test(error?.message || "")) {
+        throw new Error("Usuário possui movimentações registradas");
+      }
+      // Relançar outros erros
+      throw error;
     }
-    
-    // Deletar o usuário
-    const result = await getDb().delete(users).where(eq(users.id, id)).returning();
-    return result.length > 0;
   }
 
   // Categories

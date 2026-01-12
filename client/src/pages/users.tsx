@@ -7,7 +7,7 @@ import { MainLayout } from "@/components/layout/main-layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -121,7 +121,11 @@ export default function Users() {
   const deleteUserMutation = useMutation({
     mutationFn: async (id: string) => {
       const response = await apiRequest("DELETE", `/api/users/${id}`);
-      return response;
+      // DELETE retorna 204 (No Content), então não precisa fazer .json()
+      if (response.status === 204) {
+        return { success: true };
+      }
+      return response.json();
     },
     onSuccess: () => {
       toast({
@@ -144,7 +148,7 @@ export default function Users() {
   const onSubmit = (data: UserFormData) => {
     if (editingUser) {
       // Remove password from data if it's empty (to keep current password)
-      const updateData = { ...data };
+      const updateData: Partial<UserFormData> = { ...data };
       if (!updateData.password || updateData.password.trim() === "") {
         delete updateData.password;
       }
@@ -527,25 +531,25 @@ export default function Users() {
                       <i className="fa-solid fa-edit mr-2"></i>
                       Editar
                     </Button>
+                    {currentUser?.role === "admin" && (
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => setDeletingUser(user)}
+                        disabled={currentUser?.id === user.id}
+                        className="shadow-md bg-red-600 hover:bg-red-700"
+                        data-testid={`button-delete-${user.id}`}
+                      >
+                        <i className="fa-solid fa-trash mr-2"></i>
+                        Deletar
+                      </Button>
+                    )}
                     <AlertDialog open={deletingUser?.id === user.id} onOpenChange={(open) => !open && setDeletingUser(null)}>
-                      <AlertDialogTrigger asChild>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => setDeletingUser(user)}
-                          disabled={currentUser?.id === user.id}
-                          className="shadow-md"
-                          data-testid={`button-delete-${user.id}`}
-                        >
-                          <i className="fa-solid fa-trash mr-2"></i>
-                          Deletar
-                        </Button>
-                      </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
                           <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
                           <AlertDialogDescription>
-                            Tem certeza que deseja deletar o usuário <strong>{user.name}</strong> ({user.username})?
+                            Tem certeza que deseja deletar o usuário <strong>{deletingUser?.name}</strong> ({deletingUser?.username})?
                             <br />
                             <br />
                             Esta ação não pode ser desfeita. Se o usuário possuir movimentações registradas no sistema, a exclusão não será permitida.
