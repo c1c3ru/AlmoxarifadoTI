@@ -240,16 +240,16 @@ export function Sidebar() {
                   >
                     <i className="fas fa-key"></i>
                   </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={logout}
-                    className="text-gray-400 hover:text-gray-600 transition-opacity duration-300"
-                    data-testid="button-logout"
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={logout}
+                  className="text-gray-400 hover:text-gray-600 transition-opacity duration-300"
+                  data-testid="button-logout"
                     title="Sair"
-                  >
-                    <i className="fas fa-sign-out-alt"></i>
-                  </Button>
+                >
+                  <i className="fas fa-sign-out-alt"></i>
+                </Button>
                 </div>
               </>
             )}
