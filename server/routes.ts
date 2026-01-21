@@ -6,7 +6,7 @@ import { emailService } from "./email";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import { 
-  insertUserSchema, insertCategorySchema, insertItemSchema, insertMovementSchema 
+  insertUserSchema, insertCategorySchema, insertItemSchema, insertMovementSchema
 } from "@shared/schema";
 import rateLimit from "express-rate-limit";
 
@@ -67,11 +67,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Username ou email é obrigatório" });
       }
 
-      // Find user by username or email
-      const users = await storage.getAllUsers();
-      const user = users.find((u: any) => 
-        u.username === usernameOrEmail || u.email === usernameOrEmail
-      );
+      // Find user by username or email (incluindo deletados para permitir reset de senha)
+      const user = await storage.getUserByUsernameOrEmailIncludingDeleted(usernameOrEmail);
 
       if (!user) {
         // Don't reveal if user exists or not for security
@@ -121,11 +118,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Todos os campos são obrigatórios" });
       }
 
-      // Find the user by username or email
-      const users = await storage.getAllUsers();
-      const user = users.find((u: any) => 
-        u.username === usernameOrEmail || u.email === usernameOrEmail
-      );
+      // Find the user by username or email (incluindo deletados para permitir reset de senha)
+      const user = await storage.getUserByUsernameOrEmailIncludingDeleted(usernameOrEmail);
 
       if (!user) {
         console.log(`[password-reset] User not found: ${usernameOrEmail}`);
@@ -161,6 +155,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Update user password
       await storage.updateUserPassword(resetData.userId, hashedPassword);
+
+      // Se o usuário estava deletado (soft delete), reativá-lo ao resetar senha
+      if (user.deletedAt) {
+        await storage.reactivateUser(resetData.userId);
+        console.log(`[password-reset] User reactivated after password reset: ${usernameOrEmail}`);
+      }
 
       // Remove used reset code
       resetCodes.delete(user.id.toString());
@@ -478,6 +478,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Rota pública para registro de novos usuários (não requer autenticação)
+  app.post("/api/register", async (req, res) => {
+    try {
+      const validation = insertUserSchema.safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json({ message: "Dados inválidos", errors: validation.error.issues });
+      }
+
+      const user = await storage.createUser(validation.data);
+      const { password: _, ...userWithoutPassword } = user;
+      res.status(201).json({ 
+        message: "Usuário cadastrado com sucesso",
+        user: userWithoutPassword 
+      });
+    } catch (error) {
+      // Tratamento específico para violações de UNIQUE (Postgres code 23505)
+      const anyErr = error as any;
+      const code = anyErr?.code || anyErr?.originalError?.code;
+      const detail: string = (anyErr?.detail || anyErr?.message || "").toString();
+      const constraint: string = (anyErr?.constraint || "").toString();
+
+      if (code === "23505" || /duplicate|unique constraint|violates unique/i.test(detail)) {
+        // Tentar identificar qual campo violou
+        const msg = detail.toLowerCase() + " " + constraint.toLowerCase();
+        if (/matricula/.test(msg)) {
+          return res.status(409).json({ message: "Matrícula já cadastrada" });
+        }
+        if (/username/.test(msg)) {
+          return res.status(409).json({ message: "Usuário já existe" });
+        }
+        if (/email/.test(msg)) {
+          return res.status(409).json({ message: "Email já cadastrado" });
+        }
+        return res.status(409).json({ message: "Registro duplicado" });
+      }
+
+      console.error("Register user error:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
+  // Rota para criação de usuários por admin (requer autenticação)
   app.post("/api/users", authenticateJWT, async (req, res) => {
     try {
       const validation = insertUserSchema.safeParse(req.body);

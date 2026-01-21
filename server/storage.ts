@@ -67,10 +67,13 @@ export interface IStorage {
   // Users
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
+  getUserByUsernameOrEmailIncludingDeleted(usernameOrEmail: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: string, user: Partial<InsertUser>): Promise<User | undefined>;
   getAllUsers(): Promise<User[]>;
   deleteUser(id: string): Promise<{ success: boolean; softDelete: boolean }>;
+  updateUserPassword(id: string, hashedPassword: string): Promise<void>;
+  reactivateUser(id: string): Promise<void>;
   
   // Categories
   getCategory(id: string): Promise<Category | undefined>;
@@ -126,6 +129,19 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
+  async getUserByUsernameOrEmailIncludingDeleted(usernameOrEmail: string): Promise<User | undefined> {
+    // Buscar usuário incluindo deletados (para reset de senha)
+    const result = await getDb()
+      .select()
+      .from(users)
+      .where(or(
+        eq(users.username, usernameOrEmail),
+        eq(users.email, usernameOrEmail)
+      ))
+      .limit(1);
+    return result[0];
+  }
+
   async createUser(insertUser: InsertUser): Promise<User> {
     const hashedPassword = await bcrypt.hash(insertUser.password, 10);
     const result = await getDb().insert(users).values({
@@ -147,6 +163,17 @@ export class DatabaseStorage implements IStorage {
 
   async updateUserPassword(id: string, hashedPassword: string): Promise<void> {
     await getDb().update(users).set({ password: hashedPassword }).where(eq(users.id, id));
+  }
+
+  async reactivateUser(id: string): Promise<void> {
+    // Reativar usuário deletado (soft delete)
+    await getDb()
+      .update(users)
+      .set({ 
+        isActive: true,
+        deletedAt: sql`NULL`
+      })
+      .where(eq(users.id, id));
   }
 
   async getAllUsers(): Promise<User[]> {

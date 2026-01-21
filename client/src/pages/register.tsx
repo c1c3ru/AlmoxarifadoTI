@@ -42,13 +42,13 @@ const registerSchema = z
   })
   .superRefine((val, ctx) => {
     // Validação de matrícula baseada no perfil
-    const techLen = 14; // Técnico: 20252331040000 -> 14 caracteres
-    const adminLen = 7;  // Administrador: 1678389 -> 7 caracteres
+    const techLen = 7;  // Técnico/Servidor: 1678389 -> 7 caracteres
+    const adminLen = 7; // Administrador: 1678389 -> 7 caracteres (mesmo formato)
     
     if (val.role === "tech" && val.matricula.length !== techLen) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: `Matrícula de técnico deve ter exatamente ${techLen} dígitos`,
+        message: `Matrícula de técnico/servidor deve ter exatamente ${techLen} dígitos`,
         path: ["matricula"],
       });
     }
@@ -117,17 +117,13 @@ export default function RegisterUserPage() {
   const selectedRole = form.watch("role");
   
   const matriculaConfig = useMemo(() => {
-    if (selectedRole === "admin") {
-      return {
-        placeholder: "Ex: 1678389 (7 dígitos)",
-        maxLength: 7,
-        description: "Matrícula do servidor administrativo"
-      };
-    }
+    // Ambos técnico e admin usam 7 dígitos (matrícula de servidor)
     return {
-      placeholder: "Ex: 20252331040000 (14 dígitos)",
-      maxLength: 14,
-      description: "Matrícula do técnico em informática"
+      placeholder: "Ex: 1678389 (7 dígitos)",
+      maxLength: 7,
+      description: selectedRole === "admin" 
+        ? "Matrícula do servidor administrativo" 
+        : "Matrícula do técnico/servidor"
     };
   }, [selectedRole]);
 
@@ -149,7 +145,8 @@ export default function RegisterUserPage() {
         isActive: true,
       };
 
-      const res = await apiRequest("POST", "/api/users", payload);
+      // Usar rota pública de registro (não requer autenticação)
+      const res = await apiRequest("POST", "/api/register", payload);
 
       if (!res.ok) {
         const status = res.status;
