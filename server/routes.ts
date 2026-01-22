@@ -11,16 +11,6 @@ import {
 import rateLimit from "express-rate-limit";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Rota de debug temporária para verificar conexão de email
-  app.get("/api/debug-email", async (_req, res) => {
-    try {
-      const result = await emailService.verifyConnection();
-      res.json(result);
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
   // Rate limiters
   const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutos
