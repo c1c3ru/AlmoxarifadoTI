@@ -1,13 +1,16 @@
 // Carrega .env apenas em desenvolvimento, não em produção (Vercel)
-if (process.env.NODE_ENV !== "production") {
-  require("dotenv/config");
-}
-
 import type { Request, Response, NextFunction } from "express";
-import { setupVite, serveStatic, log } from "./vite";
-import { createDevServer } from "./app";
 
 (async () => {
+  if (process.env.NODE_ENV !== "production") {
+    // Dynamic import to avoid ESM top-level await/require issues and ensure env vars are loaded BEFORE app imports
+    await import("dotenv/config");
+  }
+
+  // Import after env vars are loaded
+  const { setupVite, serveStatic, log } = await import("./vite");
+  const { createDevServer } = await import("./app");
+
   const { app, server } = await createDevServer();
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {

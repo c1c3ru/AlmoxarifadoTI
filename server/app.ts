@@ -1,7 +1,4 @@
-// Carrega .env apenas em desenvolvimento, não em produção (Vercel)
-if (process.env.NODE_ENV !== "production") {
-  require("dotenv/config");
-}
+// Carrega .env: gerenciado no entry point (index.ts)
 
 import express from "express";
 import cors from "cors";
@@ -12,7 +9,7 @@ function log(message: string) {
   try {
     const ts = new Date().toISOString();
     console.log(`${ts} [api] ${message}`);
-  } catch {}
+  } catch { }
 }
 
 export async function createApp() {
@@ -87,7 +84,7 @@ export async function createApp() {
       if (path.startsWith("/api")) {
         let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
         if (capturedJsonResponse) {
-          try { logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`; } catch {}
+          try { logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`; } catch { }
         }
         if (logLine.length > 80) logLine = logLine.slice(0, 79) + "…";
         log(logLine);
