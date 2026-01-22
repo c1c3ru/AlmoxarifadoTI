@@ -91,7 +91,12 @@ export default function Login() {
         body: JSON.stringify({ usernameOrEmail: data.usernameOrEmail }),
       });
 
-      const result = await response.json();
+      let result;
+      try {
+        result = await response.json();
+      } catch (e) {
+        result = { message: "Erro de comunicação com o servidor" };
+      }
 
       if (response.ok) {
         toast({
