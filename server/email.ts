@@ -96,6 +96,25 @@ class EmailService {
     }
   }
 
+  async verifyConnection(): Promise<{ success: boolean; error?: any }> {
+    if (!this.isConfigured || !this.transporter) {
+      return { success: false, error: 'Service not configured (missing env vars)' };
+    }
+    try {
+      await this.transporter.verify();
+      return { success: true };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: {
+          message: error.message,
+          code: error.code,
+          response: error.response
+        }
+      };
+    }
+  }
+
   isServiceConfigured(): boolean {
     return this.isConfigured;
   }

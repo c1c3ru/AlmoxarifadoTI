@@ -5,12 +5,22 @@ import { storage } from "./storage";
 import { emailService } from "./email";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
-import { 
+import {
   insertUserSchema, insertCategorySchema, insertItemSchema, insertMovementSchema
 } from "@shared/schema";
 import rateLimit from "express-rate-limit";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Rota de debug temporária para verificar conexão de email
+  app.get("/api/debug-email", async (_req, res) => {
+    try {
+      const result = await emailService.verifyConnection();
+      res.json(result);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // Rate limiters
   const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutos
@@ -62,7 +72,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/password-recovery", async (req, res) => {
     try {
       const { usernameOrEmail } = req.body;
-      
+
       if (!usernameOrEmail) {
         return res.status(400).json({ message: "Username ou email é obrigatório" });
       }
@@ -72,8 +82,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (!user) {
         // Don't reveal if user exists or not for security
-        return res.status(200).json({ 
-          message: "Se existir uma conta para este usuário/email, enviaremos instruções de recuperação." 
+        return res.status(200).json({
+          message: "Se existir uma conta para este usuário/email, enviaremos instruções de recuperação."
         });
       }
 
@@ -89,14 +99,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Send email
       const emailSent = await emailService.sendPasswordResetEmail(user.email, resetCode, user.username);
-      
+
       if (!emailSent) {
         console.error('[password-recovery] Failed to send email to:', user.email);
         return res.status(500).json({ message: "Erro interno. Tente novamente mais tarde." });
       }
 
-      res.status(200).json({ 
-        message: "Se existir uma conta para este usuário/email, enviaremos instruções de recuperação." 
+      res.status(200).json({
+        message: "Se existir uma conta para este usuário/email, enviaremos instruções de recuperação."
       });
     } catch (error) {
       console.error('[password-recovery] Error:', error);
@@ -108,11 +118,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/password-reset", async (req, res) => {
     try {
       const { usernameOrEmail, code, newPassword } = req.body;
-      
+
       console.log(`[password-reset] === RESET ATTEMPT START ===`);
       console.log(`[password-reset] Request body:`, { usernameOrEmail, code: code ? `${code.length} chars` : 'undefined', newPassword: newPassword ? 'provided' : 'undefined' });
       console.log(`[password-reset] All stored reset codes:`, Array.from(resetCodes.entries()));
-      
+
       if (!usernameOrEmail || !code || !newPassword) {
         console.log(`[password-reset] Missing required fields`);
         return res.status(400).json({ message: "Todos os campos são obrigatórios" });
@@ -132,17 +142,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`[password-reset] Provided code: "${code}" (type: ${typeof code})`);
       console.log(`[password-reset] Stored data:`, resetData);
       console.log(`[password-reset] Current time: ${Date.now()}, Expires: ${resetData?.expires}`);
-      
+
       if (!resetData) {
         console.log(`[password-reset] No reset data found for user ID: ${user.id}`);
         return res.status(400).json({ message: "Código inválido ou expirado" });
       }
-      
+
       if (resetData.code !== code) {
         console.log(`[password-reset] Code mismatch - stored: "${resetData.code}" (type: ${typeof resetData.code}), provided: "${code}" (type: ${typeof code})`);
         return res.status(400).json({ message: "Código inválido ou expirado" });
       }
-      
+
       if (Date.now() > resetData.expires) {
         console.log(`[password-reset] Code expired - current: ${Date.now()}, expires: ${resetData.expires}`);
         return res.status(400).json({ message: "Código inválido ou expirado" });
@@ -177,7 +187,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/login", loginLimiter, async (req, res) => {
     try {
       const { username, password } = req.body;
-      
+
       if (!username || !password) {
         return res.status(400).json({ message: "Username and password are required" });
       }
@@ -194,7 +204,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Don't send password in response
       const { password: _, ...userWithoutPassword } = user;
-      
+
       if (isAuthEnabled()) {
         const token = generateToken({
           sub: user.id,
@@ -203,7 +213,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
         return res.json({ user: userWithoutPassword, token });
       }
-      
+
       res.json({ user: userWithoutPassword });
     } catch (error) {
       console.error("Login error:", error);
@@ -249,7 +259,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Debug: log how many categories and their names to diagnose discrepancies
       try {
         console.log("[GET /api/categories] count=", categories.length, "names=", categories.map(c => c.name));
-      } catch {}
+      } catch { }
       res.json(categories);
     } catch (error) {
       console.error("Categories error:", error);
@@ -331,8 +341,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { q = "", category = "", status = "" } = req.query;
       const items = await storage.searchItems(
-        q as string, 
-        category as string || undefined, 
+        q as string,
+        category as string || undefined,
         status as string || undefined
       );
       res.json(items);
@@ -424,7 +434,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { itemId, limit } = req.query;
       const movements = await storage.getMovements(
-        itemId as string || undefined, 
+        itemId as string || undefined,
         limit ? parseInt(limit as string) : undefined
       );
       res.json(movements);
@@ -447,10 +457,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (!item) {
           return res.status(404).json({ message: "Item not found" });
         }
-        
+
         if (item.currentStock < validation.data.quantity) {
-          return res.status(400).json({ 
-            message: "Insufficient stock", 
+          return res.status(400).json({
+            message: "Insufficient stock",
             available: item.currentStock,
             requested: validation.data.quantity
           });
@@ -488,9 +498,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const user = await storage.createUser(validation.data);
       const { password: _, ...userWithoutPassword } = user;
-      res.status(201).json({ 
+      res.status(201).json({
         message: "Usuário cadastrado com sucesso",
-        user: userWithoutPassword 
+        user: userWithoutPassword
       });
     } catch (error) {
       // Tratamento específico para violações de UNIQUE (Postgres code 23505)
@@ -566,7 +576,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { currentPassword, newPassword } = req.body;
-      
+
       if (!currentPassword || !newPassword) {
         return res.status(400).json({ message: "Senha atual e nova senha são obrigatórias" });
       }
@@ -649,7 +659,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const currentUser = (req as any).user as { sub: string; role: string } | undefined;
-      
+
       if (!currentUser) {
         return res.status(401).json({ message: "Unauthorized" });
       }
@@ -677,7 +687,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Se foi soft delete (desativado), retornar mensagem informativa
       if (result.softDelete) {
-        return res.status(200).json({ 
+        return res.status(200).json({
           message: "Usuário desativado com sucesso. Como ele possui movimentações registradas, o registro foi mantido no sistema para preservar o histórico.",
           softDelete: true
         });
@@ -687,7 +697,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).send();
     } catch (error: any) {
       console.error("Delete user error:", error);
-      res.status(500).json({ 
+      res.status(500).json({
         message: error?.message || "Erro interno do servidor",
         error: process.env.NODE_ENV === "development" ? String(error) : undefined
       });
@@ -698,12 +708,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/inventory/export", authenticateJWT, async (req, res) => {
     try {
       const items = await storage.getAllItems();
-      
+
       // Convert items to CSV format
       const csvHeaders = [
         'Código Interno',
         'Nome',
-        'Descrição', 
+        'Descrição',
         'Categoria',
         'Estoque Atual',
         'Estoque Mínimo',
@@ -711,7 +721,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         'Status',
         'Data Criação'
       ];
-      
+
       const csvData = items.map(item => [
         item.internalCode,
         `"${item.name}"`,
@@ -724,9 +734,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         item.status,
         new Date(item.createdAt).toLocaleDateString('pt-BR')
       ].join(','));
-      
+
       const csv = [csvHeaders.join(','), ...csvData].join('\n');
-      
+
       res.setHeader('Content-Type', 'text/csv; charset=utf-8');
       res.setHeader('Content-Disposition', `attachment; filename=inventario-${new Date().toISOString().split('T')[0]}.csv`);
       res.send('\ufeff' + csv); // BOM for Excel compatibility
@@ -739,7 +749,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/inventory/import", authenticateJWT, importLimiter, async (req, res) => {
     try {
       const { csvData, categoryId } = req.body;
-      
+
       if (!csvData || !categoryId) {
         return res.status(400).json({ message: "Dados CSV e categoria são obrigatórios" });
       }
