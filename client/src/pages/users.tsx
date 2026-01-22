@@ -25,6 +25,8 @@ const userSchema = z.object({
     message: "Senha deve ter pelo menos 6 caracteres ou estar vazia",
   }),
   name: z.string().min(1, "Nome é obrigatório"),
+  email: z.string().email("Email inválido").min(1, "Email é obrigatório"),
+  matricula: z.string().min(1, "Matrícula é obrigatória"),
   role: z.enum(["admin", "tech"]),
   isActive: z.boolean(),
 });
@@ -35,7 +37,7 @@ export default function Users() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [deletingUser, setDeletingUser] = useState<User | null>(null);
-  
+
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user: currentUser } = useAuth();
@@ -50,6 +52,8 @@ export default function Users() {
       username: "",
       password: "",
       name: "",
+      email: "",
+      matricula: "",
       role: "tech",
       isActive: true,
     },
@@ -121,18 +125,18 @@ export default function Users() {
   const deleteUserMutation = useMutation({
     mutationFn: async (id: string) => {
       const response = await apiRequest("DELETE", `/api/users/${id}`);
-      
+
       // DELETE pode retornar 204 (hard delete) ou 200 (soft delete)
       if (response.status === 204) {
         return { success: true, softDelete: false };
       }
-      
+
       // Se retornar 200, é soft delete (usuário desativado)
       if (response.status === 200) {
         const data = await response.json();
         return { success: true, softDelete: true, message: data.message };
       }
-      
+
       return response.json();
     },
     onSuccess: (data: any) => {
@@ -179,6 +183,8 @@ export default function Users() {
       username: user.username,
       password: "",
       name: user.name,
+      email: user.email,
+      matricula: user.matricula,
       role: user.role as "admin" | "tech",
       isActive: user.isActive,
     });
@@ -199,8 +205,8 @@ export default function Users() {
   };
 
   const getRoleColor = (role: string) => {
-    return role === "admin" 
-      ? "bg-gradient-to-r from-purple-100 to-blue-100 text-purple-800 border-purple-200" 
+    return role === "admin"
+      ? "bg-gradient-to-r from-purple-100 to-blue-100 text-purple-800 border-purple-200"
       : "bg-gradient-to-r from-gray-100 to-slate-100 text-gray-800 border-gray-200";
   };
 
@@ -235,7 +241,7 @@ export default function Users() {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-0 shadow-lg">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -251,7 +257,7 @@ export default function Users() {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card className="bg-gradient-to-br from-green-50 to-green-100 border-0 shadow-lg">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -281,7 +287,7 @@ export default function Users() {
             </div>
             <Dialog open={showAddModal} onOpenChange={handleCloseModal}>
               <DialogTrigger asChild>
-                <Button 
+                <Button
                   className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 shadow-lg"
                   data-testid="button-add-user"
                 >
@@ -295,7 +301,7 @@ export default function Users() {
                     {editingUser ? "Editar Usuário" : "Adicionar Novo Usuário"}
                   </DialogTitle>
                 </DialogHeader>
-                
+
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
                     <FormField
@@ -317,7 +323,7 @@ export default function Users() {
                         </FormItem>
                       )}
                     />
-                    
+
                     <FormField
                       control={form.control}
                       name="password"
@@ -339,7 +345,7 @@ export default function Users() {
                         </FormItem>
                       )}
                     />
-                    
+
                     <FormField
                       control={form.control}
                       name="name"
@@ -358,7 +364,46 @@ export default function Users() {
                         </FormItem>
                       )}
                     />
-                    
+
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="font-semibold text-gray-700">Email</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="email"
+                              placeholder="email@exemplo.com"
+                              {...field}
+                              data-testid="input-email"
+                              className="h-11 bg-gray-50/50 focus:bg-white transition-colors"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="matricula"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="font-semibold text-gray-700">Matrícula</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="Matrícula"
+                              {...field}
+                              data-testid="input-matricula"
+                              className="h-11 bg-gray-50/50 focus:bg-white transition-colors"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
                     <FormField
                       control={form.control}
                       name="role"
@@ -390,7 +435,7 @@ export default function Users() {
                         </FormItem>
                       )}
                     />
-                    
+
                     <FormField
                       control={form.control}
                       name="isActive"
@@ -412,7 +457,7 @@ export default function Users() {
                         </FormItem>
                       )}
                     />
-                    
+
                     <div className="flex items-center justify-end space-x-3 pt-6 border-t border-gray-200">
                       <Button
                         type="button"
@@ -472,7 +517,7 @@ export default function Users() {
               </div>
               <h4 className="text-xl font-bold text-gray-900 mb-3">Nenhum usuário cadastrado</h4>
               <p className="text-gray-500 mb-6">Adicione o primeiro usuário para começar a gerenciar o acesso ao sistema</p>
-              <Button 
+              <Button
                 onClick={() => setShowAddModal(true)}
                 className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
               >
@@ -489,11 +534,10 @@ export default function Users() {
                   data-testid={`user-${user.id}`}
                 >
                   <div className="flex items-center space-x-4">
-                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg ${
-                      user.role === 'admin' 
-                        ? 'bg-gradient-to-br from-purple-400 to-purple-600' 
-                        : 'bg-gradient-to-br from-blue-400 to-blue-600'
-                    }`}>
+                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg ${user.role === 'admin'
+                      ? 'bg-gradient-to-br from-purple-400 to-purple-600'
+                      : 'bg-gradient-to-br from-blue-400 to-blue-600'
+                      }`}>
                       <i className={`${getRoleIcon(user.role)} text-white text-xl`}></i>
                     </div>
                     <div>
@@ -501,7 +545,7 @@ export default function Users() {
                         <p className="font-bold text-gray-900 text-lg group-hover:text-blue-700 transition-colors" data-testid={`user-name-${user.id}`}>
                           {user.name}
                         </p>
-                        <Badge 
+                        <Badge
                           className={`${getRoleColor(user.role)} font-medium px-3 py-1 border`}
                           data-testid={`user-role-${user.id}`}
                         >
@@ -515,10 +559,18 @@ export default function Users() {
                           </Badge>
                         )}
                       </div>
-                      <div className="flex items-center space-x-4 text-sm text-gray-600">
+                      <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-gray-600">
                         <span className="flex items-center">
-                          <i className="fa-solid fa-at mr-2 text-blue-500"></i>
+                          <i className="fa-solid fa-user mr-2 text-blue-500"></i>
                           {user.username}
+                        </span>
+                        <span className="flex items-center">
+                          <i className="fa-solid fa-envelope mr-2 text-blue-500"></i>
+                          {user.email}
+                        </span>
+                        <span className="flex items-center">
+                          <i className="fa-solid fa-id-card mr-2 text-blue-500"></i>
+                          {user.matricula}
                         </span>
                         <span className="flex items-center">
                           <i className="fa-solid fa-calendar mr-2 text-green-500"></i>
