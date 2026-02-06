@@ -34,8 +34,8 @@ export const items = pgTable("items", {
   serialNumber: text("serial_number"),
   currentStock: integer("current_stock").notNull().default(0),
   minStock: integer("min_stock").notNull().default(0),
-  status: text("status", { 
-    enum: ["disponivel", "em-uso", "manutencao", "descartado"] 
+  status: text("status", {
+    enum: ["disponivel", "em-uso", "manutencao", "descartado"]
   }).notNull().default("disponivel"),
   location: text("location"),
   createdAt: timestamp("created_at").notNull().default(sql`now()`),
@@ -53,6 +53,19 @@ export const movements = pgTable("movements", {
   destination: text("destination"),
   observation: text("observation"),
   createdAt: timestamp("created_at").notNull().default(sql`now()`),
+});
+
+export const passwordResets = pgTable("password_resets", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id").references(() => users.id).notNull(),
+  code: text("code").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").notNull().default(sql`now()`),
+});
+
+export const userActivity = pgTable("user_activity", {
+  userId: uuid("user_id").primaryKey().references(() => users.id).notNull(),
+  lastSeenAt: timestamp("last_seen_at").notNull().default(sql`now()`),
 });
 
 // Insert schemas

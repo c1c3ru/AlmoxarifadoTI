@@ -1,9 +1,9 @@
-import { 
+import {
   type User, type InsertUser,
   type Category, type InsertCategory,
   type Item, type InsertItem, type ItemWithCategory,
   type Movement, type InsertMovement, type MovementWithDetails,
-  users, categories, items, movements
+  users, categories, items, movements, passwordResets, userActivity
 } from "@shared/schema";
 import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
@@ -25,7 +25,7 @@ function getDb() {
   }
   const client = neon(url);
   _db = drizzle(client);
-  
+
   // Garantir que a coluna deleted_at existe (migração automática) - apenas uma vez
   if (!_migrationChecked) {
     ensureDeletedAtColumn().catch(err => {
@@ -33,7 +33,7 @@ function getDb() {
     });
     _migrationChecked = true;
   }
-  
+
   return _db;
 }
 
@@ -42,7 +42,7 @@ async function ensureDeletedAtColumn() {
     // Usar o client diretamente para evitar recursão
     const url = process.env.DATABASE_URL;
     if (!url) return;
-    
+
     const client = neon(url);
     // Verificar se a coluna existe e criar se não existir
     await client`
@@ -74,14 +74,14 @@ export interface IStorage {
   deleteUser(id: string): Promise<{ success: boolean; softDelete: boolean }>;
   updateUserPassword(id: string, hashedPassword: string): Promise<void>;
   reactivateUser(id: string): Promise<void>;
-  
+
   // Categories
   getCategory(id: string): Promise<Category | undefined>;
   getAllCategories(): Promise<Category[]>;
   createCategory(category: InsertCategory): Promise<Category>;
   updateCategory(id: string, category: Partial<InsertCategory>): Promise<Category | undefined>;
   deleteCategory(id: string): Promise<boolean>;
-  
+
   // Items
   getItem(id: string): Promise<ItemWithCategory | undefined>;
   getItemByCode(code: string): Promise<ItemWithCategory | undefined>;
@@ -92,7 +92,7 @@ export interface IStorage {
   deleteItem(id: string): Promise<boolean>;
   getLowStockItems(): Promise<ItemWithCategory[]>;
   generateInternalCode(): Promise<string>;
-  
+
   // Movements
   createMovement(movement: InsertMovement): Promise<Movement>;
   getMovements(itemId?: string, limit?: number): Promise<MovementWithDetails[]>;
@@ -109,6 +109,11 @@ export interface IStorage {
     role: string;
     lastSeenAt: Date;
   }>>;
+
+  // Password Resets
+  createPasswordReset(userId: string, code: string, expiresAt: Date): Promise<void>;
+  getPasswordReset(userId: string): Promise<{ code: string; expiresAt: Date } | undefined>;
+  deletePasswordReset(userId: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -153,10 +158,15 @@ export class DatabaseStorage implements IStorage {
 
   async updateUser(id: string, user: Partial<InsertUser>): Promise<User | undefined> {
     let updateData = { ...user };
-    if (user.password) {
-      updateData.password = await bcrypt.hash(user.password, 10);
+
+    // Remove password field if it's empty, null, or undefined
+    if (!updateData.password || updateData.password.trim() === "") {
+      delete updateData.password;
+    } else {
+      // Only hash if password is a non-empty string
+      updateData.password = await bcrypt.hash(updateData.password, 10);
     }
-    
+
     const result = await getDb().update(users).set(updateData).where(eq(users.id, id)).returning();
     return result[0];
   }
@@ -169,7 +179,7 @@ export class DatabaseStorage implements IStorage {
     // Reativar usuário deletado (soft delete)
     await getDb()
       .update(users)
-      .set({ 
+      .set({
         isActive: true,
         deletedAt: sql`NULL`
       })
@@ -192,24 +202,24 @@ export class DatabaseStorage implements IStorage {
         .select({ count: count() })
         .from(movements)
         .where(eq(movements.userId, id));
-      
+
       const movementCount = movementCountResult?.count || 0;
-      
+
       if (movementCount > 0) {
         // Se tem movimentações, fazer soft delete (marcar como deletado e desativar)
         // Isso mantém a integridade referencial e preserva o histórico
         const result = await getDb()
           .update(users)
-          .set({ 
+          .set({
             isActive: false,
             deletedAt: sql`now()`
           })
           .where(eq(users.id, id))
           .returning();
-        
+
         return { success: result.length > 0, softDelete: true };
       }
-      
+
       // Se não tem movimentações, deletar fisicamente
       const result = await getDb().delete(users).where(eq(users.id, id)).returning();
       return { success: result.length > 0, softDelete: false };
@@ -218,13 +228,13 @@ export class DatabaseStorage implements IStorage {
       if (error?.code === "23503" || /foreign key constraint|violates foreign key/i.test(error?.message || "")) {
         const result = await getDb()
           .update(users)
-          .set({ 
+          .set({
             isActive: false,
             deletedAt: sql`now()`
           })
           .where(eq(users.id, id))
           .returning();
-        
+
         return { success: result.length > 0, softDelete: true };
       }
       // Relançar outros erros
@@ -256,7 +266,7 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(items, eq(categories.id, items.categoryId))
       .groupBy(
         categories.id,
-        categories.name, 
+        categories.name,
         categories.description,
         categories.icon,
         categories.createdAt
@@ -297,11 +307,11 @@ export class DatabaseStorage implements IStorage {
       updatedAt: items.updatedAt,
       category: categories,
     })
-    .from(items)
-    .leftJoin(categories, eq(items.categoryId, categories.id))
-    .where(eq(items.id, id))
-    .limit(1);
-    
+      .from(items)
+      .leftJoin(categories, eq(items.categoryId, categories.id))
+      .where(eq(items.id, id))
+      .limit(1);
+
     return result[0] as ItemWithCategory;
   }
 
@@ -321,11 +331,11 @@ export class DatabaseStorage implements IStorage {
       updatedAt: items.updatedAt,
       category: categories,
     })
-    .from(items)
-    .leftJoin(categories, eq(items.categoryId, categories.id))
-    .where(eq(items.internalCode, sanitized))
-    .limit(1);
-    
+      .from(items)
+      .leftJoin(categories, eq(items.categoryId, categories.id))
+      .where(eq(items.internalCode, sanitized))
+      .limit(1);
+
     return result[0] as ItemWithCategory;
   }
 
@@ -344,10 +354,10 @@ export class DatabaseStorage implements IStorage {
       updatedAt: items.updatedAt,
       category: categories,
     })
-    .from(items)
-    .leftJoin(categories, eq(items.categoryId, categories.id))
-    .orderBy(desc(items.createdAt));
-    
+      .from(items)
+      .leftJoin(categories, eq(items.categoryId, categories.id))
+      .orderBy(desc(items.createdAt));
+
     return result as ItemWithCategory[];
   }
 
@@ -379,34 +389,34 @@ export class DatabaseStorage implements IStorage {
       updatedAt: items.updatedAt,
       category: categories,
     })
-    .from(items)
-    .leftJoin(categories, eq(items.categoryId, categories.id))
-    .where(whereCondition)
-    .orderBy(desc(items.createdAt));
-    
+      .from(items)
+      .leftJoin(categories, eq(items.categoryId, categories.id))
+      .where(whereCondition)
+      .orderBy(desc(items.createdAt));
+
     return result as ItemWithCategory[];
   }
 
   async generateInternalCode(): Promise<string> {
     const currentYear = new Date().getFullYear();
     const yearPrefix = currentYear.toString();
-    
+
     // Get the highest number for this year
     const result = await getDb().select({
       code: items.internalCode
     })
-    .from(items)
-    .where(ilike(items.internalCode, `${yearPrefix}-%`))
-    .orderBy(desc(items.internalCode))
-    .limit(1);
-    
+      .from(items)
+      .where(ilike(items.internalCode, `${yearPrefix}-%`))
+      .orderBy(desc(items.internalCode))
+      .limit(1);
+
     let nextNumber = 1;
     if (result.length > 0) {
       const lastCode = result[0].code;
       const lastNumber = parseInt(lastCode.split('-')[1]);
       nextNumber = lastNumber + 1;
     }
-    
+
     return `${yearPrefix}-${nextNumber.toString().padStart(4, '0')}`;
   }
 
@@ -416,7 +426,7 @@ export class DatabaseStorage implements IStorage {
       ...item,
       internalCode,
     }).returning();
-    
+
     return await this.getItem(result[0].id) as ItemWithCategory;
   }
 
@@ -425,7 +435,7 @@ export class DatabaseStorage implements IStorage {
       ...item,
       updatedAt: sql`now()`,
     }).where(eq(items.id, id)).returning();
-    
+
     if (result.length === 0) return undefined;
     return await this.getItem(result[0].id);
   }
@@ -450,52 +460,54 @@ export class DatabaseStorage implements IStorage {
       updatedAt: items.updatedAt,
       category: categories,
     })
-    .from(items)
-    .leftJoin(categories, eq(items.categoryId, categories.id))
-    .where(sql`${items.currentStock} <= ${items.minStock}`)
-    .orderBy(asc(items.currentStock));
-    
+      .from(items)
+      .leftJoin(categories, eq(items.categoryId, categories.id))
+      .where(sql`${items.currentStock} <= ${items.minStock}`)
+      .orderBy(asc(items.currentStock));
+
     return result as ItemWithCategory[];
   }
 
   // Movements
   async createMovement(movement: InsertMovement): Promise<Movement> {
-    // Busca o item atual para obter o estoque real
-    const [itemRow] = await getDb()
-      .select({
-        id: items.id,
-        currentStock: items.currentStock,
-      })
-      .from(items)
-      .where(eq(items.id, movement.itemId));
+    return await getDb().transaction(async (tx) => {
+      // Busca o item atual para obter o estoque real com lock opcional (dependendo do suporte do driver)
+      const [itemRow] = await tx
+        .select({
+          id: items.id,
+          currentStock: items.currentStock,
+        })
+        .from(items)
+        .where(eq(items.id, movement.itemId));
 
-    if (!itemRow) {
-      throw new Error("Item not found");
-    }
+      if (!itemRow) {
+        throw new Error("Item not found");
+      }
 
-    const previousStock = itemRow.currentStock ?? 0;
-    const computedNewStock = movement.type === "entrada"
-      ? previousStock + movement.quantity
-      : previousStock - movement.quantity;
+      const previousStock = itemRow.currentStock ?? 0;
+      const computedNewStock = movement.type === "entrada"
+        ? previousStock + movement.quantity
+        : previousStock - movement.quantity;
 
-    if (computedNewStock < 0) {
-      throw new Error("Insufficient stock: operation would result in negative stock");
-    }
+      if (computedNewStock < 0) {
+        throw new Error("Insufficient stock: operation would result in negative stock");
+      }
 
-    // Insere a movimentação usando os valores calculados no servidor
-    const [inserted] = await getDb().insert(movements).values({
-      ...movement,
-      previousStock,
-      newStock: computedNewStock,
-    }).returning();
+      // Insere a movimentação usando os valores calculados no servidor
+      const [inserted] = await tx.insert(movements).values({
+        ...movement,
+        previousStock,
+        newStock: computedNewStock,
+      }).returning();
 
-    // Atualiza o estoque do item
-    await getDb().update(items).set({
-      currentStock: computedNewStock,
-      updatedAt: sql`now()`,
-    }).where(eq(items.id, movement.itemId));
+      // Atualiza o estoque do item
+      await tx.update(items).set({
+        currentStock: computedNewStock,
+        updatedAt: sql`now()`,
+      }).where(eq(items.id, movement.itemId));
 
-    return inserted as Movement;
+      return inserted as Movement;
+    });
   }
 
   async getMovements(itemId?: string, limit: number = 50): Promise<MovementWithDetails[]> {
@@ -514,10 +526,10 @@ export class DatabaseStorage implements IStorage {
       user: users,
       category: categories,
     })
-    .from(movements)
-    .leftJoin(items, eq(movements.itemId, items.id))
-    .leftJoin(users, eq(movements.userId, users.id))
-    .leftJoin(categories, eq(items.categoryId, categories.id));
+      .from(movements)
+      .leftJoin(items, eq(movements.itemId, items.id))
+      .leftJoin(users, eq(movements.userId, users.id))
+      .leftJoin(categories, eq(items.categoryId, categories.id));
 
     const qb = itemId
       ? baseSelect.where(eq(movements.itemId, itemId))
@@ -526,7 +538,7 @@ export class DatabaseStorage implements IStorage {
     const result = await qb
       .orderBy(desc(movements.createdAt))
       .limit(limit);
-    
+
     return result as MovementWithDetails[];
   }
 
@@ -536,27 +548,26 @@ export class DatabaseStorage implements IStorage {
     todayMovements: number;
     activeUsers: number;
   }> {
-    // Garante existência da tabela de presença antes de consultar
-    await this.ensureUserActivityTable();
+    // Tabela user_activity agora está no schema
     const [totalItemsResult] = await getDb().select({ count: count() }).from(items);
-    
+
     const [lowStockResult] = await getDb().select({ count: count() })
       .from(items)
       .where(sql`${items.currentStock} <= ${items.minStock}`);
-    
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const [todayMovementsResult] = await getDb().select({ count: count() })
       .from(movements)
       .where(sql`${movements.createdAt} >= ${today}`);
-    
+
     // Usuários "online" por heartbeat: usuários com last_seen_at recente na tabela user_activity
     const activeUsersResult = await getDb().execute(
       sql`SELECT COUNT(*)::int AS count FROM user_activity WHERE last_seen_at >= now() - interval '10 minutes'`
     );
     const activeUsersRows = (activeUsersResult as any).rows ?? activeUsersResult;
     const activeCount = Array.isArray(activeUsersRows) ? activeUsersRows[0]?.count : 0;
-    
+
     return {
       totalItems: totalItemsResult.count,
       lowStock: lowStockResult.count,
@@ -571,8 +582,7 @@ export class DatabaseStorage implements IStorage {
     role: string;
     lastSeenAt: Date;
   }>> {
-    // Garante existência da tabela de presença antes de consultar
-    await this.ensureUserActivityTable();
+    // Tabela user_activity agora está no schema
     const execResult = await getDb().execute(sql`
       SELECT u.id, u.username, u.role, ua.last_seen_at AS "lastSeenAt"
       FROM user_activity ua
@@ -591,22 +601,46 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateUserLastSeen(userId: string): Promise<void> {
-    // neon-http não suporta transações; executar em chamadas simples
-    // Garante a tabela e faz upsert do last_seen_at
-    await getDb().execute(sql`CREATE TABLE IF NOT EXISTS user_activity (
-      user_id uuid PRIMARY KEY,
-      last_seen_at timestamp NOT NULL DEFAULT now()
-    )`);
-
-    await getDb().execute(sql`INSERT INTO user_activity (user_id, last_seen_at) VALUES (${userId}, now())
-      ON CONFLICT (user_id) DO UPDATE SET last_seen_at = EXCLUDED.last_seen_at`);
+    // Upsert usando Drizzle ORM
+    await getDb()
+      .insert(userActivity)
+      .values({ userId, lastSeenAt: new Date() })
+      .onConflictDoUpdate({
+        target: userActivity.userId,
+        set: { lastSeenAt: sql`EXCLUDED.last_seen_at` }
+      });
   }
 
-  private async ensureUserActivityTable(): Promise<void> {
-    await getDb().execute(sql`CREATE TABLE IF NOT EXISTS user_activity (
-      user_id uuid PRIMARY KEY,
-      last_seen_at timestamp NOT NULL DEFAULT now()
-    )`);
+
+  // Password Resets
+  async createPasswordReset(userId: string, code: string, expiresAt: Date): Promise<void> {
+    // Primeiro limpa qualquer código existente para este usuário
+    await this.deletePasswordReset(userId);
+
+    await getDb().insert(passwordResets).values({
+      userId,
+      code,
+      expiresAt: expiresAt,
+    });
+  }
+
+  async getPasswordReset(userId: string): Promise<{ code: string; expiresAt: Date } | undefined> {
+    const result = await getDb().execute(sql`
+      SELECT code, expires_at FROM password_resets 
+      WHERE user_id = ${userId} 
+      ORDER BY created_at DESC 
+      LIMIT 1
+    `);
+    const rows = (result as any).rows ?? result;
+    if (rows.length === 0) return undefined;
+    return {
+      code: rows[0].code,
+      expiresAt: new Date(rows[0].expires_at)
+    };
+  }
+
+  async deletePasswordReset(userId: string): Promise<void> {
+    await getDb().execute(sql`DELETE FROM password_resets WHERE user_id = ${userId}`);
   }
 }
 
