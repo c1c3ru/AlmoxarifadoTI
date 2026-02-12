@@ -1,14 +1,24 @@
 {
+  "framework": null,
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist/public",
+  "installCommand": "npm install",
   "routes": [
-    { "src": "/api/(.*)", "dest": "/api/index.ts" },
-    { "handle": "filesystem" },
-    { "src": "/(.*)", "dest": "/index.html" }
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/index.ts"
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
   ],
   "functions": {
     "api/index.ts": {
       "includeFiles": "dist/server/**"
     }
-  },
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist/public"
+  }
 }
