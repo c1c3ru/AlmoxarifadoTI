@@ -89,6 +89,8 @@ export const insertItemSchema = createInsertSchema(items).omit({
 export const insertMovementSchema = createInsertSchema(movements).omit({
   id: true,
   createdAt: true,
+  previousStock: true,
+  newStock: true,
 });
 
 // Types

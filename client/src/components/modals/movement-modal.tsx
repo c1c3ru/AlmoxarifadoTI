@@ -70,16 +70,12 @@ export function MovementModal({ open, onOpenChange, item, initialType }: Movemen
   const createMovementMutation = useMutation({
     mutationFn: async (data: MovementFormData) => {
       if (!activeItem || !user) throw new Error("Item ou usuário não encontrado");
-      
+
       const movementData = {
         itemId: activeItem.id,
         userId: user.id,
         type: data.type,
         quantity: data.quantity,
-        previousStock: activeItem.currentStock,
-        newStock: data.type === "entrada" 
-          ? activeItem.currentStock + data.quantity 
-          : activeItem.currentStock - data.quantity,
         destination: data.destination,
         observation: data.observation,
       };
@@ -130,7 +126,7 @@ export function MovementModal({ open, onOpenChange, item, initialType }: Movemen
         <DialogHeader>
           <DialogTitle>Movimentar Item</DialogTitle>
         </DialogHeader>
-        
+
         {!activeItem ? (
           <div className="mb-2">
             <Form {...form}>
@@ -181,7 +177,7 @@ export function MovementModal({ open, onOpenChange, item, initialType }: Movemen
             </div>
           </div>
         )}
-        
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField
@@ -215,7 +211,7 @@ export function MovementModal({ open, onOpenChange, item, initialType }: Movemen
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="quantity"
@@ -247,7 +243,7 @@ export function MovementModal({ open, onOpenChange, item, initialType }: Movemen
                 </FormItem>
               )}
             />
-            
+
             {movementType === "saida" && (
               <FormField
                 control={form.control}
@@ -267,7 +263,7 @@ export function MovementModal({ open, onOpenChange, item, initialType }: Movemen
                 )}
               />
             )}
-            
+
             <FormField
               control={form.control}
               name="observation"
@@ -285,7 +281,7 @@ export function MovementModal({ open, onOpenChange, item, initialType }: Movemen
                 </FormItem>
               )}
             />
-            
+
             <div className="flex items-center justify-end space-x-3 pt-4 border-t border-gray-200">
               <Button
                 type="button"
