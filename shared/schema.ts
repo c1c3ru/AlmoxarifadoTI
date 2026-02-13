@@ -72,6 +72,25 @@ export const userActivity = pgTable("user_activity", {
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
+}).superRefine((data, ctx) => {
+  const role = data.role || "tech";
+  const matricula = data.matricula;
+
+  if (role === "tech" && matricula.length !== 14) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Matrícula de técnico deve ter 14 dígitos",
+      path: ["matricula"],
+    });
+  }
+
+  if (role === "admin" && matricula.length !== 7) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Matrícula de administrador deve ter 7 dígitos",
+      path: ["matricula"],
+    });
+  }
 });
 
 export const insertCategorySchema = createInsertSchema(categories).omit({

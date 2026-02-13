@@ -42,9 +42,9 @@ const registerSchema = z
   })
   .superRefine((val, ctx) => {
     // Validação de matrícula baseada no perfil
-    const techLen = 7;  // Técnico/Servidor: 1678389 -> 7 caracteres
-    const adminLen = 7; // Administrador: 1678389 -> 7 caracteres (mesmo formato)
-    
+    const techLen = 14;  // Técnico/Servidor: 20261193010007 -> 14 caracteres
+    const adminLen = 7; // Administrador: 1678389 -> 7 caracteres
+
     if (val.role === "tech" && val.matricula.length !== techLen) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -52,7 +52,7 @@ const registerSchema = z
         path: ["matricula"],
       });
     }
-    
+
     if (val.role === "admin" && val.matricula.length !== adminLen) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -69,7 +69,7 @@ const registerSchema = z
         path: ["password"],
       });
     }
-    
+
     if (val.password === val.matricula) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -77,7 +77,7 @@ const registerSchema = z
         path: ["password"],
       });
     }
-    
+
     if (val.password.toLowerCase().includes(val.name.toLowerCase().split(' ')[0])) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -85,7 +85,7 @@ const registerSchema = z
         path: ["password"],
       });
     }
-    
+
     if (val.password !== val.confirmPassword) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -115,20 +115,26 @@ export default function RegisterUserPage() {
 
   // Observa o valor do perfil para mostrar placeholder dinâmico
   const selectedRole = form.watch("role");
-  
+
   const matriculaConfig = useMemo(() => {
-    // Ambos técnico e admin usam 7 dígitos (matrícula de servidor)
+    if (selectedRole === "tech") {
+      return {
+        placeholder: "Ex: 20261193010007 (14 dígitos)",
+        maxLength: 14,
+        description: "Matrícula do técnico/servidor (14 dígitos)"
+      };
+    }
+
+    // Admin default
     return {
       placeholder: "Ex: 1678389 (7 dígitos)",
       maxLength: 7,
-      description: selectedRole === "admin" 
-        ? "Matrícula do servidor administrativo" 
-        : "Matrícula do técnico/servidor"
+      description: "Matrícula do servidor administrativo"
     };
   }, [selectedRole]);
 
-  const disabled = useMemo(() => 
-    !form.formState.isValid || form.formState.isSubmitting, 
+  const disabled = useMemo(() =>
+    !form.formState.isValid || form.formState.isSubmitting,
     [form.formState]
   );
 
@@ -227,21 +233,18 @@ export default function RegisterUserPage() {
                   const isEmpty = !field.value;
                   return (
                     <FormItem>
-                      <FormLabel className={`text-sm font-medium flex items-center ${
-                        hasError ? 'text-red-600' : isEmpty ? 'text-orange-600' : 'text-gray-700'
-                      }`}>
-                        <i className={`fa-solid fa-user-tag mr-2 ${
-                          hasError ? 'text-red-500' : isEmpty ? 'text-orange-500' : 'text-blue-500'
-                        }`}></i>
+                      <FormLabel className={`text-sm font-medium flex items-center ${hasError ? 'text-red-600' : isEmpty ? 'text-orange-600' : 'text-gray-700'
+                        }`}>
+                        <i className={`fa-solid fa-user-tag mr-2 ${hasError ? 'text-red-500' : isEmpty ? 'text-orange-500' : 'text-blue-500'
+                          }`}></i>
                         Perfil do Usuário *
                       </FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
-                          <SelectTrigger data-testid="select-role" className={`h-11 transition-colors ${
-                            hasError ? 'border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-200' : 
-                            isEmpty ? 'border-orange-300 bg-orange-50 focus:border-orange-500 focus:ring-orange-200' :
-                            'border-green-300 bg-green-50 focus:border-green-500 focus:ring-green-200'
-                          }`}>
+                          <SelectTrigger data-testid="select-role" className={`h-11 transition-colors ${hasError ? 'border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-200' :
+                              isEmpty ? 'border-orange-300 bg-orange-50 focus:border-orange-500 focus:ring-orange-200' :
+                                'border-green-300 bg-green-50 focus:border-green-500 focus:ring-green-200'
+                            }`}>
                             <SelectValue placeholder="Selecione o perfil" />
                           </SelectTrigger>
                         </FormControl>
@@ -283,26 +286,23 @@ export default function RegisterUserPage() {
                   const isValid = field.value?.trim() && !hasError;
                   return (
                     <FormItem>
-                      <FormLabel className={`text-sm font-medium flex items-center ${
-                        hasError ? 'text-red-600' : isEmpty ? 'text-orange-600' : 'text-gray-700'
-                      }`}>
-                        <i className={`fa-solid fa-user mr-2 ${
-                          hasError ? 'text-red-500' : isEmpty ? 'text-orange-500' : isValid ? 'text-green-500' : 'text-blue-500'
-                        }`}></i>
+                      <FormLabel className={`text-sm font-medium flex items-center ${hasError ? 'text-red-600' : isEmpty ? 'text-orange-600' : 'text-gray-700'
+                        }`}>
+                        <i className={`fa-solid fa-user mr-2 ${hasError ? 'text-red-500' : isEmpty ? 'text-orange-500' : isValid ? 'text-green-500' : 'text-blue-500'
+                          }`}></i>
                         Nome Completo *
                       </FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <Input 
-                            placeholder="Digite o nome completo" 
-                            {...field} 
+                          <Input
+                            placeholder="Digite o nome completo"
+                            {...field}
                             data-testid="input-name"
-                            className={`h-11 placeholder:text-gray-400 pr-10 transition-colors ${
-                              hasError ? 'border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-200' : 
-                              isEmpty ? 'border-orange-300 bg-orange-50 focus:border-orange-500 focus:ring-orange-200' :
-                              isValid ? 'border-green-300 bg-green-50 focus:border-green-500 focus:ring-green-200' :
-                              'border-gray-300'
-                            }`}
+                            className={`h-11 placeholder:text-gray-400 pr-10 transition-colors ${hasError ? 'border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-200' :
+                                isEmpty ? 'border-orange-300 bg-orange-50 focus:border-orange-500 focus:ring-orange-200' :
+                                  isValid ? 'border-green-300 bg-green-50 focus:border-green-500 focus:ring-green-200' :
+                                    'border-gray-300'
+                              }`}
                             maxLength={100}
                           />
                           {isValid && (
@@ -339,27 +339,24 @@ export default function RegisterUserPage() {
                   const isValid = field.value?.trim() && !hasError;
                   return (
                     <FormItem>
-                      <FormLabel className={`text-sm font-medium flex items-center ${
-                        hasError ? 'text-red-600' : isEmpty ? 'text-orange-600' : 'text-gray-700'
-                      }`}>
-                        <i className={`fa-solid fa-envelope mr-2 ${
-                          hasError ? 'text-red-500' : isEmpty ? 'text-orange-500' : isValid ? 'text-green-500' : 'text-blue-500'
-                        }`}></i>
+                      <FormLabel className={`text-sm font-medium flex items-center ${hasError ? 'text-red-600' : isEmpty ? 'text-orange-600' : 'text-gray-700'
+                        }`}>
+                        <i className={`fa-solid fa-envelope mr-2 ${hasError ? 'text-red-500' : isEmpty ? 'text-orange-500' : isValid ? 'text-green-500' : 'text-blue-500'
+                          }`}></i>
                         Email Institucional *
                       </FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <Input 
-                            type="email" 
-                            placeholder="usuario@instituicao.edu.br" 
-                            {...field} 
+                          <Input
+                            type="email"
+                            placeholder="usuario@instituicao.edu.br"
+                            {...field}
                             data-testid="input-email"
-                            className={`h-11 placeholder:text-gray-400 pr-10 transition-colors ${
-                              hasError ? 'border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-200' : 
-                              isEmpty ? 'border-orange-300 bg-orange-50 focus:border-orange-500 focus:ring-orange-200' :
-                              isValid ? 'border-green-300 bg-green-50 focus:border-green-500 focus:ring-green-200' :
-                              'border-gray-300'
-                            }`}
+                            className={`h-11 placeholder:text-gray-400 pr-10 transition-colors ${hasError ? 'border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-200' :
+                                isEmpty ? 'border-orange-300 bg-orange-50 focus:border-orange-500 focus:ring-orange-200' :
+                                  isValid ? 'border-green-300 bg-green-50 focus:border-green-500 focus:ring-green-200' :
+                                    'border-gray-300'
+                              }`}
                             maxLength={255}
                             autoComplete="email"
                           />
@@ -397,26 +394,23 @@ export default function RegisterUserPage() {
                   const isValid = field.value?.trim() && !hasError;
                   return (
                     <FormItem>
-                      <FormLabel className={`text-sm font-medium flex items-center ${
-                        hasError ? 'text-red-600' : isEmpty ? 'text-orange-600' : 'text-gray-700'
-                      }`}>
-                        <i className={`fa-solid fa-id-card mr-2 ${
-                          hasError ? 'text-red-500' : isEmpty ? 'text-orange-500' : isValid ? 'text-green-500' : 'text-blue-500'
-                        }`}></i>
+                      <FormLabel className={`text-sm font-medium flex items-center ${hasError ? 'text-red-600' : isEmpty ? 'text-orange-600' : 'text-gray-700'
+                        }`}>
+                        <i className={`fa-solid fa-id-card mr-2 ${hasError ? 'text-red-500' : isEmpty ? 'text-orange-500' : isValid ? 'text-green-500' : 'text-blue-500'
+                          }`}></i>
                         Matrícula {selectedRole === 'admin' ? 'Administrativa' : 'de Técnico'} *
                       </FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <Input 
+                          <Input
                             placeholder={matriculaConfig.placeholder}
-                            {...field} 
+                            {...field}
                             data-testid="input-matricula"
-                            className={`h-11 placeholder:text-gray-400 pr-10 transition-colors ${
-                              hasError ? 'border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-200' : 
-                              isEmpty ? 'border-orange-300 bg-orange-50 focus:border-orange-500 focus:ring-orange-200' :
-                              isValid ? 'border-green-300 bg-green-50 focus:border-green-500 focus:ring-green-200' :
-                              'border-gray-300'
-                            }`}
+                            className={`h-11 placeholder:text-gray-400 pr-10 transition-colors ${hasError ? 'border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-200' :
+                                isEmpty ? 'border-orange-300 bg-orange-50 focus:border-orange-500 focus:ring-orange-200' :
+                                  isValid ? 'border-green-300 bg-green-50 focus:border-green-500 focus:ring-green-200' :
+                                    'border-gray-300'
+                              }`}
                             maxLength={matriculaConfig.maxLength}
                             pattern="[0-9]*"
                             inputMode="numeric"
@@ -433,9 +427,8 @@ export default function RegisterUserPage() {
                           )}
                         </div>
                       </FormControl>
-                      <p className={`text-xs mt-1 ${
-                        hasError ? 'text-red-500' : isEmpty ? 'text-orange-500' : 'text-gray-500'
-                      }`}>{matriculaConfig.description}</p>
+                      <p className={`text-xs mt-1 ${hasError ? 'text-red-500' : isEmpty ? 'text-orange-500' : 'text-gray-500'
+                        }`}>{matriculaConfig.description}</p>
                       <FormMessage className="text-red-600 font-medium flex items-center mt-2">
                         {hasError && <i className="fa-solid fa-exclamation-triangle mr-2"></i>}
                       </FormMessage>
@@ -459,27 +452,24 @@ export default function RegisterUserPage() {
                   const isValid = field.value?.trim() && !hasError;
                   return (
                     <FormItem>
-                      <FormLabel className={`text-sm font-medium flex items-center ${
-                        hasError ? 'text-red-600' : isEmpty ? 'text-orange-600' : 'text-gray-700'
-                      }`}>
-                        <i className={`fa-solid fa-lock mr-2 ${
-                          hasError ? 'text-red-500' : isEmpty ? 'text-orange-500' : isValid ? 'text-green-500' : 'text-blue-500'
-                        }`}></i>
+                      <FormLabel className={`text-sm font-medium flex items-center ${hasError ? 'text-red-600' : isEmpty ? 'text-orange-600' : 'text-gray-700'
+                        }`}>
+                        <i className={`fa-solid fa-lock mr-2 ${hasError ? 'text-red-500' : isEmpty ? 'text-orange-500' : isValid ? 'text-green-500' : 'text-blue-500'
+                          }`}></i>
                         Senha de Acesso *
                       </FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <Input 
-                            type="password" 
+                          <Input
+                            type="password"
                             placeholder="Crie uma senha segura"
-                            {...field} 
+                            {...field}
                             data-testid="input-password"
-                            className={`h-11 placeholder:text-gray-400 pr-10 transition-colors ${
-                              hasError ? 'border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-200' : 
-                              isEmpty ? 'border-orange-300 bg-orange-50 focus:border-orange-500 focus:ring-orange-200' :
-                              isValid ? 'border-green-300 bg-green-50 focus:border-green-500 focus:ring-green-200' :
-                              'border-gray-300'
-                            }`}
+                            className={`h-11 placeholder:text-gray-400 pr-10 transition-colors ${hasError ? 'border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-200' :
+                                isEmpty ? 'border-orange-300 bg-orange-50 focus:border-orange-500 focus:ring-orange-200' :
+                                  isValid ? 'border-green-300 bg-green-50 focus:border-green-500 focus:ring-green-200' :
+                                    'border-gray-300'
+                              }`}
                             maxLength={128}
                             autoComplete="new-password"
                           />
@@ -494,9 +484,8 @@ export default function RegisterUserPage() {
                           )}
                         </div>
                       </FormControl>
-                      <p className={`text-xs mt-1 ${
-                        hasError ? 'text-red-500' : isEmpty ? 'text-orange-500' : 'text-gray-500'
-                      }`}>
+                      <p className={`text-xs mt-1 ${hasError ? 'text-red-500' : isEmpty ? 'text-orange-500' : 'text-gray-500'
+                        }`}>
                         Mín. 8 caracteres, com maiúscula, minúscula, número e símbolo
                       </p>
                       <FormMessage className="text-red-600 font-medium flex items-center mt-2">
@@ -522,27 +511,24 @@ export default function RegisterUserPage() {
                   const isValid = field.value?.trim() && !hasError;
                   return (
                     <FormItem>
-                      <FormLabel className={`text-sm font-medium flex items-center ${
-                        hasError ? 'text-red-600' : isEmpty ? 'text-orange-600' : 'text-gray-700'
-                      }`}>
-                        <i className={`fa-solid fa-lock-open mr-2 ${
-                          hasError ? 'text-red-500' : isEmpty ? 'text-orange-500' : isValid ? 'text-green-500' : 'text-blue-500'
-                        }`}></i>
+                      <FormLabel className={`text-sm font-medium flex items-center ${hasError ? 'text-red-600' : isEmpty ? 'text-orange-600' : 'text-gray-700'
+                        }`}>
+                        <i className={`fa-solid fa-lock-open mr-2 ${hasError ? 'text-red-500' : isEmpty ? 'text-orange-500' : isValid ? 'text-green-500' : 'text-blue-500'
+                          }`}></i>
                         Confirmar Senha *
                       </FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <Input 
-                            type="password" 
+                          <Input
+                            type="password"
                             placeholder="Digite a senha novamente"
-                            {...field} 
+                            {...field}
                             data-testid="input-confirm-password"
-                            className={`h-11 placeholder:text-gray-400 pr-10 transition-colors ${
-                              hasError ? 'border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-200' : 
-                              isEmpty ? 'border-orange-300 bg-orange-50 focus:border-orange-500 focus:ring-orange-200' :
-                              isValid ? 'border-green-300 bg-green-50 focus:border-green-500 focus:ring-green-200' :
-                              'border-gray-300'
-                            }`}
+                            className={`h-11 placeholder:text-gray-400 pr-10 transition-colors ${hasError ? 'border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-200' :
+                                isEmpty ? 'border-orange-300 bg-orange-50 focus:border-orange-500 focus:ring-orange-200' :
+                                  isValid ? 'border-green-300 bg-green-50 focus:border-green-500 focus:ring-green-200' :
+                                    'border-gray-300'
+                              }`}
                             maxLength={128}
                             autoComplete="new-password"
                           />
@@ -571,10 +557,10 @@ export default function RegisterUserPage() {
                 }}
               />
 
-              <Button 
-                type="submit" 
-                className="w-full h-12 rounded-lg bg-gradient-to-r from-sky-600 to-blue-700 hover:from-sky-700 hover:to-blue-800 text-white font-semibold shadow-lg transition disabled:from-sky-300 disabled:to-blue-300 disabled:text-white disabled:opacity-100 disabled:cursor-not-allowed disabled:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2" 
-                disabled={disabled} 
+              <Button
+                type="submit"
+                className="w-full h-12 rounded-lg bg-gradient-to-r from-sky-600 to-blue-700 hover:from-sky-700 hover:to-blue-800 text-white font-semibold shadow-lg transition disabled:from-sky-300 disabled:to-blue-300 disabled:text-white disabled:opacity-100 disabled:cursor-not-allowed disabled:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2"
+                disabled={disabled}
                 data-testid="button-submit"
               >
                 {form.formState.isSubmitting ? (
