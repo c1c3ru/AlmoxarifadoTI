@@ -32,7 +32,7 @@ async function restoreAdminUser() {
             hashedPassword,
             'Administrador',
             'admin@almoxarifado.local',
-            '000000',
+            '2329311',
             'admin',
             true
         ]);
@@ -42,7 +42,7 @@ async function restoreAdminUser() {
         console.log(`   Username: admin`);
         console.log(`   Password: admin123`);
         console.log(`   Email: admin@almoxarifado.local`);
-        console.log(`   Matrícula: 000000`);
+        console.log(`   Matrícula: 2329311`);
         console.log(`   Role: admin`);
         console.log(`\n⚠️  IMPORTANTE: Altere a senha após o primeiro login!`);
 

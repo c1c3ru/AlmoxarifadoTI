@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import { pgTable, text, varchar, integer, timestamp, uuid, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { ALLOWED_ADMIN_MATRICULAS } from "./allowed-admins";
 
 export const users = pgTable("users", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -84,10 +85,10 @@ export const insertUserSchema = createInsertSchema(users).omit({
     });
   }
 
-  if (role === "admin" && matricula.length !== 7) {
+  if (role === "admin" && !ALLOWED_ADMIN_MATRICULAS.includes(matricula)) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: "Matrícula de administrador deve ter 7 dígitos",
+      message: "Matrícula não autorizada para perfil de administrador",
       path: ["matricula"],
     });
   }

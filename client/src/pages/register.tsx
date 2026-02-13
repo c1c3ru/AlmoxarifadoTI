@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { ALLOWED_ADMIN_MATRICULAS } from "../../../shared/allowed-admins";
 
 // Política de senha robusta seguindo práticas de segurança
 const passwordPolicy = z
@@ -53,10 +54,10 @@ const registerSchema = z
       });
     }
 
-    if (val.role === "admin" && val.matricula.length !== adminLen) {
+    if (val.role === "admin" && !ALLOWED_ADMIN_MATRICULAS.includes(val.matricula)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: `Matrícula de administrador deve ter exatamente ${adminLen} dígitos`,
+        message: "Matrícula não autorizada para administrador",
         path: ["matricula"],
       });
     }
@@ -127,9 +128,9 @@ export default function RegisterUserPage() {
 
     // Admin default
     return {
-      placeholder: "Ex: 1678389 (7 dígitos)",
-      maxLength: 7,
-      description: "Matrícula do servidor administrativo"
+      placeholder: "Ex: 1678389 (Autorizados apenas)",
+      maxLength: 10,
+      description: "Matrícula do servidor administrativo (lista restrita)"
     };
   }, [selectedRole]);
 
@@ -242,8 +243,8 @@ export default function RegisterUserPage() {
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger data-testid="select-role" className={`h-11 transition-colors ${hasError ? 'border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-200' :
-                              isEmpty ? 'border-orange-300 bg-orange-50 focus:border-orange-500 focus:ring-orange-200' :
-                                'border-green-300 bg-green-50 focus:border-green-500 focus:ring-green-200'
+                            isEmpty ? 'border-orange-300 bg-orange-50 focus:border-orange-500 focus:ring-orange-200' :
+                              'border-green-300 bg-green-50 focus:border-green-500 focus:ring-green-200'
                             }`}>
                             <SelectValue placeholder="Selecione o perfil" />
                           </SelectTrigger>
@@ -299,9 +300,9 @@ export default function RegisterUserPage() {
                             {...field}
                             data-testid="input-name"
                             className={`h-11 placeholder:text-gray-400 pr-10 transition-colors ${hasError ? 'border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-200' :
-                                isEmpty ? 'border-orange-300 bg-orange-50 focus:border-orange-500 focus:ring-orange-200' :
-                                  isValid ? 'border-green-300 bg-green-50 focus:border-green-500 focus:ring-green-200' :
-                                    'border-gray-300'
+                              isEmpty ? 'border-orange-300 bg-orange-50 focus:border-orange-500 focus:ring-orange-200' :
+                                isValid ? 'border-green-300 bg-green-50 focus:border-green-500 focus:ring-green-200' :
+                                  'border-gray-300'
                               }`}
                             maxLength={100}
                           />
@@ -353,9 +354,9 @@ export default function RegisterUserPage() {
                             {...field}
                             data-testid="input-email"
                             className={`h-11 placeholder:text-gray-400 pr-10 transition-colors ${hasError ? 'border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-200' :
-                                isEmpty ? 'border-orange-300 bg-orange-50 focus:border-orange-500 focus:ring-orange-200' :
-                                  isValid ? 'border-green-300 bg-green-50 focus:border-green-500 focus:ring-green-200' :
-                                    'border-gray-300'
+                              isEmpty ? 'border-orange-300 bg-orange-50 focus:border-orange-500 focus:ring-orange-200' :
+                                isValid ? 'border-green-300 bg-green-50 focus:border-green-500 focus:ring-green-200' :
+                                  'border-gray-300'
                               }`}
                             maxLength={255}
                             autoComplete="email"
@@ -407,9 +408,9 @@ export default function RegisterUserPage() {
                             {...field}
                             data-testid="input-matricula"
                             className={`h-11 placeholder:text-gray-400 pr-10 transition-colors ${hasError ? 'border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-200' :
-                                isEmpty ? 'border-orange-300 bg-orange-50 focus:border-orange-500 focus:ring-orange-200' :
-                                  isValid ? 'border-green-300 bg-green-50 focus:border-green-500 focus:ring-green-200' :
-                                    'border-gray-300'
+                              isEmpty ? 'border-orange-300 bg-orange-50 focus:border-orange-500 focus:ring-orange-200' :
+                                isValid ? 'border-green-300 bg-green-50 focus:border-green-500 focus:ring-green-200' :
+                                  'border-gray-300'
                               }`}
                             maxLength={matriculaConfig.maxLength}
                             pattern="[0-9]*"
@@ -466,9 +467,9 @@ export default function RegisterUserPage() {
                             {...field}
                             data-testid="input-password"
                             className={`h-11 placeholder:text-gray-400 pr-10 transition-colors ${hasError ? 'border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-200' :
-                                isEmpty ? 'border-orange-300 bg-orange-50 focus:border-orange-500 focus:ring-orange-200' :
-                                  isValid ? 'border-green-300 bg-green-50 focus:border-green-500 focus:ring-green-200' :
-                                    'border-gray-300'
+                              isEmpty ? 'border-orange-300 bg-orange-50 focus:border-orange-500 focus:ring-orange-200' :
+                                isValid ? 'border-green-300 bg-green-50 focus:border-green-500 focus:ring-green-200' :
+                                  'border-gray-300'
                               }`}
                             maxLength={128}
                             autoComplete="new-password"
@@ -525,9 +526,9 @@ export default function RegisterUserPage() {
                             {...field}
                             data-testid="input-confirm-password"
                             className={`h-11 placeholder:text-gray-400 pr-10 transition-colors ${hasError ? 'border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-200' :
-                                isEmpty ? 'border-orange-300 bg-orange-50 focus:border-orange-500 focus:ring-orange-200' :
-                                  isValid ? 'border-green-300 bg-green-50 focus:border-green-500 focus:ring-green-200' :
-                                    'border-gray-300'
+                              isEmpty ? 'border-orange-300 bg-orange-50 focus:border-orange-500 focus:ring-orange-200' :
+                                isValid ? 'border-green-300 bg-green-50 focus:border-green-500 focus:ring-green-200' :
+                                  'border-gray-300'
                               }`}
                             maxLength={128}
                             autoComplete="new-password"
