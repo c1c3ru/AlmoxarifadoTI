@@ -193,7 +193,8 @@ router.post("/movements", authenticateJWT, async (req, res) => {
         res.status(201).json(movement);
     } catch (error) {
         console.error("Create movement error:", error);
-        res.status(500).json({ message: "Internal server error" });
+        const errorMessage = error instanceof Error ? error.message : "Internal server error";
+        res.status(500).json({ message: errorMessage, detail: error });
     }
 });
 
