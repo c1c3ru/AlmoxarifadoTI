@@ -56,6 +56,30 @@ router.put("/:id", authenticateJWT, async (req, res) => {
         const updateData = { ...validation.data };
         if (!updateData.password) delete updateData.password;
 
+        // Validar regra de negócio: Se for admin, matricula deve ser permitida
+        // Precisamos verificar se role ou matricula estão sendo alterados, ou pegar do banco se faltar um
+        if (updateData.role === 'admin' || updateData.matricula) {
+            // Se mudou role para admin OU mudou matricula
+            // Precisamos do estado final para validar
+            const currentUser = await storage.getUser(id);
+            if (currentUser) {
+                const finalRole = updateData.role || currentUser.role;
+                const finalMatricula = updateData.matricula || currentUser.matricula;
+
+                // Importar a lista aqui ou mover a validação para storage (mas roteador é ok para validação http)
+                // Usando a validação do schema refinado seria ideal, mas partial quebra
+                // Vamos recriar a validação manualmente aqui para garantir
+                const { ALLOWED_ADMIN_MATRICULAS } = await import("@shared/allowed-admins");
+
+                if (finalRole === 'admin' && !ALLOWED_ADMIN_MATRICULAS.includes(finalMatricula)) {
+                    return res.status(400).json({
+                        message: "Invalid user data",
+                        errors: [{ path: ["matricula"], message: "Matrícula não autorizada para perfil de administrador" }]
+                    });
+                }
+            }
+        }
+
         const user = await storage.updateUser(id, updateData);
         if (!user) return res.status(404).json({ message: "User not found" });
 

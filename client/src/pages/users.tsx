@@ -19,9 +19,11 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import type { User } from "@shared/schema";
 
+import { ALLOWED_ADMIN_MATRICULAS } from "../../../shared/allowed-admins";
+
 const userSchema = z.object({
   username: z.string().min(3, "Username deve ter pelo menos 3 caracteres"),
-  password: z.string().refine((val) => val === "" || val.length >= 6, {
+  password: z.string().optional().refine((val) => !val || val.length >= 6, {
     message: "Senha deve ter pelo menos 6 caracteres ou estar vazia",
   }),
   name: z.string().min(1, "Nome é obrigatório"),
@@ -29,6 +31,14 @@ const userSchema = z.object({
   matricula: z.string().min(1, "Matrícula é obrigatória"),
   role: z.enum(["admin", "tech"]),
   isActive: z.boolean(),
+}).superRefine((val, ctx) => {
+  if (val.role === "admin" && !ALLOWED_ADMIN_MATRICULAS.includes(val.matricula)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Matrícula não autorizada para administrador",
+      path: ["matricula"],
+    });
+  }
 });
 
 type UserFormData = z.infer<typeof userSchema>;
