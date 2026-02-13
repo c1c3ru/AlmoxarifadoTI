@@ -28,7 +28,7 @@ export default function Items() {
   const [movementTypePreset, setMovementTypePreset] = useState<"entrada" | "saida" | null>(null);
   const [selectedItem, setSelectedItem] = useState<ItemWithCategory | null>(null);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
-  
+
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -189,7 +189,7 @@ export default function Items() {
             </div>
           </div>
         </div>
-        
+
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -324,6 +324,19 @@ export default function Items() {
                                 {item.location}
                               </p>
                             )}
+
+                            {/* Mobile Info (Visible only on small screens) */}
+                            <div className="md:hidden flex flex-wrap gap-2 mt-2">
+                              <Badge variant="outline" className={`${item.currentStock <= item.minStock ? 'bg-red-50 text-red-700 border-red-200' : 'bg-green-50 text-green-700 border-green-200'
+                                } text-xs px-1.5 py-0 h-5`}>
+                                <i className="fa-solid fa-layer-group mr-1 text-[10px]"></i>
+                                {item.currentStock} un.
+                              </Badge>
+                              <Badge variant="outline" className="text-xs border-gray-200 text-gray-500 px-1.5 py-0 h-5">
+                                <i className={`${getStatusIcon(item.status)} mr-1 text-[10px]`}></i>
+                                {getStatusLabel(item.status)}
+                              </Badge>
+                            </div>
                           </div>
                         </div>
                       </td>
@@ -343,11 +356,10 @@ export default function Items() {
                       </td>
                       <td className="hidden md:table-cell px-4 py-3 sm:px-6 sm:py-4" data-testid={`item-stock-${item.id}`}>
                         <div className="flex items-center space-x-2">
-                          <div className={`px-3 py-1 rounded-lg font-bold text-lg ${
-                            item.currentStock <= item.minStock 
-                              ? 'bg-red-100 text-red-800' 
-                              : 'bg-green-100 text-green-800'
-                          }`}>
+                          <div className={`px-3 py-1 rounded-lg font-bold text-lg ${item.currentStock <= item.minStock
+                            ? 'bg-red-100 text-red-800'
+                            : 'bg-green-100 text-green-800'
+                            }`}>
                             {item.currentStock}
                           </div>
                           <div className="text-xs text-gray-500">
@@ -373,12 +385,12 @@ export default function Items() {
                       <td className="px-2 py-3 sm:px-4 md:px-6 sm:py-4">
                         <div className="flex items-center justify-center space-x-1 sm:space-x-2">
                           <div className="p-0.5 sm:p-1 bg-white rounded-lg shadow-sm border">
-                            <QRCodeGenerator 
+                            <QRCodeGenerator
                               value={`ITEM:${item.id}:${item.internalCode}`}
                               size={24}
                               className="cursor-pointer hover:scale-110 transition-transform sm:hidden"
                             />
-                            <QRCodeGenerator 
+                            <QRCodeGenerator
                               value={`ITEM:${item.id}:${item.internalCode}`}
                               size={32}
                               className="cursor-pointer hover:scale-110 transition-transform hidden sm:block"
@@ -443,7 +455,7 @@ export default function Items() {
                               <TooltipContent>Editar item</TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
-                          
+
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
@@ -479,7 +491,7 @@ export default function Items() {
                               <TooltipContent>Registrar saída (retirar do estoque)</TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
-                          
+
                           {canDeleteItems(user) && (
                             <TooltipProvider>
                               <Tooltip>

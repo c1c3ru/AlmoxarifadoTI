@@ -70,10 +70,12 @@ export const userActivity = pgTable("user_activity", {
 });
 
 // Insert schemas
-export const insertUserSchema = createInsertSchema(users).omit({
+export const baseInsertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
-}).superRefine((data, ctx) => {
+});
+
+export const insertUserSchema = baseInsertUserSchema.superRefine((data, ctx) => {
   const role = data.role || "tech";
   const matricula = data.matricula;
 

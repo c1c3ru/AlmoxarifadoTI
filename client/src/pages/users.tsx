@@ -530,7 +530,7 @@ export default function Users() {
               {users.map((user) => (
                 <div
                   key={user.id}
-                  className="flex items-center justify-between p-6 border border-gray-200 rounded-2xl hover:shadow-lg hover:border-blue-200 transition-all duration-300 group bg-gradient-to-r from-white to-gray-50"
+                  className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 p-6 border border-gray-200 rounded-2xl hover:shadow-lg hover:border-blue-200 transition-all duration-300 group bg-gradient-to-r from-white to-gray-50"
                   data-testid={`user-${user.id}`}
                 >
                   <div className="flex items-center space-x-4">
@@ -579,7 +579,7 @@ export default function Users() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-4">
+                  <div className="flex flex-wrap items-center gap-3 w-full md:w-auto mt-2 md:mt-0">
                     <div className="flex items-center space-x-3 bg-gray-50 px-4 py-2 rounded-lg border border-gray-200">
                       <div className="flex items-center space-x-2">
                         {user.isActive ? (

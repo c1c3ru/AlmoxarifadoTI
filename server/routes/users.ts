@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { storage } from "../storage";
 import { authenticateJWT } from "../auth";
-import { insertUserSchema } from "@shared/schema";
+import { insertUserSchema, baseInsertUserSchema } from "@shared/schema";
 
 const router = Router();
 
@@ -48,7 +48,7 @@ router.post("/", authenticateJWT, async (req, res) => {
 router.put("/:id", authenticateJWT, async (req, res) => {
     try {
         const { id } = req.params;
-        const validation = insertUserSchema.partial().safeParse(req.body);
+        const validation = baseInsertUserSchema.partial().safeParse(req.body);
         if (!validation.success) {
             return res.status(400).json({ message: "Invalid user data", errors: validation.error.issues });
         }
