@@ -28,8 +28,8 @@ export default function History() {
     const typeFilter = selectedTypeFilter === ALL ? undefined : selectedTypeFilter;
     if (typeFilter && movement.type !== typeFilter) return false;
     if (searchQuery && !movement.item?.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
-        !movement.item?.internalCode.toLowerCase().includes(searchQuery.toLowerCase()) &&
-        !movement.user?.name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+      !movement.item?.internalCode.toLowerCase().includes(searchQuery.toLowerCase()) &&
+      !movement.user?.name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
     return true;
   });
 
@@ -39,8 +39,8 @@ export default function History() {
   };
 
   const getMovementTypeColor = (type: string) => {
-    return type === "entrada" 
-      ? "bg-emerald-100 text-emerald-800 border-emerald-200" 
+    return type === "entrada"
+      ? "bg-emerald-100 text-emerald-800 border-emerald-200"
       : "bg-red-100 text-red-800 border-red-200";
   };
 
@@ -124,18 +124,16 @@ export default function History() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-purple-600 mb-1">Saldo Líquido</p>
-                <p className={`text-3xl font-bold ${
-                  totalQuantityIn - totalQuantityOut >= 0 
-                    ? "text-emerald-900" 
+                <p className={`text-3xl font-bold ${totalQuantityIn - totalQuantityOut >= 0
+                    ? "text-emerald-900"
                     : "text-red-900"
-                }`} data-testid="stat-net-balance">
+                  }`} data-testid="stat-net-balance">
                   {totalQuantityIn - totalQuantityOut >= 0 ? "+" : ""}{totalQuantityIn - totalQuantityOut}
                 </p>
                 <p className="text-xs text-purple-700 font-medium">unidades</p>
               </div>
-              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg ${
-                totalQuantityIn - totalQuantityOut >= 0 ? "bg-emerald-500" : "bg-red-500"
-              }`}>
+              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg ${totalQuantityIn - totalQuantityOut >= 0 ? "bg-emerald-500" : "bg-red-500"
+                }`}>
                 <i className="fa-solid fa-balance-scale text-white text-xl"></i>
               </div>
             </div>
@@ -153,7 +151,7 @@ export default function History() {
               </div>
               <h3 className="text-xl font-bold text-gray-900">Histórico Detalhado</h3>
             </div>
-            
+
             {/* Filters */}
             <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
               <div className="relative">
@@ -167,7 +165,7 @@ export default function History() {
                   className="pl-10 w-full sm:w-48"
                 />
               </div>
-              
+
               <Select value={selectedItemFilter} onValueChange={setSelectedItemFilter}>
                 <SelectTrigger className="w-full sm:w-48" data-testid="select-item-filter">
                   <SelectValue placeholder="Filtrar por item" />
@@ -177,10 +175,10 @@ export default function History() {
                   {items
                     .filter((item) => typeof item.id === 'string' && item.id.trim().length > 0)
                     .map((item) => (
-                    <SelectItem key={item.id} value={item.id}>
-                      {item.name} ({item.internalCode})
-                    </SelectItem>
-                  ))}
+                      <SelectItem key={item.id} value={item.id}>
+                        {item.name} ({item.internalCode})
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
 
@@ -223,7 +221,7 @@ export default function History() {
               <h4 className="text-xl font-bold text-gray-900 mb-3">Nenhuma movimentação encontrada</h4>
               <p className="text-gray-500">
                 {selectedItemFilter !== ALL || selectedTypeFilter !== ALL || searchQuery
-                  ? "Nenhuma movimentação corresponde aos filtros selecionados" 
+                  ? "Nenhuma movimentação corresponde aos filtros selecionados"
                   : "Ainda não há movimentações registradas no sistema"
                 }
               </p>
@@ -233,24 +231,23 @@ export default function History() {
               {filteredMovements.map((movement) => (
                 <div
                   key={movement.id}
-                  className="flex items-center justify-between p-6 border border-gray-200 rounded-2xl hover:shadow-lg hover:border-blue-200 transition-all duration-300 group bg-gradient-to-r from-white to-gray-50"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between p-6 border border-gray-200 rounded-2xl hover:shadow-lg hover:border-blue-200 transition-all duration-300 group bg-gradient-to-r from-white to-gray-50 gap-4 sm:gap-0"
                   data-testid={`history-movement-${movement.id}`}
                 >
                   <div className="flex items-center space-x-4 flex-1">
-                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg ${
-                      movement.type === "entrada" 
-                        ? "bg-gradient-to-br from-emerald-400 to-emerald-600" 
+                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg ${movement.type === "entrada"
+                        ? "bg-gradient-to-br from-emerald-400 to-emerald-600"
                         : "bg-gradient-to-br from-red-400 to-red-600"
-                    }`}>
+                      }`}>
                       <i className={`${getMovementIcon(movement.type)} text-white text-xl`}></i>
                     </div>
-                    
-                    <div className="flex-1">
+
+                    <div className="flex-1 min-w-0 w-full sm:w-auto">
                       <div className="flex items-center space-x-3 mb-2">
                         <p className="font-bold text-gray-900 text-lg group-hover:text-blue-700 transition-colors" data-testid={`history-item-${movement.id}`}>
                           {movement.item?.name}
                         </p>
-                        <Badge 
+                        <Badge
                           className={`${getMovementTypeColor(movement.type)} font-medium border px-3 py-1`}
                           data-testid={`history-type-${movement.id}`}
                         >
@@ -258,7 +255,7 @@ export default function History() {
                           {getMovementTypeLabel(movement.type)}
                         </Badge>
                       </div>
-                      
+
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-sm text-gray-600">
                         <span className="flex items-center">
                           <i className="fa-solid fa-barcode mr-2 text-blue-500"></i>
@@ -277,13 +274,13 @@ export default function History() {
                           {formatTimestamp(movement.createdAt)}
                         </span>
                       </div>
-                      
+
                       <div className="flex items-center space-x-4 text-xs text-gray-500 mt-2">
                         <span className="bg-gray-100 px-2 py-1 rounded-lg font-medium">
                           Estoque: {movement.previousStock} → {movement.newStock}
                         </span>
                       </div>
-                      
+
                       {movement.destination && (
                         <p className="text-sm text-gray-700 mt-2 flex items-center">
                           <i className="fa-solid fa-location-dot mr-2 text-blue-500"></i>
@@ -298,11 +295,10 @@ export default function History() {
                       )}
                     </div>
                   </div>
-                  
-                  <div className="text-right ml-4">
-                    <div className={`text-2xl font-bold ${
-                      movement.type === "entrada" ? "text-emerald-600" : "text-red-600"
-                    }`}>
+
+                  <div className="text-right w-full sm:w-auto ml-0 sm:ml-4 border-t sm:border-0 pt-4 sm:pt-0 border-gray-100 sm:border-transparent mt-2 sm:mt-0">
+                    <div className={`text-2xl font-bold ${movement.type === "entrada" ? "text-emerald-600" : "text-red-600"
+                      }`}>
                       {movement.type === "entrada" ? "+" : "-"}{movement.quantity}
                     </div>
                     <div className="text-xs text-gray-500 mt-1">

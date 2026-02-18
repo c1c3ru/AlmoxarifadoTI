@@ -42,7 +42,7 @@ export default function Movements() {
   // Itens recentes com base nas movimentações (únicos por itemId)
   const recentItems = (() => {
     const seen = new Set<string>();
-    const result: Array<{ id: string; name?: string; internalCode?: string; icon?: string } > = [];
+    const result: Array<{ id: string; name?: string; internalCode?: string; icon?: string }> = [];
     for (const mv of movements) {
       const id = mv.itemId as string;
       if (!id || seen.has(id)) continue;
@@ -68,15 +68,15 @@ export default function Movements() {
     const date = typeof timestamp === 'string' ? new Date(timestamp) : timestamp;
     const now = new Date();
     const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-    
+
     if (diffInHours < 1) return "Há menos de 1 hora";
     if (diffInHours === 1) return "Há 1 hora";
     return `Há ${diffInHours} horas`;
   };
 
   const getMovementTypeColor = (type: string) => {
-    return type === "entrada" 
-      ? "bg-emerald-100 text-emerald-800 border-emerald-200" 
+    return type === "entrada"
+      ? "bg-emerald-100 text-emerald-800 border-emerald-200"
       : "bg-red-100 text-red-800 border-red-200";
   };
 
@@ -96,15 +96,15 @@ export default function Movements() {
     >
       {/* Quick Actions Hero */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-0 shadow-lg hover:shadow-xl transition-all duration-300 group cursor-pointer" 
-              onClick={() => handleNewMovement("entrada")}>
+        <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-0 shadow-lg hover:shadow-xl transition-all duration-300 group cursor-pointer"
+          onClick={() => handleNewMovement("entrada")}>
           <CardContent className="p-8 text-center">
             <div className="w-16 h-16 bg-emerald-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300">
               <i className="fa-solid fa-arrow-down text-white text-2xl"></i>
             </div>
             <h3 className="text-xl font-bold text-emerald-900 mb-2">Registrar Entrada</h3>
             <p className="text-emerald-700 mb-6">Adicionar itens ao estoque do almoxarifado</p>
-            <Button 
+            <Button
               className="w-full bg-emerald-600 hover:bg-emerald-700 shadow-lg h-12 text-base font-semibold"
               data-testid="button-register-entry"
               onClick={(e) => { e.stopPropagation(); handleNewMovement("entrada"); }}
@@ -116,14 +116,14 @@ export default function Movements() {
         </Card>
 
         <Card className="bg-gradient-to-br from-red-50 to-red-100 border-0 shadow-lg hover:shadow-xl transition-all duration-300 group cursor-pointer"
-              onClick={() => handleNewMovement("saida")}>
+          onClick={() => handleNewMovement("saida")}>
           <CardContent className="p-8 text-center">
             <div className="w-16 h-16 bg-red-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300">
               <i className="fa-solid fa-arrow-up text-white text-2xl"></i>
             </div>
             <h3 className="text-xl font-bold text-red-900 mb-2">Registrar Saída</h3>
             <p className="text-red-700 mb-6">Retirar itens do estoque para uso</p>
-            <Button 
+            <Button
               className="w-full bg-red-600 hover:bg-red-700 shadow-lg h-12 text-base font-semibold"
               data-testid="button-register-exit"
               onClick={(e) => { e.stopPropagation(); handleNewMovement("saida"); }}
@@ -135,14 +135,14 @@ export default function Movements() {
         </Card>
 
         <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-0 shadow-lg hover:shadow-xl transition-all duration-300 group cursor-pointer"
-              onClick={() => window.location.href = '/scanner'}>
+          onClick={() => window.location.href = '/scanner'}>
           <CardContent className="p-8 text-center">
             <div className="w-16 h-16 bg-blue-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300">
               <i className="fa-solid fa-qrcode text-white text-2xl"></i>
             </div>
             <h3 className="text-xl font-bold text-blue-900 mb-2">Scanner QR</h3>
             <p className="text-blue-700 mb-6">Dar baixa rápida via QR Code</p>
-            <Button 
+            <Button
               className="w-full bg-blue-600 hover:bg-blue-700 shadow-lg h-12 text-base font-semibold"
               data-testid="button-go-scanner"
             >
@@ -241,7 +241,7 @@ export default function Movements() {
                 {selectedItemFilter !== ALL ? "Nenhuma movimentação para o item selecionado" : "Registre a primeira movimentação do almoxarifado"}
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <Button 
+                <Button
                   onClick={() => handleNewMovement("entrada")}
                   className="bg-emerald-600 hover:bg-emerald-700"
                   data-testid="button-first-entry"
@@ -249,7 +249,7 @@ export default function Movements() {
                   <i className="fa-solid fa-arrow-down mr-2"></i>
                   Nova Entrada
                 </Button>
-                <Button 
+                <Button
                   onClick={() => handleNewMovement("saida")}
                   className="bg-red-600 hover:bg-red-700"
                   data-testid="button-first-exit"
@@ -264,19 +264,18 @@ export default function Movements() {
               {movements.map((movement) => (
                 <div
                   key={movement.id}
-                  className="flex items-center justify-between p-6 border border-gray-200 rounded-2xl hover:shadow-lg hover:border-blue-200 transition-all duration-300 group bg-gradient-to-r from-white to-gray-50"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between p-6 border border-gray-200 rounded-2xl hover:shadow-lg hover:border-blue-200 transition-all duration-300 group bg-gradient-to-r from-white to-gray-50 gap-4 sm:gap-0"
                   data-testid={`movement-${movement.id}`}
                 >
                   <div className="flex items-center space-x-4 flex-1">
-                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg ${
-                      movement.type === "entrada" 
-                        ? "bg-gradient-to-br from-emerald-400 to-emerald-600" 
+                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg ${movement.type === "entrada"
+                        ? "bg-gradient-to-br from-emerald-400 to-emerald-600"
                         : "bg-gradient-to-br from-red-400 to-red-600"
-                    }`}>
+                      }`}>
                       <i className={`${getMovementIcon(movement.type)} text-white text-xl`}></i>
                     </div>
-                    
-                    <div className="flex-1">
+
+                    <div className="flex-1 min-w-0 w-full sm:w-auto">
                       <div className="flex items-center space-x-3 mb-2">
                         <div className="w-6 h-6 rounded bg-blue-100 flex items-center justify-center shrink-0">
                           <i className={`${normalizeIcon(movement.category?.icon)} text-blue-600 text-xs`}></i>
@@ -284,7 +283,7 @@ export default function Movements() {
                         <p className="font-bold text-gray-900 text-lg group-hover:text-blue-700 transition-colors" data-testid={`movement-item-${movement.id}`}>
                           {movement.item?.name}
                         </p>
-                        <Badge 
+                        <Badge
                           className={`${getMovementTypeColor(movement.type)} font-medium border px-3 py-1`}
                           data-testid={`movement-type-${movement.id}`}
                         >
@@ -292,7 +291,7 @@ export default function Movements() {
                           {getMovementTypeLabel(movement.type)}
                         </Badge>
                       </div>
-                      
+
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm text-gray-600">
                         <span className="flex items-center">
                           <i className="fa-solid fa-barcode mr-2 text-blue-500"></i>
@@ -307,13 +306,13 @@ export default function Movements() {
                           {formatTimestamp(movement.createdAt)}
                         </span>
                       </div>
-                      
+
                       <div className="flex items-center space-x-4 text-xs text-gray-500 mt-2">
                         <span className="bg-gray-100 px-2 py-1 rounded-lg font-medium">
                           {movement.previousStock} → {movement.newStock}
                         </span>
                       </div>
-                      
+
                       {movement.destination && (
                         <p className="text-sm text-gray-700 mt-2 flex items-center">
                           <i className="fa-solid fa-location-dot mr-2 text-blue-500"></i>
@@ -328,11 +327,10 @@ export default function Movements() {
                       )}
                     </div>
                   </div>
-                  
-                  <div className="text-right ml-4">
-                    <div className={`text-3xl font-bold ${
-                      movement.type === "entrada" ? "text-emerald-600" : "text-red-600"
-                    }`}>
+
+                  <div className="text-right w-full sm:w-auto ml-0 sm:ml-4 border-t sm:border-0 pt-4 sm:pt-0 border-gray-100 sm:border-transparent mt-2 sm:mt-0">
+                    <div className={`text-3xl font-bold ${movement.type === "entrada" ? "text-emerald-600" : "text-red-600"
+                      }`}>
                       {movement.type === "entrada" ? "+" : "-"}{movement.quantity}
                     </div>
                     <div className="text-sm text-gray-500">unidade(s)</div>
