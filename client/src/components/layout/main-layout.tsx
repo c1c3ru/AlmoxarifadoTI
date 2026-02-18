@@ -16,11 +16,11 @@ interface MainLayoutProps {
   addButtonClassName?: string;
 }
 
-export function MainLayout({ 
-  title, 
-  subtitle, 
-  children, 
-  onAddItem, 
+export function MainLayout({
+  title,
+  subtitle,
+  children,
+  onAddItem,
   showAddButton = true,
   addButtonLabel,
   addButtonIconClass,
@@ -34,7 +34,7 @@ export function MainLayout({
     const sendHeartbeat = async () => {
       try {
         await apiRequest("POST", "/api/heartbeat");
-      } catch {}
+      } catch { }
     };
     const start = () => {
       if (stopped) return;
@@ -63,28 +63,29 @@ export function MainLayout({
       stop();
     };
   }, []);
-  
+
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-background relative overflow-hidden">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary-100/30 via-background to-background pointer-events-none" />
       <Sidebar />
       <main className={cn(
-        "flex-1 transition-all duration-300 ease-in-out",
+        "flex-1 transition-all duration-300 ease-in-out relative z-10 flex flex-col",
         // Desktop margins
-        !isMobile && isCollapsed && "ml-16",
-        !isMobile && !isCollapsed && "ml-60",
+        !isMobile && isCollapsed && "ml-20",
+        !isMobile && !isCollapsed && "ml-72",
         // Mobile - no margin when sidebar is overlay
         isMobile && "ml-0"
       )}>
-        <Topbar 
-          title={title} 
-          subtitle={subtitle} 
+        <Topbar
+          title={title}
+          subtitle={subtitle}
           onAddItem={onAddItem}
           showAddButton={showAddButton}
           addButtonLabel={addButtonLabel}
           addButtonIconClass={addButtonIconClass}
           addButtonClassName={addButtonClassName}
         />
-        <div className="p-4 md:p-6">
+        <div className="p-4 md:p-8 animate-fade-in flex-1">
           {children}
         </div>
       </main>

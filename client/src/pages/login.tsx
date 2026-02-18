@@ -159,26 +159,34 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Background Pattern */}
-      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmNGY2ZjgiIGZpbGwtb3BhY2l0eT0iMC4xIj48Y2lyY2xlIGN4PSIzMCIgY3k9IjMwIiByPSIxLjUiPjwvY2lyY2xlPjwvZz48L2c+PC9zdmc+')] opacity-40"></div>
+    <div className="min-h-screen w-full flex items-center justify-center p-4 relative overflow-hidden bg-background">
+      {/* Dynamic Background */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-primary/20 via-background to-background pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,_var(--tw-gradient-stops))] from-secondary/40 via-background to-background pointer-events-none" />
 
-      <Card className="w-full max-w-md bg-white/80 backdrop-blur-lg border-0 shadow-2xl">
-        <CardHeader className="text-center pb-6">
-          <div className="flex items-center justify-center gap-3 mb-2">
-            <img
-              src={ifceLogo}
-              alt="IFCE"
-              className="h-10 w-10 object-contain drop-shadow-sm"
-              loading="eager"
-              decoding="async"
-            />
-            <CardTitle className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              SGAT-TI
+      {/* Decorative blobs */}
+      <div className="absolute top-20 left-20 w-72 h-72 bg-primary/10 rounded-full blur-3xl animate-pulse-subtle pointer-events-none" />
+      <div className="absolute bottom-20 right-20 w-96 h-96 bg-accent/10 rounded-full blur-3xl animate-pulse-subtle pointer-events-none" style={{ animationDelay: "1s" }} />
+
+      <Card className="w-full max-w-md bg-card/60 backdrop-blur-xl border-white/20 shadow-2xl relative z-10 animate-fade-in ring-1 ring-white/20">
+        <CardHeader className="text-center pb-8 pt-8">
+          <div className="flex flex-col items-center justify-center gap-4 mb-2">
+            <div className="w-20 h-20 bg-gradient-to-br from-primary to-primary-700 rounded-2xl flex items-center justify-center shadow-lg shadow-primary/25 transform rotate-3 hover:rotate-6 transition-transform duration-300">
+              <img
+                src={ifceLogo}
+                alt="IFCE"
+                className="h-12 w-auto object-contain brightness-0 invert opacity-90"
+                loading="eager"
+                decoding="async"
+              />
+            </div>
+            <CardTitle className="text-3xl font-bold text-foreground tracking-tight">
+              SGAT<span className="text-primary">-TI</span>
             </CardTitle>
           </div>
-          <p className="text-gray-600 font-medium">Sistema de Gestão de Almoxarifado de T.I.</p>
-          <div className="w-16 h-1 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full mx-auto mt-2"></div>
+          <p className="text-muted-foreground font-medium text-sm max-w-[280px] mx-auto">
+            Sistema de Gestão de Almoxarifado de T.I.
+          </p>
         </CardHeader>
 
         <CardContent className="space-y-6">
