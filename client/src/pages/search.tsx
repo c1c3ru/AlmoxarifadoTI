@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { apiRequest } from "@/lib/queryClient";
 import type { ItemWithCategory, Category } from "@shared/schema";
 
 export default function Search() {
@@ -54,9 +55,14 @@ export default function Search() {
       if (statusParam) params.append('status', statusParam);
       
       const url = `/api/items/search?${params.toString()}`;
-      // A apiRequest (wrapper do fetch) já faz o parse do JSON e trata erros de HTTP.
-      // Ela também adiciona o token de autenticação automaticamente.
-      return await apiRequest("GET", url);
+      const response = await apiRequest("GET", url);
+      // A apiRequest retorna um objeto Response, então precisamos extrair o JSON.
+      if (!response.ok) {
+        // Se a resposta não for OK, lança um erro para o useQuery tratar.
+        const errorData = await response.json().catch(() => ({ message: response.statusText }));
+        throw new Error(errorData.message || 'Falha na pesquisa');
+      }
+      return response.json();
     },
     enabled: hasFilters,
   });
