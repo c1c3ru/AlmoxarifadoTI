@@ -362,18 +362,33 @@ export class DatabaseStorage implements IStorage {
   }
 
   async searchItems(query: string, categoryId?: string, status?: string): Promise<ItemWithCategory[]> {
-    let whereCondition = or(
-      ilike(items.name, `%${query}%`),
-      ilike(items.internalCode, `%${query}%`)
-    );
+    const conditions = [];
 
+    // Filtro principal de busca por texto (nome, código, serial ou categoria)
+    if (query) {
+      const searchTerm = `%${query}%`;
+      conditions.push(
+        or(
+          ilike(items.name, searchTerm),
+          ilike(items.internalCode, searchTerm),
+          ilike(items.serialNumber, searchTerm),
+          ilike(categories.name, searchTerm)
+        )
+      );
+    }
+
+    // Filtro por ID da categoria
     if (categoryId) {
-      whereCondition = and(whereCondition, eq(items.categoryId, categoryId));
+      conditions.push(eq(items.categoryId, categoryId));
     }
 
+    // Filtro por status
     if (status) {
-      whereCondition = and(whereCondition, eq(items.status, status as any));
+      conditions.push(eq(items.status, status as any));
     }
+
+    // Combina todas as condições com AND. Se não houver filtros, a busca retorna tudo.
+    const whereCondition = conditions.length > 0 ? and(...conditions) : undefined;
 
     const result = await getDb().select({
       id: items.id,
