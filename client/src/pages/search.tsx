@@ -54,10 +54,9 @@ export default function Search() {
       if (statusParam) params.append('status', statusParam);
       
       const url = `/api/items/search?${params.toString()}`;
-      const response = await fetch(url);
-      if (!response.ok) throw new Error('Falha na pesquisa');
-      const data = await response.json();
-      return data;
+      // A apiRequest (wrapper do fetch) já faz o parse do JSON e trata erros de HTTP.
+      // Ela também adiciona o token de autenticação automaticamente.
+      return await apiRequest("GET", url);
     },
     enabled: hasFilters,
   });
