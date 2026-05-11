@@ -229,7 +229,7 @@ export default function Movements() {
           ) : isError ? (
             <div className="text-center py-8">
               <p className="text-red-600 font-medium">Erro ao carregar movimentações.</p>
-              <p className="text-sm text-gray-500 mt-1">{(error as any)?.message || "Tente novamente mais tarde."}</p>
+              <p className="text-sm text-gray-500 mt-1">{error instanceof Error ? error.message : "Tente novamente mais tarde."}</p>
             </div>
           ) : movements.length === 0 ? (
             <div className="text-center py-16">

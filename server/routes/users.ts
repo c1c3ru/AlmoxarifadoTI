@@ -105,7 +105,7 @@ router.put("/:id", authenticateJWT, async (req, res) => {
 router.delete("/:id", authenticateJWT, async (req, res) => {
     try {
         const { id } = req.params;
-        const currentUser = (req as any).user;
+        const currentUser = req.user;
         if (!currentUser) return res.status(401).json({ message: "Unauthorized" });
 
         if (currentUser.role !== "admin") {

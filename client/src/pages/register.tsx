@@ -157,7 +157,7 @@ export default function RegisterUserPage() {
 
       if (!res.ok) {
         const status = res.status;
-        const errBody = await res.json().catch(() => ({} as any));
+        const errBody = await res.json().catch(() => ({})) as Record<string, unknown>;
         const rawMsg = (errBody?.message ?? "").toString();
         const msg = rawMsg.toLowerCase();
 
@@ -202,10 +202,10 @@ export default function RegisterUserPage() {
       });
 
       form.reset();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Falha no cadastro",
-        description: error?.message || "Verifique os dados e tente novamente.",
+        description: error instanceof Error ? error.message : "Verifique os dados e tente novamente.",
         variant: "destructive",
       });
     }

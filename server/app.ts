@@ -71,13 +71,13 @@ export async function createApp() {
   app.use((req, res, next) => {
     const start = Date.now();
     const path = req.path;
-    let capturedJsonResponse: Record<string, any> | undefined = undefined;
+    let capturedJsonResponse: unknown = undefined;
 
     const originalResJson = res.json.bind(res);
-    (res as any).json = function (bodyJson: any) {
+    res.json = function (bodyJson: unknown) {
       capturedJsonResponse = bodyJson;
       return originalResJson(bodyJson);
-    } as any;
+    } as typeof res.json;
 
     res.on("finish", () => {
       const duration = Date.now() - start;

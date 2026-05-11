@@ -19,7 +19,7 @@ router.get("/users/online", authenticateJWT, async (req, res) => {
 // Heartbeat para presença online
 router.post("/heartbeat", authenticateJWT, async (req, res) => {
     try {
-        const user = (req as any).user as { sub: string } | undefined;
+        const user = req.user;
         if (!user?.sub) {
             return res.status(401).json({ message: "Unauthorized" });
         }

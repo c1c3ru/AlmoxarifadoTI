@@ -32,6 +32,14 @@ export interface JwtPayload {
   role: string;
 }
 
+declare global {
+  namespace Express {
+    interface Request {
+      user?: JwtPayload;
+    }
+  }
+}
+
 export function generateToken(payload: JwtPayload) {
   // 8h de expiração por padrão
   const expiresIn = process.env.JWT_EXPIRES_IN || "8h";
@@ -50,7 +58,7 @@ export async function authenticateJWT(req: Request, res: Response, next: NextFun
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
     // Anexa info do usuário ao request
-    (req as any).user = decoded;
+    req.user = decoded;
     // Atualiza presença (last_seen_at) para toda requisição autenticada
     try {
       await storage.updateUserLastSeen(decoded.sub);

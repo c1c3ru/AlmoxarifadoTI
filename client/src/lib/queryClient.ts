@@ -20,7 +20,7 @@ function handleUnauthorizedRedirect() {
 }
 
 function buildUrl(input: string): string {
-  const rawBase = (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_API_URL) || '';
+  const rawBase = (typeof import.meta !== 'undefined' && (import.meta as unknown as { env?: { VITE_API_URL?: string } }).env?.VITE_API_URL) || '';
   let base = rawBase;
   try {
     if (typeof window !== 'undefined') {
@@ -86,7 +86,7 @@ export const getQueryFn: <T>(options: {
     let pathOrUrl = "";
     if (Array.isArray(queryKey) && queryKey.length > 0) {
       const base = String(queryKey[0] ?? "");
-      const maybeParams = queryKey[1] as any;
+      const maybeParams = queryKey[1] as Record<string, string | number | boolean | null | undefined> | undefined;
       if (maybeParams && typeof maybeParams === "object" && !Array.isArray(maybeParams)) {
         pathOrUrl = buildApiUrl(base, maybeParams);
       } else {
@@ -106,7 +106,7 @@ export const getQueryFn: <T>(options: {
     if (res.status === 401) {
       handleUnauthorizedRedirect();
       if (unauthorizedBehavior === "returnNull") {
-        return null as any;
+        return null as never;
       }
     }
 

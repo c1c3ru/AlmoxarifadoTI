@@ -18,7 +18,17 @@ async function createBackup() {
         // Criar diretório de backups
         mkdirSync('backups', { recursive: true });
 
-        const backup: any = {
+        interface BackupData {
+            timestamp: string;
+            database: string;
+            tables: Record<string, {
+                count: number;
+                data: any[];
+                error?: string;
+            }>;
+        }
+
+        const backup: BackupData = {
             timestamp: new Date().toISOString(),
             database: 'AlmoxarifadoTI',
             tables: {}
@@ -57,7 +67,7 @@ async function createBackup() {
         console.log(`\n📊 Estatísticas do Backup:`);
         let totalRecords = 0;
         for (const [table, info] of Object.entries(backup.tables)) {
-            const count = (info as any).count;
+            const count = info.count;
             totalRecords += count;
             console.log(`  - ${table}: ${count} registros`);
         }
@@ -69,7 +79,7 @@ async function createBackup() {
         sqlDump += `-- Data: ${new Date().toISOString()}\n\n`;
 
         for (const [table, info] of Object.entries(backup.tables)) {
-            const data = (info as any).data;
+            const data = info.data;
             if (data && data.length > 0) {
                 sqlDump += `\n-- Tabela: ${table} (${data.length} registros)\n`;
                 sqlDump += `-- Dados exportados em JSON para restauração\n`;

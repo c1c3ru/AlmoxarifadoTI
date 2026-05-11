@@ -153,7 +153,7 @@ router.post("/register", async (req, res) => {
 // Alterar própria senha
 router.put("/users/me/password", authenticateJWT, async (req, res) => {
     try {
-        const user = (req as any).user;
+        const user = req.user;
         if (!user?.sub) return res.status(401).json({ message: "Unauthorized" });
 
         const { currentPassword, newPassword } = req.body;

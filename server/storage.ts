@@ -384,7 +384,7 @@ export class DatabaseStorage implements IStorage {
 
     // Filtro por status
     if (status) {
-      conditions.push(eq(items.status, status as any));
+      conditions.push(eq(items.status, status as "disponivel" | "em-uso" | "manutencao" | "descartado"));
     }
 
     // Combina todas as condições com AND. Se não houver filtros, a busca retorna tudo.
@@ -580,7 +580,8 @@ export class DatabaseStorage implements IStorage {
     const activeUsersResult = await getDb().execute(
       sql`SELECT COUNT(*)::int AS count FROM user_activity WHERE last_seen_at >= now() - interval '10 minutes'`
     );
-    const activeUsersRows = (activeUsersResult as any).rows ?? activeUsersResult;
+    const resultObj = activeUsersResult as unknown as { rows?: Array<{ count: string | number }> };
+    const activeUsersRows = resultObj.rows ?? activeUsersResult;
     const activeCount = Array.isArray(activeUsersRows) ? activeUsersRows[0]?.count : 0;
 
     return {
@@ -605,12 +606,13 @@ export class DatabaseStorage implements IStorage {
       WHERE ua.last_seen_at >= now() - (interval '1 minute' * ${windowMinutes})
       ORDER BY ua.last_seen_at DESC
     `);
-    const rows = (execResult as any).rows ?? execResult;
-    const out = (rows as any[]).map((r: any) => ({
+    const resultObj = execResult as unknown as { rows?: Array<Record<string, unknown>> };
+    const rows = resultObj.rows ?? execResult;
+    const out = (Array.isArray(rows) ? rows : []).map((r) => ({
       id: String(r.id),
       username: String(r.username),
       role: String(r.role),
-      lastSeenAt: new Date(r.lastSeenAt ?? r.last_seen_at),
+      lastSeenAt: new Date((r.lastSeenAt ?? r.last_seen_at) as string | Date | number),
     }));
     return out;
   }
@@ -646,8 +648,9 @@ export class DatabaseStorage implements IStorage {
       ORDER BY created_at DESC 
       LIMIT 1
     `);
-    const rows = (result as any).rows ?? result;
-    if (rows.length === 0) return undefined;
+    const resultObj = result as unknown as { rows?: Array<{ code: string; expires_at: Date | string }> };
+    const rows = resultObj.rows ?? result;
+    if (!Array.isArray(rows) || rows.length === 0) return undefined;
     return {
       code: rows[0].code,
       expiresAt: new Date(rows[0].expires_at)

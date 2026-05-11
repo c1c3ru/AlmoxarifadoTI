@@ -5,7 +5,7 @@ export default async function handler(req: any, res: any) {
     // Em produção no Vercel, importe o arquivo já compilado pelo build.
     // Usar caminho dinâmico evita erro de resolução de módulo no TypeScript durante o dev.
     const distPath = "../dist/server/app.js";
-    const mod: any = await import(distPath as any);
+    const mod = await import(distPath);
     const { createApp } = mod;
     appPromise = createApp();
   }
