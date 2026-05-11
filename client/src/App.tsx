@@ -16,6 +16,7 @@ import Users from "@/pages/users";
 import Categories from "@/pages/categories";
 import NotFound from "@/pages/not-found";
 import RegisterUserPage from "@/pages/register";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
@@ -130,6 +131,7 @@ function App() {
           <TooltipProvider>
             <Toaster />
             <Router />
+            <SpeedInsights />
           </TooltipProvider>
         </SidebarProvider>
       </AuthProvider>
