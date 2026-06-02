@@ -3,6 +3,7 @@ import { storage } from "../storage";
 import { authenticateJWT } from "../auth";
 import { insertCategorySchema, insertItemSchema, insertMovementSchema } from "@shared/schema";
 import rateLimit from "express-rate-limit";
+import * as XLSX from "xlsx";
 
 const router = Router();
 
@@ -202,13 +203,14 @@ router.post("/movements", authenticateJWT, async (req, res) => {
 router.get("/inventory/export", authenticateJWT, async (_req, res) => {
     try {
         const items = await storage.getAllItems();
-        const headers = ['Código Interno', 'Nome', 'Descrição', 'Categoria', 'Estoque Atual', 'Estoque Mínimo', 'Localização', 'Status', 'Data Criação'];
+        const headers = ['Código Interno', 'Nome', 'Descrição', 'Categoria', 'Estoque Atual', 'Unidade', 'Estoque Mínimo', 'Localização', 'Status', 'Data Criação'];
         const csvData = items.map(item => [
             item.internalCode,
             `"${item.name}"`,
             `""`,
             `"${item.category?.name || ''}"`,
             item.currentStock,
+            `"${item.unit}"`,
             item.minStock,
             `"${item.location || ''}"`,
             item.status,
@@ -221,6 +223,36 @@ router.get("/inventory/export", authenticateJWT, async (_req, res) => {
     } catch (error) {
         console.error("CSV export error:", error);
         res.status(500).json({ message: "Erro ao exportar inventário" });
+    }
+});
+
+router.get("/inventory/export-excel", authenticateJWT, async (_req, res) => {
+    try {
+        const items = await storage.getAllItems();
+        const data = items.map(item => ({
+            'Código Interno': item.internalCode,
+            'Nome': item.name,
+            'Categoria': item.category?.name || '',
+            'Estoque Atual': item.currentStock,
+            'Unidade': item.unit,
+            'Estoque Mínimo': item.minStock,
+            'Localização': item.location || '',
+            'Status': item.status,
+            'Data Criação': new Date(item.createdAt).toLocaleDateString('pt-BR')
+        }));
+        
+        const worksheet = XLSX.utils.json_to_sheet(data);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Inventário");
+        
+        const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+        
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename="inventario-${new Date().toISOString().split('T')[0]}.xlsx"`);
+        res.send(buffer);
+    } catch (error) {
+        console.error("Excel export error:", error);
+        res.status(500).json({ message: "Erro ao exportar inventário para Excel" });
     }
 });
 

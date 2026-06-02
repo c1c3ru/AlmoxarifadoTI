@@ -148,13 +148,45 @@ export function CSVImportExport() {
     },
     onSuccess: () => {
       toast({
-        title: "Exportação realizada com sucesso",
+        title: "Exportação CSV realizada com sucesso",
         description: "O arquivo CSV foi baixado para o seu dispositivo.",
       });
     },
     onError: (error) => {
       toast({
-        title: "Erro na exportação",
+        title: "Erro na exportação CSV",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const exportExcelMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch("/api/inventory/export-excel");
+      if (!response.ok) {
+        throw new Error("Erro ao exportar inventário para Excel");
+      }
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `inventario-${new Date().toISOString().split('T')[0]}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Exportação XLSX realizada com sucesso",
+        description: "O arquivo XLSX foi baixado para o seu dispositivo.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro na exportação XLSX",
         description: error.message,
         variant: "destructive",
       });
@@ -260,7 +292,7 @@ Monitor LED 19,"Monitor LED 19 polegadas",8,2,"Sala B - Mesa 1"`;
     <div className="flex items-center space-x-3">
       <Button
         onClick={() => exportMutation.mutate()}
-        disabled={exportMutation.isPending}
+        disabled={exportMutation.isPending || exportExcelMutation.isPending}
         variant="outline"
         className="bg-success-50 border-success-200 text-success-700 hover:bg-success-100"
         data-testid="button-export-csv"
@@ -268,12 +300,32 @@ Monitor LED 19,"Monitor LED 19 polegadas",8,2,"Sala B - Mesa 1"`;
         {exportMutation.isPending ? (
           <>
             <i className="fas fa-spinner fa-spin mr-2"></i>
-            Exportando...
+            CSV...
           </>
         ) : (
           <>
             <i className="fas fa-download mr-2"></i>
             Exportar CSV
+          </>
+        )}
+      </Button>
+
+      <Button
+        onClick={() => exportExcelMutation.mutate()}
+        disabled={exportMutation.isPending || exportExcelMutation.isPending}
+        variant="outline"
+        className="bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100"
+        data-testid="button-export-xlsx"
+      >
+        {exportExcelMutation.isPending ? (
+          <>
+            <i className="fas fa-spinner fa-spin mr-2"></i>
+            XLSX...
+          </>
+        ) : (
+          <>
+            <i className="fas fa-file-excel mr-2"></i>
+            Exportar XLSX
           </>
         )}
       </Button>

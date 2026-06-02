@@ -35,6 +35,7 @@ export const items = pgTable("items", {
   serialNumber: text("serial_number"),
   currentStock: integer("current_stock").notNull().default(0),
   minStock: integer("min_stock").notNull().default(0),
+  unit: text("unit").notNull().default("un"),
   status: text("status", {
     enum: ["disponivel", "em-uso", "manutencao", "descartado"]
   }).notNull().default("disponivel"),

@@ -57,6 +57,48 @@ export default function Items() {
     },
   });
 
+  const updateItemMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<ItemWithCategory> }) => {
+      await apiRequest("PUT", `/api/items/${id}`, data);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Item atualizado",
+        description: "As alterações foram salvas com sucesso.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/items"] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro ao atualizar item",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const createMovementMutation = useMutation({
+    mutationFn: async (data: any) => {
+      await apiRequest("POST", `/api/movements`, data);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Balanço registrado",
+        description: "O estoque foi ajustado e registrado com sucesso no histórico.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/items"] });
+      // Also invalidate movements to update dashboard/history
+      queryClient.invalidateQueries({ queryKey: ["/api/movements"] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro ao ajustar estoque",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleEdit = (item: ItemWithCategory) => {
     setSelectedItem(item);
     setShowEditModal(true);
@@ -330,7 +372,7 @@ export default function Items() {
                               <Badge variant="outline" className={`${item.currentStock <= item.minStock ? 'bg-red-50 text-red-700 border-red-200' : 'bg-green-50 text-green-700 border-green-200'
                                 } text-xs px-1.5 py-0 h-5`}>
                                 <i className="fa-solid fa-layer-group mr-1 text-[10px]"></i>
-                                {item.currentStock} un.
+                                {item.currentStock} {item.unit}
                               </Badge>
                               <Badge variant="outline" className="text-xs border-gray-200 text-gray-500 px-1.5 py-0 h-5">
                                 <i className={`${getStatusIcon(item.status)} mr-1 text-[10px]`}></i>
@@ -355,18 +397,49 @@ export default function Items() {
                         </Badge>
                       </td>
                       <td className="hidden md:table-cell px-4 py-3 sm:px-6 sm:py-4" data-testid={`item-stock-${item.id}`}>
-                        <div className="flex items-center space-x-2">
-                          <div className={`px-3 py-1 rounded-lg font-bold text-lg ${item.currentStock <= item.minStock
-                            ? 'bg-red-100 text-red-800'
-                            : 'bg-green-100 text-green-800'
-                            }`}>
-                            {item.currentStock}
+                        <div className="flex flex-col space-y-2">
+                          <div className="flex items-center space-x-2">
+                            <input
+                              type="number"
+                              defaultValue={item.currentStock}
+                              onBlur={(e) => {
+                                const newVal = parseInt(e.target.value);
+                                if (!isNaN(newVal) && newVal !== item.currentStock) {
+                                  const diff = newVal - item.currentStock;
+                                  createMovementMutation.mutate({
+                                    itemId: item.id,
+                                    userId: user?.id,
+                                    type: diff > 0 ? "entrada" : "saida",
+                                    quantity: Math.abs(diff),
+                                    observation: "Ajuste de Balanço/Inventário"
+                                  });
+                                }
+                              }}
+                              title="Editar quantidade (Gera Movimentação)"
+                              className={`w-16 px-2 py-1 rounded-lg font-bold text-center border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none shadow-sm transition-all ${item.currentStock <= item.minStock
+                                ? 'bg-red-50 text-red-800 border-red-200'
+                                : 'bg-green-50 text-green-800 border-green-200'
+                                }`}
+                            />
+                            <input
+                              type="text"
+                              defaultValue={item.unit}
+                              onBlur={(e) => {
+                                const newUnit = e.target.value.trim();
+                                if (newUnit && newUnit !== item.unit) {
+                                  updateItemMutation.mutate({ id: item.id, data: { unit: newUnit } });
+                                }
+                              }}
+                              title="Editar unidade"
+                              className="w-14 px-2 py-1 text-sm font-semibold uppercase rounded-lg border border-gray-200 bg-white text-gray-700 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none shadow-sm transition-all text-center"
+                              placeholder="UN"
+                            />
                           </div>
-                          <div className="text-xs text-gray-500">
+                          <div className="text-xs text-gray-500 flex items-center space-x-2">
                             <div>de {item.minStock} mín</div>
                             {item.currentStock <= item.minStock && (
                               <div className="text-red-500 font-medium flex items-center">
-                                <i className="fa-solid fa-triangle-exclamation mr-1"></i>
+                                <i className="fa-solid fa-triangle-exclamation mr-1 animate-pulse"></i>
                                 Baixo!
                               </div>
                             )}
