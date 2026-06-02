@@ -356,7 +356,7 @@ export class DatabaseStorage implements IStorage {
     })
       .from(items)
       .leftJoin(categories, eq(items.categoryId, categories.id))
-      .orderBy(desc(items.createdAt));
+      .orderBy(asc(items.name));
 
     return result as ItemWithCategory[];
   }
@@ -407,7 +407,7 @@ export class DatabaseStorage implements IStorage {
       .from(items)
       .leftJoin(categories, eq(items.categoryId, categories.id))
       .where(whereCondition)
-      .orderBy(desc(items.createdAt));
+      .orderBy(asc(items.name));
 
     return result as ItemWithCategory[];
   }
