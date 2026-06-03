@@ -208,6 +208,7 @@ export default function ConsumptionDashboard() {
 
         {/* Sort select */}
         <select
+          aria-label="Ordenar itens por"
           value={sortBy}
           onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
           className="py-2 px-3 text-sm rounded-lg border border-border bg-card text-foreground focus:outline-none focus:ring-1 focus:ring-primary/40 cursor-pointer"
