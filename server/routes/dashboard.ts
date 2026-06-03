@@ -34,4 +34,14 @@ router.get("/recent-movements", authenticateJWT, async (_req, res) => {
     }
 });
 
+router.get("/consumption", authenticateJWT, async (_req, res) => {
+    try {
+        const consumption = await storage.getItemConsumption();
+        res.json(consumption);
+    } catch (error) {
+        console.error("Consumption dashboard error:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+});
+
 export default router;

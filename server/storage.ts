@@ -102,13 +102,25 @@ export interface IStorage {
     todayMovements: number;
     activeUsers: number;
   }>;
+  getItemConsumption(): Promise<Array<{
+    itemId: string;
+    itemName: string;
+    internalCode: string;
+    categoryName: string;
+    categoryIcon: string;
+    totalConsumed: number;
+    unit: string;
+    totalEntradas: number;
+    lastMovement: Date | null;
+    currentStock: number;
+  }>>;
   updateUserLastSeen(userId: string): Promise<void>;
   getOnlineUsers(windowMinutes?: number): Promise<Array<{
     id: string;
     username: string;
     role: string;
     lastSeenAt: Date;
-  }>>;
+  }>>
 
   // Password Resets
   createPasswordReset(userId: string, code: string, expiresAt: Date): Promise<void>;
@@ -590,6 +602,52 @@ export class DatabaseStorage implements IStorage {
       todayMovements: todayMovementsResult.count,
       activeUsers: Number(activeCount) || 0,
     };
+  }
+
+  async getItemConsumption(): Promise<Array<{
+    itemId: string;
+    itemName: string;
+    internalCode: string;
+    categoryName: string;
+    categoryIcon: string;
+    totalConsumed: number;
+    unit: string;
+    totalEntradas: number;
+    lastMovement: Date | null;
+    currentStock: number;
+  }>> {
+    const execResult = await getDb().execute(sql`
+      SELECT
+        i.id AS "itemId",
+        i.name AS "itemName",
+        i.internal_code AS "internalCode",
+        COALESCE(c.name, 'Sem Categoria') AS "categoryName",
+        COALESCE(c.icon, 'fas fa-box') AS "categoryIcon",
+        COALESCE(SUM(CASE WHEN m.type = 'saida' THEN m.quantity ELSE 0 END), 0)::int AS "totalConsumed",
+        i.unit AS "unit",
+        COALESCE(SUM(CASE WHEN m.type = 'entrada' THEN m.quantity ELSE 0 END), 0)::int AS "totalEntradas",
+        MAX(m.created_at) AS "lastMovement",
+        i.current_stock AS "currentStock"
+      FROM items i
+      LEFT JOIN categories c ON c.id = i.category_id
+      LEFT JOIN movements m ON m.item_id = i.id
+      GROUP BY i.id, i.name, i.internal_code, c.name, c.icon, i.unit, i.current_stock
+      ORDER BY "totalConsumed" DESC
+    `);
+    const resultObj = execResult as unknown as { rows?: Array<Record<string, unknown>> };
+    const rows = resultObj.rows ?? execResult;
+    return (Array.isArray(rows) ? rows : []).map((r) => ({
+      itemId: String(r.itemId ?? r['itemId'] ?? ''),
+      itemName: String(r.itemName ?? r['itemName'] ?? ''),
+      internalCode: String(r.internalCode ?? r['internalCode'] ?? ''),
+      categoryName: String(r.categoryName ?? r['categoryName'] ?? 'Sem Categoria'),
+      categoryIcon: String(r.categoryIcon ?? r['categoryIcon'] ?? 'fas fa-box'),
+      totalConsumed: Number(r.totalConsumed ?? r['totalConsumed'] ?? 0),
+      unit: String(r.unit ?? 'un'),
+      totalEntradas: Number(r.totalEntradas ?? r['totalEntradas'] ?? 0),
+      lastMovement: r.lastMovement ? new Date(r.lastMovement as string | Date | number) : null,
+      currentStock: Number(r.currentStock ?? r['currentStock'] ?? 0),
+    }));
   }
 
   async getOnlineUsers(windowMinutes: number = 10): Promise<Array<{

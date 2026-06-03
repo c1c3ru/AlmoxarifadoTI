@@ -16,6 +16,7 @@ import Users from "@/pages/users";
 import Categories from "@/pages/categories";
 import NotFound from "@/pages/not-found";
 import RegisterUserPage from "@/pages/register";
+import ConsumptionDashboard from "@/pages/consumption";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -99,6 +100,12 @@ function Router() {
       <Route path="/history">
         <ProtectedRoute>
           <History />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/consumption">
+        <ProtectedRoute>
+          <ConsumptionDashboard />
         </ProtectedRoute>
       </Route>
       

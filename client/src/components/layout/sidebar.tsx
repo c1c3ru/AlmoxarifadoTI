@@ -34,6 +34,7 @@ const menuItems = [
   { route: "/movements", label: "Movimentações", icon: "fas fa-exchange-alt" },
   { route: "/scanner", label: "Scanner QR", icon: "fas fa-qrcode" },
   { route: "/history", label: "Histórico", icon: "fas fa-history" },
+  { route: "/consumption", label: "Consumo", icon: "fas fa-fire-flame-curved" },
 ];
 
 const adminItems = [
