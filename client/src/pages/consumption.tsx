@@ -36,6 +36,7 @@ function relativeDate(d: string | null): string {
   return `${Math.floor(diff / 365)}a atrás`;
 }
 
+/** Rank badge: medalha para top 3, número para demais */
 function RankBadge({ rank }: { rank: number }) {
   const medals = [
     { bg: "#f59e0b", icon: "fas fa-trophy" },
@@ -46,20 +47,25 @@ function RankBadge({ rank }: { rank: number }) {
     const m = medals[rank - 1];
     return (
       <div
-        className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
+        className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
         style={{ background: m.bg }}
       >
-        <i className={`${m.icon} text-white`} style={{ fontSize: "0.6rem" }} />
+        <i className={`${m.icon} text-white`} style={{ fontSize: "0.55rem" }} />
       </div>
     );
   }
   return (
-    <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-      <span className="text-muted-foreground font-bold" style={{ fontSize: "0.65rem" }}>
+    <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+      <span className="text-muted-foreground font-bold" style={{ fontSize: "0.6rem" }}>
         {rank}
       </span>
     </div>
   );
+}
+
+/** Skeleton genérico */
+function Sk({ className = "" }: { className?: string }) {
+  return <div className={`rounded-md animate-pulse bg-muted ${className}`} />;
 }
 
 export default function ConsumptionDashboard() {
@@ -81,8 +87,14 @@ export default function ConsumptionDashboard() {
     return map;
   }, [raw]);
 
-  const categories = useMemo(() => Array.from(new Set(raw.map((r) => r.categoryName))).sort(), [raw]);
-  const maxConsumed = useMemo(() => Math.max(...raw.map((r) => r.totalConsumed), 1), [raw]);
+  const categories = useMemo(
+    () => Array.from(new Set(raw.map((r) => r.categoryName))).sort(),
+    [raw]
+  );
+  const maxConsumed = useMemo(
+    () => Math.max(...raw.map((r) => r.totalConsumed), 1),
+    [raw]
+  );
 
   const items = useMemo(() => {
     let list = [...raw];
@@ -108,12 +120,42 @@ export default function ConsumptionDashboard() {
   const totalEntradas = raw.reduce((s, i) => s + i.totalEntradas, 0);
   const topItem = raw[0];
 
-  const Skeleton = ({ className = "" }: { className?: string }) => (
-    <div
-      className={`rounded-lg animate-pulse bg-muted ${className}`}
-      style={{ minHeight: "1rem" }}
-    />
-  );
+  /* ─── KPI DATA ─── */
+  const kpis = [
+    {
+      label: "Saídas totais",
+      value: totalSaidas.toLocaleString("pt-BR"),
+      sub: "unidades consumidas",
+      icon: "fas fa-arrow-up",
+      color: "#f43f5e",
+      colorBg: "#f43f5e18",
+    },
+    {
+      label: "Entradas totais",
+      value: totalEntradas.toLocaleString("pt-BR"),
+      sub: "unidades recebidas",
+      icon: "fas fa-arrow-down",
+      color: "#10b981",
+      colorBg: "#10b98118",
+    },
+    {
+      label: "Tipos de itens",
+      value: String(raw.length),
+      sub: "cadastrados",
+      icon: "fas fa-boxes-stacked",
+      color: "#8b5cf6",
+      colorBg: "#8b5cf618",
+    },
+    {
+      label: "Maior consumo",
+      value: topItem?.itemName ?? "—",
+      sub: topItem ? `${topItem.totalConsumed} ${topItem.unit} saídas` : "",
+      icon: "fas fa-crown",
+      color: "#f59e0b",
+      colorBg: "#f59e0b18",
+      isName: true,
+    },
+  ];
 
   return (
     <MainLayout
@@ -121,97 +163,75 @@ export default function ConsumptionDashboard() {
       subtitle="Saídas acumuladas desde o início do sistema"
       showAddButton={false}
     >
-      {/* ── KPIs ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-        {[
-          {
-            label: "Total de Saídas",
-            value: isLoading ? null : totalSaidas.toLocaleString("pt-BR"),
-            sub: "unidades",
-            icon: "fas fa-arrow-up",
-            color: "#f43f5e",
-            colorBg: "#f43f5e18",
-          },
-          {
-            label: "Total de Entradas",
-            value: isLoading ? null : totalEntradas.toLocaleString("pt-BR"),
-            sub: "unidades",
-            icon: "fas fa-arrow-down",
-            color: "#10b981",
-            colorBg: "#10b98118",
-          },
-          {
-            label: "Tipos de Itens",
-            value: isLoading ? null : String(raw.length),
-            sub: "cadastrados",
-            icon: "fas fa-boxes-stacked",
-            color: "#8b5cf6",
-            colorBg: "#8b5cf618",
-          },
-          {
-            label: "Maior Consumidor",
-            value: isLoading ? null : topItem?.itemName ?? "—",
-            sub: topItem ? `${topItem.totalConsumed} ${topItem.unit}` : "",
-            icon: "fas fa-crown",
-            color: "#f59e0b",
-            colorBg: "#f59e0b18",
-            truncate: true,
-          },
-        ].map((kpi) => (
+      {/* ── KPIs ─────────────────────────────────────────── */}
+      {/*
+        Mobile  : 1 coluna (cada card ocupa 100 %)
+        ≥ 480px : 2 colunas
+        ≥ 768px : 4 colunas
+      */}
+      <div className="grid grid-cols-1 min-[480px]:grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+        {kpis.map((kpi) => (
           <div
             key={kpi.label}
-            className="rounded-xl border border-border bg-card p-4 flex flex-col gap-2 relative overflow-hidden"
+            className="rounded-xl border border-border bg-card p-4 flex items-center gap-3 relative overflow-hidden"
           >
+            {/* Ícone */}
             <div
-              className="absolute top-3 right-3 w-8 h-8 rounded-lg flex items-center justify-center"
+              className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
               style={{ background: kpi.colorBg }}
             >
-              <i className={kpi.icon} style={{ color: kpi.color, fontSize: "0.8rem" }} />
+              <i className={kpi.icon} style={{ color: kpi.color }} />
             </div>
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide pr-10">
-              {kpi.label}
-            </p>
-            {kpi.value === null ? (
-              <>
-                <Skeleton className="h-7 w-20" />
-                <Skeleton className="h-3 w-14" />
-              </>
-            ) : (
-              <>
-                <p
-                  className={`font-extrabold text-foreground leading-tight ${kpi.truncate ? "text-sm line-clamp-2" : "text-2xl"}`}
-                >
-                  {kpi.value}
-                </p>
-                {kpi.sub && (
-                  <p className="text-xs text-muted-foreground">{kpi.sub}</p>
-                )}
-              </>
-            )}
+
+            {/* Texto */}
+            <div className="min-w-0 flex-1">
+              <p className="text-[0.7rem] font-semibold text-muted-foreground uppercase tracking-wide leading-none mb-1">
+                {kpi.label}
+              </p>
+              {isLoading ? (
+                <>
+                  <Sk className="h-5 w-20 mb-1" />
+                  <Sk className="h-3 w-14" />
+                </>
+              ) : (
+                <>
+                  <p
+                    className={`font-extrabold text-foreground leading-tight ${
+                      kpi.isName ? "text-sm line-clamp-1" : "text-xl"
+                    }`}
+                  >
+                    {kpi.value}
+                  </p>
+                  {kpi.sub && (
+                    <p className="text-[0.7rem] text-muted-foreground mt-0.5 truncate">
+                      {kpi.sub}
+                    </p>
+                  )}
+                </>
+              )}
+            </div>
           </div>
         ))}
       </div>
 
-      {/* ── SEARCH & SORT ── */}
-      <div className="flex flex-col sm:flex-row gap-2 mb-3">
-        {/* Search */}
-        <div className="relative flex-1">
-          <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-xs" />
+      {/* ── SEARCH + SORT ─────────────────────────────────── */}
+      <div className="flex gap-2 mb-3">
+        <div className="relative flex-1 min-w-0">
+          <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-xs pointer-events-none" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar item, código ou categoria..."
+            placeholder="Buscar item, código ou categoria…"
             className="w-full pl-8 pr-3 py-2 text-sm rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/40"
           />
         </div>
 
-        {/* Sort select */}
         <select
           aria-label="Ordenar itens por"
           value={sortBy}
           onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-          className="py-2 px-3 text-sm rounded-lg border border-border bg-card text-foreground focus:outline-none focus:ring-1 focus:ring-primary/40 cursor-pointer"
+          className="py-2 px-2.5 text-sm rounded-lg border border-border bg-card text-foreground focus:outline-none focus:ring-1 focus:ring-primary/40 cursor-pointer flex-shrink-0"
         >
           <option value="consumed">Mais consumido</option>
           <option value="stock">Menor estoque</option>
@@ -219,9 +239,12 @@ export default function ConsumptionDashboard() {
         </select>
       </div>
 
-      {/* ── CATEGORY CHIPS (scroll horizontal) ── */}
-      <div className="mb-4 overflow-x-auto pb-1">
-        <div className="flex gap-1.5 w-max">
+      {/* ── CATEGORY CHIPS (scroll horizontal sem scrollbar visível) ── */}
+      <div
+        className="mb-4 overflow-x-auto"
+        style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "none" }}
+      >
+        <div className="flex gap-1.5 w-max pb-0.5">
           <button
             onClick={() => setCategory("all")}
             className={`px-3 py-1 rounded-full text-xs font-semibold border transition-colors whitespace-nowrap ${
@@ -230,8 +253,9 @@ export default function ConsumptionDashboard() {
                 : "border-border text-muted-foreground bg-card hover:border-primary/40"
             }`}
           >
-            Todas categorias
+            Todas
           </button>
+
           {categories.map((cat) => {
             const p = PALETTE[catPalette[cat] ?? 0];
             const active = category === cat;
@@ -243,7 +267,11 @@ export default function ConsumptionDashboard() {
                 style={
                   active
                     ? { background: p.bar, color: "#fff", borderColor: "transparent" }
-                    : { borderColor: "hsl(var(--border))", color: "hsl(var(--muted-foreground))", background: "hsl(var(--card))" }
+                    : {
+                        borderColor: "hsl(var(--border))",
+                        color: "hsl(var(--muted-foreground))",
+                        background: "hsl(var(--card))",
+                      }
                 }
               >
                 {cat}
@@ -253,39 +281,50 @@ export default function ConsumptionDashboard() {
         </div>
       </div>
 
-      {/* ── RESULTS INFO ── */}
+      {/* ── RESULTS COUNT ─────────────────────────────────── */}
       <p className="text-xs text-muted-foreground mb-3">
         <span className="font-semibold text-foreground">{items.length}</span>{" "}
         {items.length === 1 ? "item" : "itens"}
-        {category !== "all" && <span> em <strong>{category}</strong></span>}
-        {search && <span> · busca: &ldquo;{search}&rdquo;</span>}
+        {category !== "all" && (
+          <span>
+            {" "}em <strong>{category}</strong>
+          </span>
+        )}
+        {search && (
+          <span>
+            {" "}· &ldquo;{search}&rdquo;
+          </span>
+        )}
       </p>
 
-      {/* ── LIST ── */}
+      {/* ── LIST ──────────────────────────────────────────── */}
       {isLoading ? (
         <div className="space-y-2">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="rounded-xl border border-border bg-card p-4">
-              <div className="flex items-center gap-3">
-                <Skeleton className="w-7 h-7 rounded-full" />
-                <Skeleton className="w-9 h-9 rounded-xl" />
-                <div className="flex-1 space-y-2">
-                  <Skeleton className="h-4 w-48" />
-                  <Skeleton className="h-3 w-28" />
-                  <Skeleton className="h-2 w-full" />
+            <div key={i} className="rounded-xl border border-border bg-card p-3">
+              <div className="flex items-center gap-2">
+                <Sk className="w-6 h-6 rounded-full flex-shrink-0" />
+                <Sk className="w-8 h-8 rounded-lg flex-shrink-0" />
+                <div className="flex-1 space-y-1.5 min-w-0">
+                  <Sk className="h-4 w-3/4" />
+                  <Sk className="h-3 w-1/2" />
+                  <Sk className="h-1.5 w-full" />
                 </div>
-                <Skeleton className="w-14 h-8 rounded-lg" />
+                <div className="flex-shrink-0 space-y-1 text-right">
+                  <Sk className="h-5 w-10" />
+                  <Sk className="h-3 w-8" />
+                </div>
               </div>
             </div>
           ))}
         </div>
       ) : items.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-          <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center mb-3">
-            <i className="fas fa-chart-bar text-xl" />
+          <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-3">
+            <i className="fas fa-chart-bar" />
           </div>
-          <p className="font-semibold">Nenhum item encontrado</p>
-          <p className="text-sm mt-1">Ajuste os filtros ou a busca</p>
+          <p className="font-semibold text-sm">Nenhum item encontrado</p>
+          <p className="text-xs mt-1">Ajuste os filtros ou a busca</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -298,80 +337,95 @@ export default function ConsumptionDashboard() {
             return (
               <div
                 key={item.itemId}
-                className="rounded-xl border border-border bg-card p-3 sm:p-4 transition-all hover:border-primary/30 hover:shadow-sm"
-                style={{ animationDelay: `${Math.min(displayIdx, 15) * 0.03}s` }}
+                className="rounded-xl border border-border bg-card p-3 transition-colors hover:border-primary/30"
               >
-                {/* TOP ROW */}
-                <div className="flex items-start gap-2.5">
-                  {/* Rank */}
-                  <RankBadge rank={globalRank} />
-
-                  {/* Category icon */}
-                  <div
-                    className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-                    style={{ background: p.bg }}
-                  >
-                    <i className={`${item.categoryIcon} text-sm`} style={{ color: p.bar }} />
+                {/* ── linha principal ── */}
+                <div className="flex items-center gap-2">
+                  {/* rank (oculto em telas muito pequenas para liberar espaço) */}
+                  <div className="hidden min-[360px]:block flex-shrink-0">
+                    <RankBadge rank={globalRank} />
                   </div>
 
-                  {/* Name + meta */}
+                  {/* ícone categoria */}
+                  <div
+                    className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                    style={{ background: p.bg }}
+                  >
+                    <i
+                      className={`${item.categoryIcon} text-xs`}
+                      style={{ color: p.bar }}
+                    />
+                  </div>
+
+                  {/* nome + meta */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-baseline gap-2 flex-wrap">
-                      <p className="font-semibold text-foreground text-sm leading-snug truncate">
+                    {/* nome + código */}
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <p className="font-semibold text-foreground text-sm truncate leading-snug">
                         {item.itemName}
                       </p>
-                      <span className="text-xs text-muted-foreground font-mono flex-shrink-0">
+                      {/* código visível só em telas maiores */}
+                      <span className="hidden sm:inline text-[0.65rem] text-muted-foreground font-mono flex-shrink-0">
                         {item.internalCode}
                       </span>
                     </div>
-                    <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+
+                    {/* categoria + data */}
+                    <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                       <span
-                        className="text-xs px-2 py-0.5 rounded-full font-medium"
+                        className="text-[0.65rem] px-1.5 py-0.5 rounded-full font-medium leading-none"
                         style={{ background: p.bg, color: p.text }}
                       >
                         {item.categoryName}
                       </span>
-                      <span className="text-xs text-muted-foreground">
-                        <i className="far fa-clock mr-1 opacity-50" />
+                      <span className="text-[0.65rem] text-muted-foreground leading-none">
+                        <i className="far fa-clock mr-0.5 opacity-50" />
                         {relativeDate(item.lastMovement)}
                       </span>
                       {noMovement && (
-                        <span className="text-xs text-amber-500 font-medium">sem uso</span>
+                        <span className="text-[0.65rem] text-amber-500 font-semibold">
+                          sem uso
+                        </span>
                       )}
                     </div>
                   </div>
 
-                  {/* Consumed count */}
-                  <div className="text-right flex-shrink-0 pl-1">
-                    <p className="font-extrabold text-lg leading-none" style={{ color: p.bar }}>
+                  {/* contagem à direita */}
+                  <div className="text-right flex-shrink-0 ml-1">
+                    <p
+                      className="font-extrabold text-base leading-none tabular-nums"
+                      style={{ color: p.bar }}
+                    >
                       {item.totalConsumed.toLocaleString("pt-BR")}
                     </p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{item.unit} saídas</p>
+                    <p className="text-[0.65rem] text-muted-foreground mt-0.5">
+                      {item.unit} saídas
+                    </p>
                   </div>
                 </div>
 
-                {/* PROGRESS BAR */}
+                {/* ── barra de progresso ── */}
                 {!noMovement && (
-                  <div className="mt-2.5 ml-[4.25rem]">
-                    <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                      <div
-                        className="h-full rounded-full transition-all duration-700"
-                        style={{ width: `${pct}%`, background: p.bar }}
-                      />
-                    </div>
+                  <div className="mt-2 h-1 rounded-full bg-muted overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-700"
+                      style={{ width: `${pct}%`, background: p.bar }}
+                    />
                   </div>
                 )}
 
-                {/* BOTTOM STATS ROW (só aparece se tiver dados relevantes) */}
+                {/* ── stats secundários (entradas + estoque) ── */}
                 {(item.totalEntradas > 0 || item.currentStock > 0) && (
-                  <div className="mt-2 ml-[4.25rem] flex items-center gap-4 text-xs text-muted-foreground">
+                  <div className="mt-1.5 flex items-center gap-3 text-[0.65rem] text-muted-foreground">
+                    {item.totalEntradas > 0 && (
+                      <span>
+                        <i className="fas fa-arrow-down mr-0.5 text-emerald-500" />
+                        {item.totalEntradas.toLocaleString("pt-BR")} ent.
+                      </span>
+                    )}
                     <span>
-                      <i className="fas fa-arrow-down mr-1 text-emerald-500" />
-                      {item.totalEntradas.toLocaleString("pt-BR")} entradas
-                    </span>
-                    <span>
-                      <i className="fas fa-warehouse mr-1 text-sky-400" />
-                      {item.currentStock.toLocaleString("pt-BR")} em estoque
+                      <i className="fas fa-warehouse mr-0.5 text-sky-400" />
+                      {item.currentStock.toLocaleString("pt-BR")} estoque
                     </span>
                   </div>
                 )}
@@ -382,7 +436,7 @@ export default function ConsumptionDashboard() {
       )}
 
       {!isLoading && items.length > 0 && (
-        <p className="text-xs text-center text-muted-foreground mt-6">
+        <p className="text-[0.65rem] text-center text-muted-foreground mt-6">
           <i className="fas fa-circle-info mr-1" />
           Dados acumulados desde o início · atualizado a cada 2 min
         </p>
