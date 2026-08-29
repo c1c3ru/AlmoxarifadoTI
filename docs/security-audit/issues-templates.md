@@ -60,7 +60,7 @@ As rotas GET / (listar todos os usuários), POST / (criar usuário) e PUT /:id (
 
 **Cenário de exploração (evidência):**
 ```
-Um usuário 'tech' autentica normalmente, obtém seu próprio JWT válido e chama `PUT /api/users/<id-de-um-admin>` com body `{"password":"invadido123"}`. Como role/matricula não mudam, a checagem de allowlist é pulada, storage.updateUser hasheia a nova senha e grava — o atacante agora loga como aquele administrador. O mesmo endpoint também permite ler (GET /) e-mail, matrícula e papel de todos os usuários do sistema.
+Um usuário 'tech' autentica normalmente, obtém seu próprio JWT válido e chama `PUT /api/users/<id-de-um-admin>` com body `{"password": "<senha-escolhida-pelo-atacante>"}`. Como role/matricula não mudam, a checagem de allowlist é pulada, storage.updateUser hasheia a nova senha e grava — o atacante agora loga como aquele administrador. O mesmo endpoint também permite ler (GET /) e-mail, matrícula e papel de todos os usuários do sistema.
 ```
 
 **Trecho de código relevante:**
@@ -110,7 +110,7 @@ PUT /api/users/<vitima-id>  { "email": "atacante@evil.com" }
 // passo 2
 POST /api/password-recovery { "usernameOrEmail": "<username-vitima>" }
 // passo 3 — código chega no inbox do atacante
-POST /api/password-reset { "usernameOrEmail": ..., "code": ..., "newPassword": "nova" }
+POST /api/password-reset { "usernameOrEmail": ..., "code": ..., "newPassword": "<senha-escolhida-pelo-atacante>" }
 ```
 
 **Correção recomendada:**
@@ -199,42 +199,6 @@ Trocar o padrão para 'negar por padrão': se ALLOWED_ORIGINS estiver vazio, blo
 - [ ] Revisão de código por outra pessoa (não o autor da correção)
 - [ ] Validado em ambiente de staging antes do deploy em produção
 - [ ] Achado F05 marcado como resolvido neste relatório na próxima auditoria
----
-
-### [SECURITY][MÉDIO] Credencial administrativa hardcoded (admin/admin123) em script de restauração
-
-**Labels:** `security, bug`
-**Categoria:** Chaves Expostas
-**Severidade:** Médio
-**ID do achado:** F06
-
-**Arquivos afetados:**
-- `scripts/restore-admin.ts` (linhas 27, 32-42)
-
-**Descrição / Impacto:**
-O script cria automaticamente um usuário admin com username 'admin' e senha literal 'admin123' sempre que a tabela users estiver vazia (ex.: banco recém-provisionado ou restaurado). A senha em texto puro está versionada no repositório e também é impressa no console em texto claro.
-
-**Cenário de exploração (evidência):**
-```
-Se o script for executado contra um banco de produção recém-criado (cenário exatamente descrito no próprio script, para 'restaurar' o admin), qualquer pessoa que conheça esse padrão amplamente documentado (admin/admin123) consegue logar como administrador antes que a senha seja trocada — e nada no fluxo força essa troca imediata.
-```
-
-**Trecho de código relevante:**
-```ts
-const hashedPassword = await bcrypt.hash("admin123", 10);
-...VALUES ('admin', hashedPassword, 'Administrador', 'admin@almoxarifado.local', '2329311', 'admin', true)
-console.log(`   Password: admin123`);
-```
-
-**Correção recomendada:**
-Gerar uma senha aleatória forte a cada execução e imprimi-la uma única vez (nunca hardcoded), ou exigir troca de senha obrigatória no primeiro login (flag must_change_password).
-
-**Checklist de aceite:**
-- [ ] Correção implementada em `scripts/restore-admin.ts`
-- [ ] Teste automatizado ou manual cobrindo o cenário de exploração acima
-- [ ] Revisão de código por outra pessoa (não o autor da correção)
-- [ ] Validado em ambiente de staging antes do deploy em produção
-- [ ] Achado F06 marcado como resolvido neste relatório na próxima auditoria
 ---
 
 ### [SECURITY][MÉDIO] Lista de matrículas autorizadas a virar admin é enviada ao bundle JavaScript público do cliente

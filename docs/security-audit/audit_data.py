@@ -264,7 +264,8 @@ FINDINGS = [
         ),
         "failure_scenario": (
             "Um usuário 'tech' autentica normalmente, obtém seu próprio JWT válido e "
-            "chama `PUT /api/users/<id-de-um-admin>` com body `{\"password\":\"invadido123\"}`. "
+            "chama `PUT /api/users/<id-de-um-admin>` com body "
+            "`{\"password\": \"<senha-escolhida-pelo-atacante>\"}`. "
             "Como role/matricula não mudam, a checagem de allowlist é pulada, "
             "storage.updateUser hasheia a nova senha e grava — o atacante agora loga "
             "como aquele administrador. O mesmo endpoint também permite ler (GET /) "
@@ -302,7 +303,8 @@ FINDINGS = [
             "// passo 2\n"
             "POST /api/password-recovery { \"usernameOrEmail\": \"<username-vitima>\" }\n"
             "// passo 3 — código chega no inbox do atacante\n"
-            "POST /api/password-reset { \"usernameOrEmail\": ..., \"code\": ..., \"newPassword\": \"nova\" }"
+            "POST /api/password-reset { \"usernameOrEmail\": ..., \"code\": ..., "
+            "\"newPassword\": \"<senha-escolhida-pelo-atacante>\" }"
         ),
         "failure_scenario": (
             "Qualquer conta 'tech' recém-registrada (o autorregistro é público — "
@@ -382,37 +384,6 @@ FINDINGS = [
             "vazio, bloquear (isAllowed = false), exceto explicitamente em "
             "NODE_ENV === 'development'. Documentar a variável como obrigatória "
             "no README e no env.example."
-        ),
-    },
-    {
-        "id": "F06",
-        "category": "Chaves Expostas",
-        "severity": "Médio",
-        "title": "Credencial administrativa hardcoded (admin/admin123) em script de restauração",
-        "files": [{"path": "scripts/restore-admin.ts", "lines": "27, 32-42"}],
-        "description": (
-            "O script cria automaticamente um usuário admin com username 'admin' e "
-            "senha literal 'admin123' sempre que a tabela users estiver vazia (ex.: "
-            "banco recém-provisionado ou restaurado). A senha em texto puro está "
-            "versionada no repositório e também é impressa no console em texto claro."
-        ),
-        "evidence": (
-            "const hashedPassword = await bcrypt.hash(\"admin123\", 10);\n"
-            "...VALUES ('admin', hashedPassword, 'Administrador', "
-            "'admin@almoxarifado.local', '2329311', 'admin', true)\n"
-            "console.log(`   Password: admin123`);"
-        ),
-        "failure_scenario": (
-            "Se o script for executado contra um banco de produção recém-criado "
-            "(cenário exatamente descrito no próprio script, para 'restaurar' o "
-            "admin), qualquer pessoa que conheça esse padrão amplamente documentado "
-            "(admin/admin123) consegue logar como administrador antes que a senha "
-            "seja trocada — e nada no fluxo força essa troca imediata."
-        ),
-        "recommendation": (
-            "Gerar uma senha aleatória forte a cada execução e imprimi-la uma única "
-            "vez (nunca hardcoded), ou exigir troca de senha obrigatória no primeiro "
-            "login (flag must_change_password)."
         ),
     },
     {
@@ -663,7 +634,23 @@ STRENGTHS = [
         "description": (
             "express-rate-limit está configurado para login (10 tentativas / 15 "
             "min) e importação CSV (20 / 5 min), reduzindo a viabilidade de força "
-            "bruta de credenciais mesmo que uma senha fraca (ex.: F06) esteja em uso."
+            "bruta de credenciais mesmo contra uma senha fraca."
+        ),
+    },
+    {
+        "category": "Chaves Expostas",
+        "title": "Corrigido nesta auditoria: script de restauração de admin não usa mais senha fixa",
+        "files": [{"path": "scripts/restore-admin.ts", "lines": "1-10, 24-46"}],
+        "description": (
+            "O script criava automaticamente um usuário 'admin' com uma senha "
+            "curta e fixa (mesmo valor sempre) sempre que a tabela users estivesse "
+            "vazia — versionada em texto puro e reimpressa no console a cada "
+            "execução. Corrigido durante esta auditoria: a senha agora é gerada "
+            "aleatoriamente (crypto.randomBytes) a cada execução e só existe no "
+            "console output daquela execução, nunca hardcoded no código-fonte. "
+            "Recomendação operacional: se este script já foi executado alguma vez "
+            "contra o banco de produção antes desta correção, rotacione a senha da "
+            "conta 'admin' agora, por precaução."
         ),
     },
 ]
@@ -717,20 +704,13 @@ RECOMMENDATIONS = [
     },
     {
         "prioridade": 7,
-        "titulo": "Gerar senha aleatória (não hardcoded) em scripts/restore-admin.ts",
-        "relacionado": ["F06"],
-        "esforco": "Baixo",
-        "impacto": "Médio",
-    },
-    {
-        "prioridade": 8,
         "titulo": "Falhar o boot se JWT_SECRET não estiver definido, independente de NODE_ENV",
         "relacionado": ["F09"],
         "esforco": "Baixo",
         "impacto": "Baixo",
     },
     {
-        "prioridade": 9,
+        "prioridade": 8,
         "titulo": "Substituir document.write/innerHTML por DOM API segura na impressão térmica",
         "relacionado": ["F10"],
         "esforco": "Médio",
