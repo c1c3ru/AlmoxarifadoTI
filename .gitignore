@@ -7,3 +7,8 @@ vite.config.ts.*
 .env
 .env.*
 .vercel
+
+# Auditoria de segurança (docs/security-audit) — script isolado
+docs/security-audit/.venv
+docs/security-audit/__pycache__
+docs/security-audit/*.pyc
