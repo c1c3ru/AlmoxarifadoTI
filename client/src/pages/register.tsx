@@ -44,7 +44,6 @@ const registerSchema = z
   .superRefine((val, ctx) => {
     // Validação de matrícula baseada no perfil
     const techLen = 14;  // Técnico/Servidor: 20261193010007 -> 14 caracteres
-    const adminLen = 7; // Administrador: 1678389 -> 7 caracteres
 
     if (val.role === "tech" && val.matricula.length !== techLen) {
       ctx.addIssue({

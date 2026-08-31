@@ -5,6 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/hooks/use-auth";
+import { formatRelativeTime } from "@/lib/movements";
 import type { ItemWithCategory, MovementWithDetails } from "@shared/schema";
 
 interface DashboardStats {
@@ -50,16 +51,6 @@ export default function Dashboard() {
     refetchInterval: 60000,
     refetchOnWindowFocus: true,
   });
-
-  const formatTimestamp = (timestamp: string | Date) => {
-    const date = typeof timestamp === 'string' ? new Date(timestamp) : timestamp;
-    const now = new Date();
-    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-
-    if (diffInHours < 1) return "Há menos de 1 hora";
-    if (diffInHours === 1) return "Há 1 hora";
-    return `Há ${diffInHours} horas`;
-  };
 
   return (
     <MainLayout
@@ -202,7 +193,7 @@ export default function Dashboard() {
                       </div>
                     </div>
                     <div className="text-right text-xs text-muted-foreground flex-shrink-0 max-w-xs">
-                      <p className="truncate">{formatTimestamp(u.lastSeenAt)}</p>
+                      <p className="truncate">{formatRelativeTime(u.lastSeenAt)}</p>
                     </div>
                   </div>
                 ))
@@ -329,7 +320,7 @@ export default function Dashboard() {
                           )}
                         </div>
                         <p className="text-xs text-muted-foreground/80 mt-1 truncate">
-                          {formatTimestamp(movement.createdAt)} • {movement.user?.name || movement.user?.username}
+                          {formatRelativeTime(movement.createdAt)} • {movement.user?.name || movement.user?.username}
                         </p>
                       </div>
                     </div>
