@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { buildApiUrl } from "@/lib/url";
 import { useQuery } from "@tanstack/react-query";
 import { MainLayout } from "@/components/layout/main-layout";
 import { MovementModal } from "@/components/modals/movement-modal";
@@ -8,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { formatRelativeTime, getMovementTypeColor, getMovementTypeLabel, getMovementIcon } from "@/lib/movements";
 import type { ItemWithCategory, MovementWithDetails } from "@shared/schema";
 
 export default function Movements() {
@@ -62,30 +62,6 @@ export default function Movements() {
     setMovementType(type);
     setSelectedItem(item || null);
     setShowMovementModal(true);
-  };
-
-  const formatTimestamp = (timestamp: string | Date) => {
-    const date = typeof timestamp === 'string' ? new Date(timestamp) : timestamp;
-    const now = new Date();
-    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-
-    if (diffInHours < 1) return "Há menos de 1 hora";
-    if (diffInHours === 1) return "Há 1 hora";
-    return `Há ${diffInHours} horas`;
-  };
-
-  const getMovementTypeColor = (type: string) => {
-    return type === "entrada"
-      ? "bg-emerald-100 text-emerald-800 border-emerald-200"
-      : "bg-red-100 text-red-800 border-red-200";
-  };
-
-  const getMovementTypeLabel = (type: string) => {
-    return type === "entrada" ? "Entrada" : "Saída";
-  };
-
-  const getMovementIcon = (type: string) => {
-    return type === "entrada" ? "fa-solid fa-arrow-down" : "fa-solid fa-arrow-up";
   };
 
   return (
@@ -303,7 +279,7 @@ export default function Movements() {
                         </span>
                         <span className="flex items-center">
                           <i className="fa-solid fa-clock mr-2 text-orange-500"></i>
-                          {formatTimestamp(movement.createdAt)}
+                          {formatRelativeTime(movement.createdAt)}
                         </span>
                       </div>
 

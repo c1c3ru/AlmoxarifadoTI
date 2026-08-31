@@ -328,7 +328,7 @@ export default function ConsumptionDashboard() {
         </div>
       ) : (
         <div className="space-y-2">
-          {items.map((item, displayIdx) => {
+          {items.map((item) => {
             const globalRank = raw.findIndex((r) => r.itemId === item.itemId) + 1;
             const p = PALETTE[catPalette[item.categoryName] ?? 0];
             const pct = maxConsumed > 0 ? (item.totalConsumed / maxConsumed) * 100 : 0;

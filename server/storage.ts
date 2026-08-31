@@ -1,14 +1,13 @@
 import {
   type User, type InsertUser,
   type Category, type InsertCategory,
-  type Item, type InsertItem, type ItemWithCategory,
+  type InsertItem, type ItemWithCategory,
   type Movement, type InsertMovement, type MovementWithDetails,
   users, categories, items, movements, passwordResets, userActivity
 } from "@shared/schema";
 import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
 import { eq, desc, asc, and, or, ilike, sql, count, isNull } from "drizzle-orm";
-import { randomUUID } from "crypto";
 import bcrypt from "bcryptjs";
 
 let _db: ReturnType<typeof drizzle> | undefined;

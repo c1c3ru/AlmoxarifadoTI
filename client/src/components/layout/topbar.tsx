@@ -13,7 +13,7 @@ interface TopbarProps {
 }
 
 export function Topbar({ title, subtitle, onAddItem, showAddButton = true, addButtonLabel, addButtonIconClass, addButtonClassName }: TopbarProps) {
-  const { toggle, isMobile } = useSidebar();
+  const { toggle } = useSidebar();
 
   return (
     <header className="sticky top-0 z-40 w-full max-w-full overflow-x-hidden border-b border-border bg-background/80 backdrop-blur-md px-4 md:px-6 py-4 transition-all duration-300">

@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { buildApiUrl } from "@/lib/url";
 import { useQuery } from "@tanstack/react-query";
 import { MainLayout } from "@/components/layout/main-layout";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
+import { getMovementTypeColor, getMovementTypeLabel, getMovementIcon } from "@/lib/movements";
 import type { MovementWithDetails, ItemWithCategory } from "@shared/schema";
 
 export default function History() {
@@ -36,20 +36,6 @@ export default function History() {
   const formatTimestamp = (timestamp: string | Date) => {
     const date = typeof timestamp === 'string' ? new Date(timestamp) : timestamp;
     return date.toLocaleString("pt-BR");
-  };
-
-  const getMovementTypeColor = (type: string) => {
-    return type === "entrada"
-      ? "bg-emerald-100 text-emerald-800 border-emerald-200"
-      : "bg-red-100 text-red-800 border-red-200";
-  };
-
-  const getMovementTypeLabel = (type: string) => {
-    return type === "entrada" ? "Entrada" : "Saída";
-  };
-
-  const getMovementIcon = (type: string) => {
-    return type === "entrada" ? "fa-solid fa-arrow-down" : "fa-solid fa-arrow-up";
   };
 
   const totalEntries = filteredMovements.filter(m => m.type === "entrada").length;

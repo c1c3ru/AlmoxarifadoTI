@@ -12,6 +12,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { downloadBlob } from "@/lib/utils";
 import type { Category } from "@shared/schema";
 
 const importSchema = z.object({
@@ -135,16 +136,9 @@ export function CSVImportExport() {
       if (!response.ok) {
         throw new Error("Erro ao exportar inventário");
       }
-      
+
       const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `inventario-${new Date().toISOString().split('T')[0]}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      downloadBlob(blob, `inventario-${new Date().toISOString().split('T')[0]}.csv`);
     },
     onSuccess: () => {
       toast({
@@ -167,16 +161,9 @@ export function CSVImportExport() {
       if (!response.ok) {
         throw new Error("Erro ao exportar inventário para Excel");
       }
-      
+
       const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `inventario-${new Date().toISOString().split('T')[0]}.xlsx`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      downloadBlob(blob, `inventario-${new Date().toISOString().split('T')[0]}.xlsx`);
     },
     onSuccess: () => {
       toast({
@@ -476,14 +463,7 @@ Monitor LED 19,"Monitor LED 19 polegadas",8,2,"Sala B - Mesa 1"`;
                                   size="sm"
                                   onClick={() => {
                                     const blob = new Blob([errorReportText()], { type: 'text/plain;charset=utf-8' });
-                                    const url = URL.createObjectURL(blob);
-                                    const a = document.createElement('a');
-                                    a.href = url;
-                                    a.download = `erros-importacao-${new Date().toISOString().slice(0,10)}.txt`;
-                                    document.body.appendChild(a);
-                                    a.click();
-                                    URL.revokeObjectURL(url);
-                                    document.body.removeChild(a);
+                                    downloadBlob(blob, `erros-importacao-${new Date().toISOString().slice(0,10)}.txt`);
                                   }}
                                 >
                                   <i className="fas fa-file-arrow-down mr-2" /> Baixar relatório
