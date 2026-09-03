@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { storage } from "../storage";
 import { authenticateJWT } from "../auth";
+import { logError } from "../logger";
 
 const router = Router();
 
@@ -11,7 +12,7 @@ router.get("/users/online", authenticateJWT, async (req, res) => {
         const online = await storage.getOnlineUsers(windowMinutes);
         res.json(online);
     } catch (error) {
-        console.error("Get online users error:", error);
+        logError("Get online users error:", error);
         res.status(500).json({ message: "Internal server error" });
     }
 });
@@ -26,7 +27,7 @@ router.post("/heartbeat", authenticateJWT, async (req, res) => {
         await storage.updateUserLastSeen(user.sub);
         return res.status(204).send();
     } catch (error) {
-        console.error("Heartbeat error:", error);
+        logError("Heartbeat error:", error);
         res.status(500).json({ message: "Internal server error" });
     }
 });
