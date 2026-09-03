@@ -54,19 +54,35 @@ export async function createApp() {
 
   // CORS
   const allowedOrigins = (process.env.ALLOWED_ORIGINS || '').split(',').map(o => o.trim()).filter(Boolean);
-  app.use(cors({
-    origin: (origin, callback) => {
-      if (!origin) return callback(null, true);
-      // 🔒 SECURITY: sem ALLOWED_ORIGINS configurado, nega por padrão em
-      // produção (só libera geral em desenvolvimento, por conveniência).
-      const isAllowed = allowedOrigins.length === 0
-        ? process.env.NODE_ENV !== 'production'
-        : allowedOrigins.includes(origin);
-      return callback(isAllowed ? null : new Error('Not allowed by CORS'), isAllowed);
-    },
+  const corsBaseOptions = {
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
+  };
+  app.use(cors((req, callback) => {
+    const origin = req.headers.origin;
+    if (!origin) return callback(null, { ...corsBaseOptions, origin: true });
+
+    // O próprio front-end da aplicação (mesmo host da API — caso de todo
+    // deploy na Vercel: produção e cada preview, cada um com domínio
+    // próprio) nunca deve ser bloqueado por CORS: não é uma origem
+    // "externa", e exigir ALLOWED_ORIGINS pra cada domínio de preview não
+    // é viável. Comparar contra o Host da própria requisição cobre isso
+    // sem depender de configuração alguma.
+    let isSameOrigin = false;
+    try {
+      isSameOrigin = new URL(origin).host === req.headers.host;
+    } catch {
+      isSameOrigin = false;
+    }
+
+    // 🔒 SECURITY: sem ALLOWED_ORIGINS configurado, nega por padrão em
+    // produção (só libera geral em desenvolvimento, por conveniência).
+    const isAllowed = isSameOrigin || (allowedOrigins.length === 0
+      ? process.env.NODE_ENV !== 'production'
+      : allowedOrigins.includes(origin));
+    if (!isAllowed) return callback(new Error('Not allowed by CORS'));
+    return callback(null, { ...corsBaseOptions, origin: true });
   }));
 
   // Body parsers
