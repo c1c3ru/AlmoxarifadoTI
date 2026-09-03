@@ -9,12 +9,18 @@
 **Data:** 2026-09-03 · **Branch:** `claude/authorization-backend-frontend-audit-529sur`
 **Stack:** Express 4 + Drizzle/Postgres (backend) · React 18 + Wouter + TanStack Query (frontend) · JWT (`jsonwebtoken`) + bcrypt
 
-> **Atualização (mesma PR):** os itens P0 e P1 da Seção 7 (middleware `requireAdmin` nas 8
-> rotas, autoria de `POST /api/movements` travada no token, `ENABLE_JWT` seguro por padrão e
-> CORS deny-by-default em produção) já foram corrigidos e estão neste mesmo PR — ver commit
-> que segue este documento. Os vereditos 🔴/🟠 abaixo descrevem o estado **antes** da correção;
-> cada um foi marcado com "✅ Corrigido" onde já resolvido. O item P2 (lista de matrículas no
-> bundle do cliente) segue em aberto.
+> **Atualização:** todos os itens P0/P1/P2 da Seção 7 já foram corrigidos — parte em sessões
+> paralelas que investigaram o mesmo sistema e mergearam em `main` enquanto este relatório era
+> escrito ([#4](https://github.com/c1c3ru/AlmoxarifadoTI/pull/4) logs/erros, [#5](https://github.com/c1c3ru/AlmoxarifadoTI/pull/5) matrículas no bundle +
+> `JWT_SECRET`, [#6](https://github.com/c1c3ru/AlmoxarifadoTI/pull/6) `requireAdmin` em `POST/PUT /api/users` + autoria de
+> `POST /api/movements`), parte neste mesmo branch (o restante do `requireAdmin` que #6 não
+> cobriu — `GET /api/users`, as 3 rotas de `/api/categories` e `DELETE /api/items/:id` —, o
+> `ENABLE_JWT` seguro por padrão, que nenhuma das outras PRs tocou, e CORS deny-by-default em
+> produção). Os dois conjuntos foram reconciliados por merge de `main` neste branch, com os
+> pontos de sobreposição resolvidos a favor de uma única implementação (sem duplicar lógica).
+> Os vereditos 🔴/🟠 abaixo descrevem o estado **antes** de qualquer uma dessas correções; cada
+> um foi marcado com "✅ Corrigido" onde já resolvido. Ver Seção 7 para a atribuição exata de
+> qual PR corrigiu o quê.
 
 ---
 
@@ -103,7 +109,7 @@ pelo qual F01 deveria ser tratado como bloqueador antes de qualquer outra corre�
 | `POST /api/password-recovery` | Nenhuma (pública por design) — sempre responde 200 genérico | Pública | ✅ correto (enumeração de conta mitigada pela resposta genérica) |
 | `POST /api/password-reset` | Código de 6 dígitos + expiração de 1h, ambos server-side | Pública | ✅ correto isoladamente — mas ver §5.3 (cadeia com o achado de `PUT /users/:id`) |
 | `POST /api/auth/login` | `loginLimiter` (10/15min) + `bcrypt.compare` + `user.isActive` | Pública | ✅ correto |
-| `POST /api/register` | `insertUserSchema` (Zod) — se `role:"admin"`, exige matrícula presente em `ALLOWED_ADMIN_MATRICULAS` (`shared/schema.ts:91`) | Pública; formulário permite escolher `role: admin` livremente (`register.tsx:27-29,56`) | ⚠️ ver §5.4 — a única barreira para virar admin por autorregistro é uma lista de ~140 matrículas que **vaza no bundle JS público** (F07, auditoria anterior) |
+| `POST /api/register` | ~~`insertUserSchema` (Zod) — se `role:"admin"`, exigia matrícula presente em `ALLOWED_ADMIN_MATRICULAS`~~ agora a PR [#6](https://github.com/c1c3ru/AlmoxarifadoTI/pull/6) força `role: "tech"` no servidor, ignorando o que o cliente enviar | Formulário ainda mostra a opção `role: admin` (`register.tsx`), mas isso não tem mais efeito no backend | ✅ **Corrigido pela PR #6** (ver §5.5) — antes: ⚠️ a única barreira para virar admin por autorregistro era uma lista de ~140 matrículas que **vazava no bundle JS público** (F07, auditoria anterior; removida do bundle pela PR [#5](https://github.com/c1c3ru/AlmoxarifadoTI/pull/5)) |
 | `PUT /api/users/me/password` | `authenticateJWT` **+** escopo travado em `req.user.sub` (nunca aceita `id` de outro usuário) + confere `currentPassword` via bcrypt | Acessível a todos, mas sempre opera na própria conta | ✅ correto — auto-escopo bem implementado |
 
 ### 4.2 Gestão de usuários (`server/routes/users.ts`, montado em `/api/users`) — área "admin" no frontend
@@ -229,7 +235,7 @@ Combinando 5.1 com o fluxo público de recuperação de senha:
 Isso já está catalogado como F03 na auditoria anterior; ele é reafirmado aqui porque é a
 consequência direta e mais grave de 5.1 — a correção de 5.1 elimina esta cadeia por completo.
 
-### ⚠️ 5.5 — Autorregistro público como administrador depende só de uma lista secreta que não é secreta
+### ⚠️ 5.5 — Autorregistro público como administrador depende só de uma lista secreta que não é secreta — ✅ CORRIGIDO (PRs #5 e #6)
 
 **Rota:** `POST /api/register` · **Arquivos:** `shared/allowed-admins.ts`, `register.tsx:13,56`,
 `users.tsx:22,35`
@@ -272,12 +278,19 @@ padrão certo já existe no código — só não foi replicado nas rotas acima:
 
 | Prioridade | Ação | Rotas afetadas | Status |
 |---|---|---|---|
-| **P0 — bloqueador** | Tornar a autenticação segura por padrão: `ENABLE_JWT` agora só desliga a autenticação se setado explicitamente para `"false"`/`"0"` — a ausência da variável mantém a autenticação **ligada** (antes era o oposto) | Todas | ✅ **Corrigido** (`server/auth.ts`) — optou-se por inverter o padrão em vez de `process.exit(1)` no boot (como faz `JWT_SECRET`) para não derrubar em produção um deploy que hoje já roda sem essa variável; ver nota de risco operacional abaixo |
-| **P0 — bloqueador** | Criar middleware `requireAdmin` e aplicar em `GET/POST/PUT /api/users`, `POST/PUT/DELETE /api/categories/:id`, `DELETE /api/items/:id` | 8 rotas listadas em 5.1–5.3 | ✅ **Corrigido** (`server/auth.ts`, `server/routes/users.ts`, `server/routes/inventory.ts`) |
-| **P1 — alto** | Em `PUT /api/users/:id`, mesmo após `requireAdmin`, considerar reautenticação (senha atual) para trocar o próprio e-mail, e notificar o e-mail antigo em qualquer troca | `PUT /api/users/:id` | ⏳ Em aberto — a rota já exige admin agora (fecha a cadeia crítica de 5.4), mas a reautenticação extra por e-mail não foi implementada nesta rodada |
-| **P1 — alto** | Em `POST /api/movements`, ignorar `userId` do corpo e usar sempre `req.user.sub` | `POST /api/movements` | ✅ **Corrigido** (`server/routes/inventory.ts`) |
-| **P2 — médio** | Remover a lista real de `ALLOWED_ADMIN_MATRICULAS` do bundle do cliente; validar só formato no React | `shared/allowed-admins.ts`, `register.tsx`, `users.tsx` | ⏳ Em aberto |
-| **P2 — médio** | Definir `ALLOWED_ORIGINS` como obrigatório em produção (nega por padrão se ausente) — já catalogado como F05 | `server/app.ts:54-64` | ✅ **Corrigido** — nega por padrão quando `NODE_ENV=production` e a variável está ausente |
+| **P0 — bloqueador** | Tornar a autenticação segura por padrão: `ENABLE_JWT` agora só desliga a autenticação se setado explicitamente para `"false"`/`"0"` — a ausência da variável mantém a autenticação **ligada** (antes era o oposto) | Todas | ✅ **Corrigido neste branch** (`server/auth.ts`) — nenhuma das PRs #4/#5/#6 tocou nisso. Optou-se por inverter o padrão em vez de `process.exit(1)` no boot para não derrubar em produção um deploy que hoje já roda sem essa variável; a checagem de força do `JWT_SECRET` (endurecida pela #5) passou a rodar também sempre que `NODE_ENV=production`, além de quando `ENABLE_JWT` é ligado explicitamente — sem isso, um deploy em produção sem `ENABLE_JWT` setado passaria a exigir auth (com a inversão de padrão) sem nunca ter validado a força do segredo. Ver nota de risco operacional abaixo. |
+| **P0 — bloqueador** | Criar middleware `requireAdmin` e aplicar em `GET/POST/PUT /api/users`, `POST/PUT/DELETE /api/categories/:id`, `DELETE /api/items/:id` | 8 rotas listadas em 5.1–5.3 | ✅ **Corrigido, dividido entre a PR [#6](https://github.com/c1c3ru/AlmoxarifadoTI/pull/6) e este branch** — #6 criou o middleware `requireAdmin` e já tinha aplicado em `POST /api/users` e `PUT /api/users/:id` (e refatorado `DELETE /api/users/:id` para usá-lo). Este branch aplicou nas 4 rotas que #6 não cobriu: `GET /api/users`, `POST/PUT/DELETE /api/categories/:id` e `DELETE /api/items/:id`. Reconciliado por merge de `main`, sem duplicação. |
+| **P1 — alto** | Em `PUT /api/users/:id`, mesmo após `requireAdmin`, considerar reautenticação (senha atual) para trocar o próprio e-mail, e notificar o e-mail antigo em qualquer troca | `PUT /api/users/:id` | ⏳ Em aberto — a rota já exige admin (fecha a cadeia crítica de 5.4), mas a reautenticação extra por e-mail não foi implementada em nenhuma das PRs |
+| **P1 — alto** | Em `POST /api/movements`, ignorar `userId` do corpo e usar sempre `req.user.sub` | `POST /api/movements` | ✅ **Corrigido pela PR [#6](https://github.com/c1c3ru/AlmoxarifadoTI/pull/6)** — injeta `userId: currentUser.sub` no corpo antes de validar com `insertMovementSchema`. Este branch tinha uma correção equivalente (aplicada depois da validação); removida no merge para não duplicar a mesma proteção de duas formas diferentes no mesmo handler. |
+| **P2 — médio** | Remover a lista real de `ALLOWED_ADMIN_MATRICULAS` do bundle do cliente; validar só formato no React | `shared/allowed-admins.ts`, `register.tsx`, `users.tsx` | ✅ **Corrigido pela PR [#5](https://github.com/c1c3ru/AlmoxarifadoTI/pull/5)** — `register.tsx`/`users.tsx` não importam mais `shared/allowed-admins.ts`; a validação real continua só no backend (`shared/schema.ts`), que responde 400 e é mapeado de volta para o campo do formulário. A mesma PR também endureceu a checagem de `JWT_SECRET` fraco para rodar sempre que `ENABLE_JWT` está ligado, não só quando `NODE_ENV=production`. A PR [#6](https://github.com/c1c3ru/AlmoxarifadoTI/pull/6), à parte, também passou a forçar `role: "tech"` no servidor em `POST /api/register` independentemente do que o cliente envie (fecha a variante de auto-registro público do mesmo problema, discutida em §5.5). |
+| **P2 — médio** | Definir `ALLOWED_ORIGINS` como obrigatório em produção (nega por padrão se ausente) — já catalogado como F05 | `server/app.ts:54-64` | ✅ **Corrigido neste branch** — nega por padrão quando `NODE_ENV=production` e a variável está ausente; nenhuma das outras PRs tocou nisso |
+
+Como bônus, a PR [#4](https://github.com/c1c3ru/AlmoxarifadoTI/pull/4) corrigiu uma categoria inteira de achados que não fazia parte
+do escopo original deste relatório (autorização): vazamento de dados sensíveis em logs e mensagens
+de erro (código de recuperação de senha em texto puro no log, `error.message` cru repassado ao
+cliente em respostas 500, corpo de resposta com token JWT sendo logado, e-mail do destinatário e
+resposta bruta do SMTP no log de envio de e-mail) — ver
+`docs/security-audit/logs-error-handling-findings.md`, adicionado por aquela PR.
 
 ### Nota de risco operacional (ENABLE_JWT)
 

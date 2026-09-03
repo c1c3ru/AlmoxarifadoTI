@@ -195,13 +195,7 @@ router.post("/movements", authenticateJWT, async (req, res) => {
             }
         }
 
-        // 🔒 SECURITY: a autoria da movimentação vem do token, nunca do corpo
-        // enviado pelo cliente — evita que um usuário atribua a movimentação
-        // a outra pessoa. Só cai no valor do corpo se a autenticação estiver
-        // explicitamente desligada (ENABLE_JWT=false), quando não há usuário
-        // verificado nenhum para usar.
-        const authenticatedUserId = req.user?.sub ?? validation.data.userId;
-        const movement = await storage.createMovement({ ...validation.data, userId: authenticatedUserId });
+        const movement = await storage.createMovement(validation.data);
         res.status(201).json(movement);
     } catch (error) {
         logError("Create movement error:", error);
