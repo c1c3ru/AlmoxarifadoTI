@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { storage } from "../storage";
-import { authenticateJWT } from "../auth";
+import { authenticateJWT, requireAdmin } from "../auth";
 import { insertCategorySchema, insertItemSchema, insertMovementSchema } from "@shared/schema";
 import rateLimit from "express-rate-limit";
 import * as XLSX from "xlsx";
@@ -11,12 +11,6 @@ const router = Router();
 // Gestão de categorias (criar/editar/excluir) é uma tela restrita a admins no
 // frontend (AdminRoute) — a leitura continua liberada para qualquer usuário
 // autenticado, que precisa das categorias para cadastrar/filtrar itens.
-function requireAdmin(req: import("express").Request, res: import("express").Response, next: import("express").NextFunction) {
-    if (req.user?.role !== "admin") {
-        return res.status(403).json({ message: "Apenas administradores podem gerenciar categorias" });
-    }
-    next();
-}
 
 const importLimiter = rateLimit({
     windowMs: 5 * 60 * 1000,
