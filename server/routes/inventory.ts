@@ -8,6 +8,10 @@ import { logError } from "../logger";
 
 const router = Router();
 
+// Gestão de categorias (criar/editar/excluir) é uma tela restrita a admins no
+// frontend (AdminRoute) — a leitura continua liberada para qualquer usuário
+// autenticado, que precisa das categorias para cadastrar/filtrar itens.
+
 const importLimiter = rateLimit({
     windowMs: 5 * 60 * 1000,
     max: 20,

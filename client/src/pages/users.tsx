@@ -19,10 +19,10 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import type { User } from "@shared/schema";
 
-// A verificação contra a lista real de matrículas autorizadas para admin é
-// feita exclusivamente no backend (shared/schema.ts / server/routes/users.ts),
-// que retorna 400 se a matrícula não for permitida. Isso evita embutir a
-// lista de matrículas administrativas no bundle público do cliente.
+// A validação de matrícula autorizada para o perfil "admin" é feita pelo
+// servidor (server/allowed-admins.ts / server/routes/users.ts), que retorna
+// 400 se a matrícula não for permitida — nunca embutida no bundle público do
+// cliente. Erro tratado no onError das mutations abaixo.
 const userSchema = z.object({
   username: z.string().min(3, "Username deve ter pelo menos 3 caracteres"),
   password: z.string().optional().refine((val) => !val || val.length >= 6, {

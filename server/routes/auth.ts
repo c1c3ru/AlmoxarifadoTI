@@ -1,7 +1,8 @@
 import { Router } from "express";
 import { storage } from "../storage";
-import { authenticateJWT, isAuthEnabled, generateToken } from "../auth";
+import { authenticateJWT, generateToken } from "../auth";
 import { insertUserSchema } from "@shared/schema";
+import { isAllowedAdminMatricula } from "../allowed-admins";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { emailService } from "../email";
@@ -17,8 +18,15 @@ const loginLimiter = rateLimit({
     message: { message: "Muitas tentativas de login. Tente novamente após 15 minutos." },
 });
 
+// Limitador para endpoints públicos sensíveis (registro e recuperação/redefinição de senha)
+const sensitiveActionLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 10,
+    message: { message: "Muitas solicitações. Tente novamente após 15 minutos." },
+});
+
 // Password recovery endpoint
-router.post("/password-recovery", async (req, res) => {
+router.post("/password-recovery", sensitiveActionLimiter, async (req, res) => {
     try {
         const { usernameOrEmail } = req.body;
         if (!usernameOrEmail) {
@@ -51,7 +59,7 @@ router.post("/password-recovery", async (req, res) => {
 });
 
 // Password reset endpoint
-router.post("/password-reset", async (req, res) => {
+router.post("/password-reset", sensitiveActionLimiter, async (req, res) => {
     try {
         const { usernameOrEmail, code, newPassword } = req.body;
 
@@ -105,16 +113,12 @@ router.post("/auth/login", loginLimiter, async (req, res) => {
 
         const { password: _, ...userWithoutPassword } = user;
 
-        if (isAuthEnabled()) {
-            const token = generateToken({
-                sub: user.id,
-                username: user.username,
-                role: user.role,
-            });
-            return res.json({ user: userWithoutPassword, token });
-        }
-
-        res.json({ user: userWithoutPassword });
+        const token = generateToken({
+            sub: user.id,
+            username: user.username,
+            role: user.role,
+        });
+        res.json({ user: userWithoutPassword, token });
     } catch (error) {
         logError("Login error:", error);
         res.status(500).json({ message: "Internal server error" });
@@ -122,12 +126,19 @@ router.post("/auth/login", loginLimiter, async (req, res) => {
 });
 
 // Registro público
-router.post("/register", async (req, res) => {
+router.post("/register", sensitiveActionLimiter, async (req, res) => {
     try {
         // 🔒 SECURITY: cadastro público sempre cria conta "tech" — role nunca vem do cliente
         const validation = insertUserSchema.safeParse({ ...req.body, role: "tech" });
         if (!validation.success) {
             return res.status(400).json({ message: "Dados inválidos", errors: validation.error.issues });
+        }
+
+        if (validation.data.role === "admin" && !isAllowedAdminMatricula(validation.data.matricula)) {
+            return res.status(400).json({
+                message: "Invalid user data",
+                errors: [{ path: ["matricula"], message: "Matrícula não autorizada para perfil de administrador" }],
+            });
         }
 
         const user = await storage.createUser(validation.data);

@@ -45,11 +45,17 @@ npm run db:push
 Crie `.env` na raiz com, por exemplo:
 ```
 DATABASE_URL=postgres://user:pass@host:port/db
-SESSION_SECRET=uma_chave_secreta_segura
+JWT_SECRET=uma_chave_secreta_com_pelo_menos_32_caracteres
 # Opcional
 PORT=3000
 NODE_ENV=development
+JWT_EXPIRES_IN=8h
+ALLOWED_ORIGINS=https://seu-dominio.com
 ```
+
+Autenticação via JWT é sempre obrigatória (não há flag para desativá-la). Em
+produção (`NODE_ENV=production`), o servidor recusa iniciar se `JWT_SECRET`
+não estiver definido ou tiver menos de 32 caracteres.
 
 ## Desenvolvimento
 1. Rodar backend (com API e assets do client servidos pelo server de dev):
@@ -97,7 +103,7 @@ shared/
 - Câmera não abre: verifique permissões do navegador e protocolo (HTTPS/localhost).
 - QR não reconhecido: garanta que o conteúdo do QR corresponde ao código interno do item cadastrado.
 - Erro de banco: confirme `DATABASE_URL` e execute `npm run db:push`.
-- Sessão/Autenticação: confirme `SESSION_SECRET` e cookies habilitados.
+- Sessão/Autenticação: confirme `JWT_SECRET` definido (obrigatório em produção) e que o token está sendo enviado no header `Authorization: Bearer <token>`.
 
 ## Licença
 MIT
