@@ -2,7 +2,6 @@ import { sql } from "drizzle-orm";
 import { pgTable, text, integer, timestamp, uuid, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
-import { ALLOWED_ADMIN_MATRICULAS } from "./allowed-admins";
 
 export const users = pgTable("users", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -88,13 +87,9 @@ export const insertUserSchema = baseInsertUserSchema.superRefine((data, ctx) => 
     });
   }
 
-  if (role === "admin" && !ALLOWED_ADMIN_MATRICULAS.includes(matricula)) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: "Matrícula não autorizada para perfil de administrador",
-      path: ["matricula"],
-    });
-  }
+  // A checagem de matrícula autorizada para role "admin" é feita só no servidor
+  // (server/allowed-admins.ts), pois este schema é compartilhado com o bundle do
+  // cliente e não deve carregar a lista de matrículas autorizadas.
 });
 
 export const insertCategorySchema = createInsertSchema(categories).omit({

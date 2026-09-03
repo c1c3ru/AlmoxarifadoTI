@@ -1,12 +1,16 @@
 import { Router } from "express";
 import { storage } from "../storage";
-import { authenticateJWT } from "../auth";
+import { authenticateJWT, requireAdmin } from "../auth";
 import { insertCategorySchema, insertItemSchema, insertMovementSchema } from "@shared/schema";
 import rateLimit from "express-rate-limit";
 import * as XLSX from "xlsx";
 import { logError } from "../logger";
 
 const router = Router();
+
+// Gestão de categorias (criar/editar/excluir) é uma tela restrita a admins no
+// frontend (AdminRoute) — a leitura continua liberada para qualquer usuário
+// autenticado, que precisa das categorias para cadastrar/filtrar itens.
 
 const importLimiter = rateLimit({
     windowMs: 5 * 60 * 1000,
@@ -35,7 +39,7 @@ router.get("/categories/with-counts", authenticateJWT, async (_req, res) => {
     }
 });
 
-router.post("/categories", authenticateJWT, async (req, res) => {
+router.post("/categories", authenticateJWT, requireAdmin, async (req, res) => {
     try {
         const validation = insertCategorySchema.safeParse(req.body);
         if (!validation.success) {
@@ -49,7 +53,7 @@ router.post("/categories", authenticateJWT, async (req, res) => {
     }
 });
 
-router.put("/categories/:id", authenticateJWT, async (req, res) => {
+router.put("/categories/:id", authenticateJWT, requireAdmin, async (req, res) => {
     try {
         const { id } = req.params;
         const validation = insertCategorySchema.partial().safeParse(req.body);
@@ -65,7 +69,7 @@ router.put("/categories/:id", authenticateJWT, async (req, res) => {
     }
 });
 
-router.delete("/categories/:id", authenticateJWT, async (req, res) => {
+router.delete("/categories/:id", authenticateJWT, requireAdmin, async (req, res) => {
     try {
         const { id } = req.params;
         const success = await storage.deleteCategory(id);

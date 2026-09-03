@@ -52,10 +52,11 @@ const registerSchema = z
       });
     }
 
-    // A verificação contra a lista real de matrículas autorizadas para admin
-    // é feita exclusivamente no backend (shared/schema.ts), que retorna 400
-    // e é mapeado para o campo "matricula" em onSubmit. Isso evita embutir a
-    // lista de matrículas administrativas no bundle público do cliente.
+    // A validação de matrícula autorizada para o perfil "admin" é feita pelo
+    // servidor (server/allowed-admins.ts) e nunca embutida no bundle público
+    // do cliente. Na prática, POST /api/register sempre cria conta "tech"
+    // (role vem fixo do servidor); contas admin só são criadas por um admin
+    // já autenticado via POST /api/users.
 
     // Validações de segurança para senha
     if (val.password === val.email) {

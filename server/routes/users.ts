@@ -2,12 +2,13 @@ import { Router } from "express";
 import { storage } from "../storage";
 import { authenticateJWT, requireAdmin } from "../auth";
 import { insertUserSchema, baseInsertUserSchema } from "@shared/schema";
+import { isAllowedAdminMatricula } from "../allowed-admins";
 import { logError } from "../logger";
 
 const router = Router();
 
 // Admin: Listar usuários
-router.get("/", authenticateJWT, async (_req, res) => {
+router.get("/", authenticateJWT, requireAdmin, async (_req, res) => {
     try {
         const users = await storage.getAllUsers();
         const usersWithoutPasswords = users.map(({ password, ...user }) => user);
@@ -24,6 +25,13 @@ router.post("/", authenticateJWT, requireAdmin, async (req, res) => {
         const validation = insertUserSchema.safeParse(req.body);
         if (!validation.success) {
             return res.status(400).json({ message: "Invalid user data", errors: validation.error.issues });
+        }
+
+        if (validation.data.role === "admin" && !isAllowedAdminMatricula(validation.data.matricula)) {
+            return res.status(400).json({
+                message: "Invalid user data",
+                errors: [{ path: ["matricula"], message: "Matrícula não autorizada para perfil de administrador" }],
+            });
         }
 
         const user = await storage.createUser(validation.data);
@@ -67,12 +75,7 @@ router.put("/:id", authenticateJWT, requireAdmin, async (req, res) => {
                 const finalRole = updateData.role || currentUser.role;
                 const finalMatricula = updateData.matricula || currentUser.matricula;
 
-                // Importar a lista aqui ou mover a validação para storage (mas roteador é ok para validação http)
-                // Usando a validação do schema refinado seria ideal, mas partial quebra
-                // Vamos recriar a validação manualmente aqui para garantir
-                const { ALLOWED_ADMIN_MATRICULAS } = await import("@shared/allowed-admins");
-
-                if (finalRole === 'admin' && !ALLOWED_ADMIN_MATRICULAS.includes(finalMatricula)) {
+                if (finalRole === 'admin' && !isAllowedAdminMatricula(finalMatricula)) {
                     return res.status(400).json({
                         message: "Invalid user data",
                         errors: [{ path: ["matricula"], message: "Matrícula não autorizada para perfil de administrador" }]
@@ -106,8 +109,7 @@ router.put("/:id", authenticateJWT, requireAdmin, async (req, res) => {
 router.delete("/:id", authenticateJWT, requireAdmin, async (req, res) => {
     try {
         const { id } = req.params;
-        const currentUser = req.user;
-        if (!currentUser) return res.status(401).json({ message: "Unauthorized" });
+        const currentUser = req.user!;
 
         if (currentUser.sub === id) {
             return res.status(400).json({ message: "Você não pode deletar sua própria conta" });
