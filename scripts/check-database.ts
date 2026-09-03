@@ -19,7 +19,9 @@ async function checkDatabase() {
                 console.log(`📊 ${table}: ${count} registros`);
 
                 if (table === 'users' && count > 0) {
-                    const sample = await sql(`SELECT id, username, email, role, is_active FROM "${table}" LIMIT 3`);
+                    // Não seleciona email/password aqui: script de diagnóstico não deve
+                    // imprimir PII no console.
+                    const sample = await sql(`SELECT id, username, role, is_active FROM "${table}" LIMIT 3`);
                     console.log(`   Amostra:`, sample);
                 }
             } catch (error: any) {

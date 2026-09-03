@@ -102,6 +102,9 @@ export const insertItemSchema = createInsertSchema(items).omit({
   internalCode: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  currentStock: z.number().int().min(0, "Estoque atual não pode ser negativo"),
+  minStock: z.number().int().min(0, "Estoque mínimo não pode ser negativo"),
 });
 
 export const insertMovementSchema = createInsertSchema(movements).omit({

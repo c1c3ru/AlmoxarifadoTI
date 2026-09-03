@@ -7,6 +7,7 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { emailService } from "../email";
 import rateLimit from "express-rate-limit";
+import { logError } from "../logger";
 
 const router = Router();
 
@@ -44,7 +45,7 @@ router.post("/password-recovery", sensitiveActionLimiter, async (req, res) => {
 
         await storage.createPasswordReset(user.id.toString(), resetCode, expiresAt);
 
-        console.log(`[password-recovery] Generated code ${resetCode} for user ${user.username} (ID: ${user.id})`);
+        console.log(`[password-recovery] Reset code generated for user ID ${user.id}`);
 
         await emailService.sendPasswordResetEmail(user.email, resetCode, user.username);
 
@@ -52,7 +53,7 @@ router.post("/password-recovery", sensitiveActionLimiter, async (req, res) => {
             message: "Se existir uma conta para este usuário/email, enviaremos instruções de recuperação."
         });
     } catch (error) {
-        console.error('[password-recovery] Error:', error);
+        logError('[password-recovery] Error:', error);
         res.status(500).json({ message: "Erro interno do servidor" });
     }
 });
@@ -87,7 +88,7 @@ router.post("/password-reset", sensitiveActionLimiter, async (req, res) => {
         await storage.deletePasswordReset(user.id.toString());
         res.status(200).json({ message: "Senha redefinida com sucesso" });
     } catch (error) {
-        console.error('[password-reset] Error:', error);
+        logError('[password-reset] Error:', error);
         res.status(500).json({ message: "Erro interno do servidor" });
     }
 });
@@ -119,7 +120,7 @@ router.post("/auth/login", loginLimiter, async (req, res) => {
         });
         res.json({ user: userWithoutPassword, token });
     } catch (error) {
-        console.error("Login error:", error);
+        logError("Login error:", error);
         res.status(500).json({ message: "Internal server error" });
     }
 });
@@ -127,7 +128,8 @@ router.post("/auth/login", loginLimiter, async (req, res) => {
 // Registro público
 router.post("/register", sensitiveActionLimiter, async (req, res) => {
     try {
-        const validation = insertUserSchema.safeParse(req.body);
+        // 🔒 SECURITY: cadastro público sempre cria conta "tech" — role nunca vem do cliente
+        const validation = insertUserSchema.safeParse({ ...req.body, role: "tech" });
         if (!validation.success) {
             return res.status(400).json({ message: "Dados inválidos", errors: validation.error.issues });
         }
@@ -156,7 +158,7 @@ router.post("/register", sensitiveActionLimiter, async (req, res) => {
             return res.status(409).json({ message: "Registro duplicado" });
         }
 
-        console.error("Register user error:", error);
+        logError("Register user error:", error);
         res.status(500).json({ message: "Erro interno do servidor" });
     }
 });
@@ -187,7 +189,7 @@ router.put("/users/me/password", authenticateJWT, async (req, res) => {
 
         res.status(200).json({ message: "Senha alterada com sucesso" });
     } catch (error) {
-        console.error("Change password error:", error);
+        logError("Change password error:", error);
         res.status(500).json({ message: "Erro interno do servidor" });
     }
 });

@@ -1,21 +1,11 @@
 import { Router } from "express";
 import { storage } from "../storage";
-import { authenticateJWT } from "../auth";
+import { authenticateJWT, requireAdmin } from "../auth";
 import { insertUserSchema, baseInsertUserSchema } from "@shared/schema";
 import { isAllowedAdminMatricula } from "../allowed-admins";
+import { logError } from "../logger";
 
 const router = Router();
-
-// Todas as rotas deste arquivo são de gestão de usuários e só devem ser
-// acessíveis a administradores (o próprio frontend só expõe estas telas
-// dentro de um AdminRoute) — troca de senha própria tem rota dedicada em
-// PUT /users/me/password.
-function requireAdmin(req: import("express").Request, res: import("express").Response, next: import("express").NextFunction) {
-    if (req.user?.role !== "admin") {
-        return res.status(403).json({ message: "Apenas administradores podem acessar este recurso" });
-    }
-    next();
-}
 
 // Admin: Listar usuários
 router.get("/", authenticateJWT, requireAdmin, async (_req, res) => {
@@ -24,7 +14,7 @@ router.get("/", authenticateJWT, requireAdmin, async (_req, res) => {
         const usersWithoutPasswords = users.map(({ password, ...user }) => user);
         res.json(usersWithoutPasswords);
     } catch (error) {
-        console.error("Users error:", error);
+        logError("Users error:", error);
         res.status(500).json({ message: "Internal server error" });
     }
 });
@@ -58,7 +48,7 @@ router.post("/", authenticateJWT, requireAdmin, async (req, res) => {
             return res.status(409).json({ message: "Registro duplicado" });
         }
 
-        console.error("Create user error:", error);
+        logError("Create user error:", error);
         res.status(500).json({ message: "Internal server error" });
     }
 });
@@ -110,7 +100,7 @@ router.put("/:id", authenticateJWT, requireAdmin, async (req, res) => {
             return res.status(409).json({ message: "Registro duplicado" });
         }
 
-        console.error("Update user error:", error);
+        logError("Update user error:", error);
         res.status(500).json({ message: "Internal server error" });
     }
 });
@@ -140,8 +130,8 @@ router.delete("/:id", authenticateJWT, requireAdmin, async (req, res) => {
 
         res.status(204).send();
     } catch (error: any) {
-        console.error("Delete user error:", error);
-        res.status(500).json({ message: error?.message || "Erro interno do servidor" });
+        logError("Delete user error:", error);
+        res.status(500).json({ message: "Erro interno do servidor" });
     }
 });
 

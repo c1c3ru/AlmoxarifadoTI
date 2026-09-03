@@ -2,7 +2,12 @@ import jwt, { type Secret, type SignOptions } from "jsonwebtoken";
 import type { Request, Response, NextFunction } from "express";
 import { storage } from "./storage";
 
-// 🔒 SECURITY: Validate JWT_SECRET in production
+// 🔒 SECURITY: Validate JWT_SECRET in production. Autenticação em si é
+// sempre obrigatória (não existe mais flag para desativá-la); esta checagem
+// adicional garante que, em produção, o segredo usado para assinar/validar
+// tokens nunca seja o valor padrão committado no repositório. Mantida
+// restrita a NODE_ENV=production para não exigir configuração extra em
+// ambientes de desenvolvimento local (veja README).
 const JWT_SECRET_RAW = process.env.JWT_SECRET || "change-me-in-prod";
 
 if (process.env.NODE_ENV === "production") {
@@ -40,6 +45,16 @@ export function generateToken(payload: JwtPayload) {
   const expiresIn = process.env.JWT_EXPIRES_IN || "8h";
   const options: SignOptions = { expiresIn } as SignOptions;
   return jwt.sign(payload, JWT_SECRET, options);
+}
+
+export function requireAdmin(req: Request, res: Response, next: NextFunction) {
+  if (!req.user) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+  if (req.user.role !== "admin") {
+    return res.status(403).json({ message: "Apenas administradores podem realizar esta ação" });
+  }
+  return next();
 }
 
 export async function authenticateJWT(req: Request, res: Response, next: NextFunction) {

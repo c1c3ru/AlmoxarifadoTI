@@ -4,6 +4,7 @@ import { authenticateJWT } from "../auth";
 import { insertCategorySchema, insertItemSchema, insertMovementSchema } from "@shared/schema";
 import rateLimit from "express-rate-limit";
 import * as XLSX from "xlsx";
+import { logError } from "../logger";
 
 const router = Router();
 
@@ -29,7 +30,7 @@ router.get("/categories", authenticateJWT, async (_req, res) => {
         const categories = await storage.getAllCategories();
         res.json(categories);
     } catch (error) {
-        console.error("Categories error:", error);
+        logError("Categories error:", error);
         res.status(500).json({ message: "Internal server error" });
     }
 });
@@ -39,7 +40,7 @@ router.get("/categories/with-counts", authenticateJWT, async (_req, res) => {
         const categoriesWithCounts = await storage.getCategoriesWithItemCount();
         res.json(categoriesWithCounts);
     } catch (error) {
-        console.error("Categories with counts error:", error);
+        logError("Categories with counts error:", error);
         res.status(500).json({ message: "Internal server error" });
     }
 });
@@ -53,7 +54,7 @@ router.post("/categories", authenticateJWT, requireAdmin, async (req, res) => {
         const category = await storage.createCategory(validation.data);
         res.status(201).json(category);
     } catch (error) {
-        console.error("Create category error:", error);
+        logError("Create category error:", error);
         res.status(500).json({ message: "Internal server error" });
     }
 });
@@ -69,7 +70,7 @@ router.put("/categories/:id", authenticateJWT, requireAdmin, async (req, res) =>
         if (!category) return res.status(404).json({ message: "Category not found" });
         res.json(category);
     } catch (error) {
-        console.error("Update category error:", error);
+        logError("Update category error:", error);
         res.status(500).json({ message: "Internal server error" });
     }
 });
@@ -81,7 +82,7 @@ router.delete("/categories/:id", authenticateJWT, requireAdmin, async (req, res)
         if (!success) return res.status(404).json({ message: "Category not found" });
         res.status(204).send();
     } catch (error) {
-        console.error("Delete category error:", error);
+        logError("Delete category error:", error);
         res.status(500).json({ message: "Internal server error" });
     }
 });
@@ -92,7 +93,7 @@ router.get("/items", authenticateJWT, async (_req, res) => {
         const items = await storage.getAllItems();
         res.json(items);
     } catch (error) {
-        console.error("Items error:", error);
+        logError("Items error:", error);
         res.status(500).json({ message: "Internal server error" });
     }
 });
@@ -107,7 +108,7 @@ router.get("/items/search", authenticateJWT, async (req, res) => {
         );
         res.json(items);
     } catch (error) {
-        console.error("Search items error:", error);
+        logError("Search items error:", error);
         res.status(500).json({ message: "Internal server error" });
     }
 });
@@ -119,7 +120,7 @@ router.get("/items/:id", authenticateJWT, async (req, res) => {
         if (!item) return res.status(404).json({ message: "Item not found" });
         res.json(item);
     } catch (error) {
-        console.error("Get item error:", error);
+        logError("Get item error:", error);
         res.status(500).json({ message: "Internal server error" });
     }
 });
@@ -133,7 +134,7 @@ router.post("/items", authenticateJWT, async (req, res) => {
         const item = await storage.createItem(validation.data);
         res.status(201).json(item);
     } catch (error) {
-        console.error("Create item error:", error);
+        logError("Create item error:", error);
         res.status(500).json({ message: "Internal server error" });
     }
 });
@@ -149,7 +150,7 @@ router.put("/items/:id", authenticateJWT, async (req, res) => {
         if (!item) return res.status(404).json({ message: "Item not found" });
         res.json(item);
     } catch (error) {
-        console.error("Update item error:", error);
+        logError("Update item error:", error);
         res.status(500).json({ message: "Internal server error" });
     }
 });
@@ -161,7 +162,7 @@ router.delete("/items/:id", authenticateJWT, async (req, res) => {
         if (!success) return res.status(404).json({ message: "Item not found" });
         res.status(204).send();
     } catch (error) {
-        console.error("Delete item error:", error);
+        logError("Delete item error:", error);
         res.status(500).json({ message: "Internal server error" });
     }
 });
@@ -176,14 +177,18 @@ router.get("/movements", authenticateJWT, async (req, res) => {
         );
         res.json(movements);
     } catch (error) {
-        console.error("Movements error:", error);
+        logError("Movements error:", error);
         res.status(500).json({ message: "Internal server error" });
     }
 });
 
 router.post("/movements", authenticateJWT, async (req, res) => {
     try {
-        const validation = insertMovementSchema.safeParse(req.body);
+        const currentUser = req.user;
+        if (!currentUser?.sub) return res.status(401).json({ message: "Unauthorized" });
+
+        // 🔒 SECURITY: userId nunca deve vir do cliente — usar sempre a identidade do token JWT
+        const validation = insertMovementSchema.safeParse({ ...req.body, userId: currentUser.sub });
         if (!validation.success) {
             return res.status(400).json({ message: "Invalid movement data", errors: validation.error.issues });
         }
@@ -203,9 +208,8 @@ router.post("/movements", authenticateJWT, async (req, res) => {
         const movement = await storage.createMovement(validation.data);
         res.status(201).json(movement);
     } catch (error) {
-        console.error("Create movement error:", error);
-        const errorMessage = error instanceof Error ? error.message : "Internal server error";
-        res.status(500).json({ message: errorMessage, detail: error });
+        logError("Create movement error:", error);
+        res.status(500).json({ message: "Internal server error" });
     }
 });
 
@@ -231,7 +235,7 @@ router.get("/inventory/export", authenticateJWT, async (_req, res) => {
         res.setHeader('Content-Disposition', `attachment; filename=inventario-${new Date().toISOString().split('T')[0]}.csv`);
         res.send('\ufeff' + csv);
     } catch (error) {
-        console.error("CSV export error:", error);
+        logError("CSV export error:", error);
         res.status(500).json({ message: "Erro ao exportar inventário" });
     }
 });
@@ -261,7 +265,7 @@ router.get("/inventory/export-excel", authenticateJWT, async (_req, res) => {
         res.setHeader('Content-Disposition', `attachment; filename="inventario-${new Date().toISOString().split('T')[0]}.xlsx"`);
         res.send(buffer);
     } catch (error) {
-        console.error("Excel export error:", error);
+        logError("Excel export error:", error);
         res.status(500).json({ message: "Erro ao exportar inventário para Excel" });
     }
 });
@@ -327,7 +331,10 @@ router.post("/inventory/import", authenticateJWT, importLimiter, async (req, res
                 const currentStock = parseInt((currentStockStr || '0').replace(/\D/g, '')) || 0;
                 const minStock = parseInt((minStockStr || '0').replace(/\D/g, '')) || 0;
 
-                if (!name?.trim()) throw new Error("Nome do item não informado");
+                if (!name?.trim()) {
+                    results.errors.push(`Linha ${i + 2}: Nome do item não informado`);
+                    continue;
+                }
 
                 await storage.createItem({
                     name: name.trim(),
@@ -338,13 +345,14 @@ router.post("/inventory/import", authenticateJWT, importLimiter, async (req, res
                     status: 'disponivel',
                 });
                 results.success++;
-            } catch (err: any) {
-                results.errors.push(`Linha ${i + 2}: ${err.message}`);
+            } catch (err) {
+                logError(`CSV import row ${i + 2} error:`, err);
+                results.errors.push(`Linha ${i + 2}: Não foi possível importar este item`);
             }
         }
         res.json(results);
     } catch (error) {
-        console.error("CSV import error:", error);
+        logError("CSV import error:", error);
         res.status(500).json({ message: "Erro ao importar inventário" });
     }
 });

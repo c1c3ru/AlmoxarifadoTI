@@ -20,9 +20,9 @@ import { useAuth } from "@/hooks/use-auth";
 import type { User } from "@shared/schema";
 
 // A validação de matrícula autorizada para o perfil "admin" é feita pelo
-// servidor (a lista não deve ser embutida no bundle público do cliente).
-// Um envio com matrícula não autorizada retorna erro 400 tratado no onError
-// das mutations abaixo.
+// servidor (server/allowed-admins.ts / server/routes/users.ts), que retorna
+// 400 se a matrícula não for permitida — nunca embutida no bundle público do
+// cliente. Erro tratado no onError das mutations abaixo.
 const userSchema = z.object({
   username: z.string().min(3, "Username deve ter pelo menos 3 caracteres"),
   password: z.string().optional().refine((val) => !val || val.length >= 6, {
