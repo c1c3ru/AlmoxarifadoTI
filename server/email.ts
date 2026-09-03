@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import type { Transporter } from 'nodemailer';
+import { logError } from './logger';
 
 interface EmailConfig {
   host: string;
@@ -83,15 +84,10 @@ class EmailService {
       };
 
       await this.transporter.sendMail(mailOptions);
-      console.log(`[email] Password reset email sent to ${email}`);
+      console.log('[email] Password reset email sent successfully');
       return true;
-    } catch (error: any) {
-      console.error('[email] Failed to send password reset email:', {
-        message: error.message,
-        code: error.code,
-        command: error.command,
-        response: error.response
-      });
+    } catch (error) {
+      logError('[email] Failed to send password reset email:', error);
       return false;
     }
   }

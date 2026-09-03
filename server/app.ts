@@ -1,9 +1,11 @@
 // Carrega .env: gerenciado no entry point (index.ts)
 
 import express from "express";
+import type { Request, Response, NextFunction } from "express";
 import cors from "cors";
 import helmet from "helmet";
 import { registerRoutes } from "./routes";
+import { logError } from "./logger";
 // Avoid importing Vite in serverless runtime. Provide a minimal logger here.
 function log(message: string) {
   try {
@@ -68,26 +70,16 @@ export async function createApp() {
   app.use(express.urlencoded({ extended: false, limit: "1mb" }));
 
   // Access log curto para /api em prod
+  // Não captura o corpo da resposta: respostas de auth podem conter o token
+  // JWT, e logar o JSON completo (mesmo truncado) arrisca expor segredos.
   app.use((req, res, next) => {
     const start = Date.now();
     const path = req.path;
-    let capturedJsonResponse: unknown = undefined;
-
-    const originalResJson = res.json.bind(res);
-    res.json = function (bodyJson: unknown) {
-      capturedJsonResponse = bodyJson;
-      return originalResJson(bodyJson);
-    } as typeof res.json;
 
     res.on("finish", () => {
       const duration = Date.now() - start;
       if (path.startsWith("/api")) {
-        let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-        if (capturedJsonResponse) {
-          try { logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`; } catch { }
-        }
-        if (logLine.length > 80) logLine = logLine.slice(0, 79) + "…";
-        log(logLine);
+        log(`${req.method} ${path} ${res.statusCode} in ${duration}ms`);
       }
     });
 
@@ -96,6 +88,22 @@ export async function createApp() {
 
   // Registra rotas API e retorna httpServer (descartado em serverless)
   await registerRoutes(app);
+
+  // Middleware de erro central: precisa vir por último. Cobre qualquer erro
+  // não tratado por um try/catch de rota (ex.: JSON malformado no body, um
+  // throw síncrono em middleware) — tanto em dev quanto no runtime serverless
+  // da Vercel (api/index.ts usa só createApp(), nunca server/index.ts).
+  // Nunca repassa err.message/err.stack ao cliente.
+  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+    logError("[error]", err);
+    if (res.headersSent) return;
+    const status = typeof err?.status === "number"
+      ? err.status
+      : typeof err?.statusCode === "number"
+        ? err.statusCode
+        : 500;
+    res.status(status).json({ message: "Internal server error" });
+  });
 
   // Em dev local com Vite, o caller decide se chama setupVite/serveStatic
   return app;

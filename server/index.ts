@@ -1,5 +1,4 @@
 // Carrega .env apenas em desenvolvimento, não em produção (Vercel)
-import type { Request, Response, NextFunction } from "express";
 
 (async () => {
   if (process.env.NODE_ENV !== "production") {
@@ -13,19 +12,9 @@ import type { Request, Response, NextFunction } from "express";
 
   const { app, server } = await createDevServer();
 
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err?.status || err?.statusCode || 500;
-    const message = err?.message || "Internal Server Error";
-    // Log estruturado (sem lançar após responder)
-    console.error("[error]", {
-      status,
-      message,
-      stack: app.get("env") === "development" ? err?.stack : undefined,
-    });
-    if (!res.headersSent) {
-      res.status(status).json({ message });
-    }
-  });
+  // O middleware de erro central já é registrado dentro de createApp()
+  // (server/app.ts) — cobre tanto este servidor de dev quanto o runtime
+  // serverless da Vercel (api/index.ts).
 
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
