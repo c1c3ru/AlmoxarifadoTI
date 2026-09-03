@@ -9,18 +9,21 @@
 **Data:** 2026-09-03 · **Branch:** `claude/authorization-backend-frontend-audit-529sur`
 **Stack:** Express 4 + Drizzle/Postgres (backend) · React 18 + Wouter + TanStack Query (frontend) · JWT (`jsonwebtoken`) + bcrypt
 
-> **Atualização:** todos os itens P0/P1/P2 da Seção 7 já foram corrigidos — parte em sessões
-> paralelas que investigaram o mesmo sistema e mergearam em `main` enquanto este relatório era
-> escrito ([#4](https://github.com/c1c3ru/AlmoxarifadoTI/pull/4) logs/erros, [#5](https://github.com/c1c3ru/AlmoxarifadoTI/pull/5) matrículas no bundle +
-> `JWT_SECRET`, [#6](https://github.com/c1c3ru/AlmoxarifadoTI/pull/6) `requireAdmin` em `POST/PUT /api/users` + autoria de
-> `POST /api/movements`), parte neste mesmo branch (o restante do `requireAdmin` que #6 não
-> cobriu — `GET /api/users`, as 3 rotas de `/api/categories` e `DELETE /api/items/:id` —, o
-> `ENABLE_JWT` seguro por padrão, que nenhuma das outras PRs tocou, e CORS deny-by-default em
-> produção). Os dois conjuntos foram reconciliados por merge de `main` neste branch, com os
-> pontos de sobreposição resolvidos a favor de uma única implementação (sem duplicar lógica).
-> Os vereditos 🔴/🟠 abaixo descrevem o estado **antes** de qualquer uma dessas correções; cada
-> um foi marcado com "✅ Corrigido" onde já resolvido. Ver Seção 7 para a atribuição exata de
-> qual PR corrigiu o quê.
+> **Atualização:** todos os itens P0/P1/P2 da Seção 7 já foram corrigidos — a maior parte em
+> quatro sessões paralelas que investigaram o mesmo sistema e mergearam em `main` enquanto este
+> relatório era escrito ([#4](https://github.com/c1c3ru/AlmoxarifadoTI/pull/4) logs/erros,
+> [#5](https://github.com/c1c3ru/AlmoxarifadoTI/pull/5) matrículas no bundle,
+> [#6](https://github.com/c1c3ru/AlmoxarifadoTI/pull/6) `requireAdmin` em `POST/PUT /api/users` +
+> autoria de `POST /api/movements`, [#7](https://github.com/c1c3ru/AlmoxarifadoTI/pull/7) remove
+> a flag `ENABLE_JWT` por completo — autenticação sempre obrigatória — e completa `requireAdmin`
+> em `GET /api/users` e no CRUD de `/api/categories`). O que sobrou de exclusivo deste branch,
+> depois de reconciliar três vezes com `main` por merge (sem duplicar lógica nos pontos em que
+> mais de uma sessão consertou a mesma rota): `requireAdmin` em `DELETE /api/items/:id` — a única
+> rota do achado original que nenhuma das quatro PRs cobriu — e CORS deny-by-default em produção
+> quando `ALLOWED_ORIGINS` não está configurado, que a #7 deliberadamente deixou de fora do
+> escopo dela. Os vereditos 🔴/🟠 abaixo descrevem o estado **antes** de qualquer uma dessas
+> correções; cada um foi marcado com "✅ Corrigido" onde já resolvido. Ver Seção 7 para a
+> atribuição exata de qual PR corrigiu o quê.
 
 ---
 
@@ -278,12 +281,12 @@ padrão certo já existe no código — só não foi replicado nas rotas acima:
 
 | Prioridade | Ação | Rotas afetadas | Status |
 |---|---|---|---|
-| **P0 — bloqueador** | Tornar a autenticação segura por padrão: `ENABLE_JWT` agora só desliga a autenticação se setado explicitamente para `"false"`/`"0"` — a ausência da variável mantém a autenticação **ligada** (antes era o oposto) | Todas | ✅ **Corrigido neste branch** (`server/auth.ts`) — nenhuma das PRs #4/#5/#6 tocou nisso. Optou-se por inverter o padrão em vez de `process.exit(1)` no boot para não derrubar em produção um deploy que hoje já roda sem essa variável; a checagem de força do `JWT_SECRET` (endurecida pela #5) passou a rodar também sempre que `NODE_ENV=production`, além de quando `ENABLE_JWT` é ligado explicitamente — sem isso, um deploy em produção sem `ENABLE_JWT` setado passaria a exigir auth (com a inversão de padrão) sem nunca ter validado a força do segredo. Ver nota de risco operacional abaixo. |
-| **P0 — bloqueador** | Criar middleware `requireAdmin` e aplicar em `GET/POST/PUT /api/users`, `POST/PUT/DELETE /api/categories/:id`, `DELETE /api/items/:id` | 8 rotas listadas em 5.1–5.3 | ✅ **Corrigido, dividido entre a PR [#6](https://github.com/c1c3ru/AlmoxarifadoTI/pull/6) e este branch** — #6 criou o middleware `requireAdmin` e já tinha aplicado em `POST /api/users` e `PUT /api/users/:id` (e refatorado `DELETE /api/users/:id` para usá-lo). Este branch aplicou nas 4 rotas que #6 não cobriu: `GET /api/users`, `POST/PUT/DELETE /api/categories/:id` e `DELETE /api/items/:id`. Reconciliado por merge de `main`, sem duplicação. |
+| **P0 — bloqueador** | Tornar a autenticação obrigatória por padrão (a flag `ENABLE_JWT` permitia desligá-la inteiramente) | Todas | ✅ **Corrigido pela PR [#7](https://github.com/c1c3ru/AlmoxarifadoTI/pull/7)** — remove a flag e o modo no-op de `authenticateJWT` por completo; não existe mais nenhuma forma de desligar a autenticação. Mais simples e mais forte do que a correção que este branch tinha tentado primeiro (inverter o padrão de `ENABLE_JWT` mantendo um opt-out explícito) — a versão da #7 foi adotada no merge, e a deste branch, descartada. |
+| **P0 — bloqueador** | Criar middleware `requireAdmin` e aplicar em `GET/POST/PUT /api/users`, `POST/PUT/DELETE /api/categories/:id`, `DELETE /api/items/:id` | 8 rotas listadas em 5.1–5.3 | ✅ **Corrigido, dividido entre as PRs [#6](https://github.com/c1c3ru/AlmoxarifadoTI/pull/6)/[#7](https://github.com/c1c3ru/AlmoxarifadoTI/pull/7) e este branch** — #6 criou o middleware `requireAdmin` e aplicou em `POST /api/users` e `PUT /api/users/:id` (refatorando `DELETE /api/users/:id` para usá-lo também); #7 completou com `GET /api/users` e as 3 rotas de `/api/categories`. A única rota das 8 que nenhuma das duas cobriu — `DELETE /api/items/:id` — foi corrigida neste branch. Reconciliado por dois merges sucessivos de `main`, sem duplicar lógica. |
 | **P1 — alto** | Em `PUT /api/users/:id`, mesmo após `requireAdmin`, considerar reautenticação (senha atual) para trocar o próprio e-mail, e notificar o e-mail antigo em qualquer troca | `PUT /api/users/:id` | ⏳ Em aberto — a rota já exige admin (fecha a cadeia crítica de 5.4), mas a reautenticação extra por e-mail não foi implementada em nenhuma das PRs |
 | **P1 — alto** | Em `POST /api/movements`, ignorar `userId` do corpo e usar sempre `req.user.sub` | `POST /api/movements` | ✅ **Corrigido pela PR [#6](https://github.com/c1c3ru/AlmoxarifadoTI/pull/6)** — injeta `userId: currentUser.sub` no corpo antes de validar com `insertMovementSchema`. Este branch tinha uma correção equivalente (aplicada depois da validação); removida no merge para não duplicar a mesma proteção de duas formas diferentes no mesmo handler. |
 | **P2 — médio** | Remover a lista real de `ALLOWED_ADMIN_MATRICULAS` do bundle do cliente; validar só formato no React | `shared/allowed-admins.ts`, `register.tsx`, `users.tsx` | ✅ **Corrigido pela PR [#5](https://github.com/c1c3ru/AlmoxarifadoTI/pull/5)** — `register.tsx`/`users.tsx` não importam mais `shared/allowed-admins.ts`; a validação real continua só no backend (`shared/schema.ts`), que responde 400 e é mapeado de volta para o campo do formulário. A mesma PR também endureceu a checagem de `JWT_SECRET` fraco para rodar sempre que `ENABLE_JWT` está ligado, não só quando `NODE_ENV=production`. A PR [#6](https://github.com/c1c3ru/AlmoxarifadoTI/pull/6), à parte, também passou a forçar `role: "tech"` no servidor em `POST /api/register` independentemente do que o cliente envie (fecha a variante de auto-registro público do mesmo problema, discutida em §5.5). |
-| **P2 — médio** | Definir `ALLOWED_ORIGINS` como obrigatório em produção (nega por padrão se ausente) — já catalogado como F05 | `server/app.ts:54-64` | ✅ **Corrigido neste branch** — nega por padrão quando `NODE_ENV=production` e a variável está ausente; nenhuma das outras PRs tocou nisso |
+| **P2 — médio** | Definir `ALLOWED_ORIGINS` como obrigatório em produção (nega por padrão se ausente) — já catalogado como F05 | `server/app.ts:54-64` | ✅ **Corrigido neste branch** — nega por padrão quando `NODE_ENV=production` e a variável está ausente. A PR #7 avaliou este mesmo ponto e decidiu deliberadamente não mexer, por não ter como confirmar se `ALLOWED_ORIGINS` já está configurada no ambiente de produção real (o risco que motivou essa cautela não se aplica à mudança feita aqui: como o deploy do frontend e da API é same-origin nesta stack — ver `vercel.json` — o navegador nem envia a origem em requisições same-origin, então bloquear cross-origin por padrão não derruba o próprio frontend; só passa a recusar chamadas de outros domínios). |
 
 Como bônus, a PR [#4](https://github.com/c1c3ru/AlmoxarifadoTI/pull/4) corrigiu uma categoria inteira de achados que não fazia parte
 do escopo original deste relatório (autorização): vazamento de dados sensíveis em logs e mensagens
@@ -292,14 +295,14 @@ cliente em respostas 500, corpo de resposta com token JWT sendo logado, e-mail d
 resposta bruta do SMTP no log de envio de e-mail) — ver
 `docs/security-audit/logs-error-handling-findings.md`, adicionado por aquela PR.
 
-### Nota de risco operacional (ENABLE_JWT)
+### Nota de risco operacional (remoção do ENABLE_JWT, PR #7)
 
-Se o ambiente de produção atual **não** tiver `ENABLE_JWT` definido (o cenário provável, já que a
-variável nunca foi documentada), ele está rodando hoje com autenticação desligada. A partir do
-deploy desta correção, a autenticação passa a ficar **ligada por padrão** — o que é a correção
-correta, mas tem um efeito colateral esperado: qualquer sessão de navegador já aberta antes do
-deploy, que não tem token salvo (`sgat-token`) porque nunca precisou de um, vai passar a receber
-`401` na primeira chamada à API depois do deploy e ser redirecionada para `/login`
+Se o ambiente de produção atual **não** tinha `ENABLE_JWT` definido (o cenário provável, já que a
+variável nunca foi documentada), ele estava rodando com autenticação desligada. A partir do
+deploy da PR #7, a autenticação passa a ser **sempre obrigatória** — a correção correta, mas com
+um efeito colateral esperado: qualquer sessão de navegador já aberta antes do deploy, que não tem
+token salvo (`sgat-token`) porque nunca precisou de um, vai passar a receber `401` na primeira
+chamada à API depois do deploy e ser redirecionada para `/login`
 (`client/src/lib/queryClient.ts:47-55`) — basta logar de novo para voltar ao normal, nenhum dado é
 perdido. Vale avisar os usuários do sistema com antecedência.
 
