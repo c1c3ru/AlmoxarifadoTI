@@ -2,12 +2,19 @@ import jwt, { type Secret, type SignOptions } from "jsonwebtoken";
 import type { Request, Response, NextFunction } from "express";
 import { storage } from "./storage";
 
-// 🔒 SECURITY: Validate JWT_SECRET in production
+// 🔒 SECURITY: Validate JWT_SECRET whenever JWT auth is enabled, regardless
+// of NODE_ENV — a default value committed to source control must never be
+// usable to sign tokens in any reachable environment (staging/preview included).
 const JWT_SECRET_RAW = process.env.JWT_SECRET || "change-me-in-prod";
 
-if (process.env.NODE_ENV === "production") {
+function isAuthEnabledFromEnv() {
+  const enableJwtValue = process.env.ENABLE_JWT;
+  return enableJwtValue === "true" || enableJwtValue === "1";
+}
+
+if (isAuthEnabledFromEnv()) {
   if (!process.env.JWT_SECRET || JWT_SECRET_RAW === "change-me-in-prod") {
-    console.error("❌ FATAL SECURITY ERROR: JWT_SECRET is not set or using default value in production!");
+    console.error("❌ FATAL SECURITY ERROR: JWT_SECRET is not set or using the default value while ENABLE_JWT is on!");
     console.error("   Set a strong JWT_SECRET in your environment variables before deploying.");
     process.exit(1);
   }
@@ -22,8 +29,7 @@ if (process.env.NODE_ENV === "production") {
 const JWT_SECRET: Secret = JWT_SECRET_RAW as Secret;
 
 export function isAuthEnabled() {
-  const enableJwtValue = process.env.ENABLE_JWT;
-  return enableJwtValue === "true" || enableJwtValue === "1";
+  return isAuthEnabledFromEnv();
 }
 
 export interface JwtPayload {
