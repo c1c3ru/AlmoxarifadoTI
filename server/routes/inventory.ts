@@ -173,7 +173,11 @@ router.get("/movements", authenticateJWT, async (req, res) => {
 
 router.post("/movements", authenticateJWT, async (req, res) => {
     try {
-        const validation = insertMovementSchema.safeParse(req.body);
+        const currentUser = req.user;
+        if (!currentUser?.sub) return res.status(401).json({ message: "Unauthorized" });
+
+        // 🔒 SECURITY: userId nunca deve vir do cliente — usar sempre a identidade do token JWT
+        const validation = insertMovementSchema.safeParse({ ...req.body, userId: currentUser.sub });
         if (!validation.success) {
             return res.status(400).json({ message: "Invalid movement data", errors: validation.error.issues });
         }
