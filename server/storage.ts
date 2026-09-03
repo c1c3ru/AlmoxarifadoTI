@@ -9,6 +9,7 @@ import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
 import { eq, desc, asc, and, or, ilike, sql, count, isNull } from "drizzle-orm";
 import bcrypt from "bcryptjs";
+import { logWarn } from "./logger";
 
 let _db: ReturnType<typeof drizzle> | undefined;
 let _migrationChecked = false;
@@ -28,7 +29,7 @@ function getDb() {
   // Garantir que a coluna deleted_at existe (migração automática) - apenas uma vez
   if (!_migrationChecked) {
     ensureDeletedAtColumn().catch(err => {
-      console.warn("Warning: Could not ensure deleted_at column exists:", err);
+      logWarn("Warning: Could not ensure deleted_at column exists:", err);
     });
     _migrationChecked = true;
   }
@@ -58,7 +59,7 @@ async function ensureDeletedAtColumn() {
     `;
   } catch (error) {
     // Se falhar, apenas logar (não quebrar a aplicação)
-    console.warn("Warning: Could not ensure deleted_at column exists:", error);
+    logWarn("Warning: Could not ensure deleted_at column exists:", error);
   }
 }
 

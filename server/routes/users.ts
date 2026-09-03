@@ -2,6 +2,7 @@ import { Router } from "express";
 import { storage } from "../storage";
 import { authenticateJWT, requireAdmin } from "../auth";
 import { insertUserSchema, baseInsertUserSchema } from "@shared/schema";
+import { logError } from "../logger";
 
 const router = Router();
 
@@ -12,7 +13,7 @@ router.get("/", authenticateJWT, requireAdmin, async (_req, res) => {
         const usersWithoutPasswords = users.map(({ password, ...user }) => user);
         res.json(usersWithoutPasswords);
     } catch (error) {
-        console.error("Users error:", error);
+        logError("Users error:", error);
         res.status(500).json({ message: "Internal server error" });
     }
 });
@@ -39,7 +40,7 @@ router.post("/", authenticateJWT, requireAdmin, async (req, res) => {
             return res.status(409).json({ message: "Registro duplicado" });
         }
 
-        console.error("Create user error:", error);
+        logError("Create user error:", error);
         res.status(500).json({ message: "Internal server error" });
     }
 });
@@ -96,7 +97,7 @@ router.put("/:id", authenticateJWT, requireAdmin, async (req, res) => {
             return res.status(409).json({ message: "Registro duplicado" });
         }
 
-        console.error("Update user error:", error);
+        logError("Update user error:", error);
         res.status(500).json({ message: "Internal server error" });
     }
 });
@@ -105,7 +106,8 @@ router.put("/:id", authenticateJWT, requireAdmin, async (req, res) => {
 router.delete("/:id", authenticateJWT, requireAdmin, async (req, res) => {
     try {
         const { id } = req.params;
-        const currentUser = req.user!;
+        const currentUser = req.user;
+        if (!currentUser) return res.status(401).json({ message: "Unauthorized" });
 
         if (currentUser.sub === id) {
             return res.status(400).json({ message: "Você não pode deletar sua própria conta" });
@@ -126,8 +128,8 @@ router.delete("/:id", authenticateJWT, requireAdmin, async (req, res) => {
 
         res.status(204).send();
     } catch (error: any) {
-        console.error("Delete user error:", error);
-        res.status(500).json({ message: error?.message || "Erro interno do servidor" });
+        logError("Delete user error:", error);
+        res.status(500).json({ message: "Erro interno do servidor" });
     }
 });
 

@@ -2,12 +2,29 @@ import jwt, { type Secret, type SignOptions } from "jsonwebtoken";
 import type { Request, Response, NextFunction } from "express";
 import { storage } from "./storage";
 
-// 🔒 SECURITY: Validate JWT_SECRET in production
+// 🔒 SECURITY: Validate JWT_SECRET whenever JWT auth is enabled, regardless
+// of NODE_ENV — a default value committed to source control must never be
+// usable to sign tokens in any reachable environment (staging/preview included).
 const JWT_SECRET_RAW = process.env.JWT_SECRET || "change-me-in-prod";
 
-if (process.env.NODE_ENV === "production") {
+// Opt-in: usado apenas para decidir quando o boot deve falhar por um
+// JWT_SECRET fraco/ausente (ver guarda abaixo). Não confundir com
+// isAuthEnabled() — essa aqui não define se a autenticação está ativa em
+// tempo de execução, só quando a checagem estrita de segredo forte roda.
+function isAuthEnabledFromEnv() {
+  const enableJwtValue = process.env.ENABLE_JWT;
+  return enableJwtValue === "true" || enableJwtValue === "1";
+}
+
+// Roda sempre em produção (independente de ENABLE_JWT, já que agora a
+// autenticação é ligada por padrão — ver isAuthEnabled() abaixo) e também
+// em qualquer ambiente onde ENABLE_JWT tenha sido ligado explicitamente
+// (staging/preview). Fora disso (dev local sem ENABLE_JWT), não falha o
+// boot — evita quebrar `npm run dev` para quem ainda não configurou um
+// JWT_SECRET próprio.
+if (process.env.NODE_ENV === "production" || isAuthEnabledFromEnv()) {
   if (!process.env.JWT_SECRET || JWT_SECRET_RAW === "change-me-in-prod") {
-    console.error("❌ FATAL SECURITY ERROR: JWT_SECRET is not set or using default value in production!");
+    console.error("❌ FATAL SECURITY ERROR: JWT_SECRET is not set or using the default value while ENABLE_JWT is on!");
     console.error("   Set a strong JWT_SECRET in your environment variables before deploying.");
     process.exit(1);
   }
@@ -54,9 +71,11 @@ export function generateToken(payload: JwtPayload) {
 // 🔒 SECURITY: Exige que o usuário autenticado tenha role "admin". Deve
 // sempre rodar depois de authenticateJWT na cadeia de middlewares.
 export function requireAdmin(req: Request, res: Response, next: NextFunction) {
-  if (!req.user) return res.status(401).json({ message: "Unauthorized" });
+  if (!req.user) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
   if (req.user.role !== "admin") {
-    return res.status(403).json({ message: "Apenas administradores podem executar esta ação" });
+    return res.status(403).json({ message: "Apenas administradores podem realizar esta ação" });
   }
   return next();
 }

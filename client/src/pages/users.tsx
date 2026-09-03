@@ -19,8 +19,10 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import type { User } from "@shared/schema";
 
-import { ALLOWED_ADMIN_MATRICULAS } from "../../../shared/allowed-admins";
-
+// A verificação contra a lista real de matrículas autorizadas para admin é
+// feita exclusivamente no backend (shared/schema.ts / server/routes/users.ts),
+// que retorna 400 se a matrícula não for permitida. Isso evita embutir a
+// lista de matrículas administrativas no bundle público do cliente.
 const userSchema = z.object({
   username: z.string().min(3, "Username deve ter pelo menos 3 caracteres"),
   password: z.string().optional().refine((val) => !val || val.length >= 6, {
@@ -31,14 +33,6 @@ const userSchema = z.object({
   matricula: z.string().min(1, "Matrícula é obrigatória"),
   role: z.enum(["admin", "tech"]),
   isActive: z.boolean(),
-}).superRefine((val, ctx) => {
-  if (val.role === "admin" && !ALLOWED_ADMIN_MATRICULAS.includes(val.matricula)) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: "Matrícula não autorizada para administrador",
-      path: ["matricula"],
-    });
-  }
 });
 
 type UserFormData = z.infer<typeof userSchema>;

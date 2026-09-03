@@ -10,7 +10,6 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { ALLOWED_ADMIN_MATRICULAS } from "../../../shared/allowed-admins";
 
 // Política de senha robusta seguindo práticas de segurança
 const passwordPolicy = z
@@ -53,13 +52,10 @@ const registerSchema = z
       });
     }
 
-    if (val.role === "admin" && !ALLOWED_ADMIN_MATRICULAS.includes(val.matricula)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Matrícula não autorizada para administrador",
-        path: ["matricula"],
-      });
-    }
+    // A verificação contra a lista real de matrículas autorizadas para admin
+    // é feita exclusivamente no backend (shared/schema.ts), que retorna 400
+    // e é mapeado para o campo "matricula" em onSubmit. Isso evita embutir a
+    // lista de matrículas administrativas no bundle público do cliente.
 
     // Validações de segurança para senha
     if (val.password === val.email) {
