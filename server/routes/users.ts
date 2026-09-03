@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { storage } from "../storage";
-import { authenticateJWT } from "../auth";
+import { authenticateJWT, requireAdmin } from "../auth";
 import { insertUserSchema, baseInsertUserSchema } from "@shared/schema";
 
 const router = Router();
@@ -18,7 +18,7 @@ router.get("/", authenticateJWT, async (_req, res) => {
 });
 
 // Admin: Criar usuário
-router.post("/", authenticateJWT, async (req, res) => {
+router.post("/", authenticateJWT, requireAdmin, async (req, res) => {
     try {
         const validation = insertUserSchema.safeParse(req.body);
         if (!validation.success) {
@@ -45,7 +45,7 @@ router.post("/", authenticateJWT, async (req, res) => {
 });
 
 // Admin: Atualizar usuário
-router.put("/:id", authenticateJWT, async (req, res) => {
+router.put("/:id", authenticateJWT, requireAdmin, async (req, res) => {
     try {
         const { id } = req.params;
         const validation = baseInsertUserSchema.partial().safeParse(req.body);
@@ -102,15 +102,11 @@ router.put("/:id", authenticateJWT, async (req, res) => {
 });
 
 // Admin: Deletar usuário
-router.delete("/:id", authenticateJWT, async (req, res) => {
+router.delete("/:id", authenticateJWT, requireAdmin, async (req, res) => {
     try {
         const { id } = req.params;
         const currentUser = req.user;
         if (!currentUser) return res.status(401).json({ message: "Unauthorized" });
-
-        if (currentUser.role !== "admin") {
-            return res.status(403).json({ message: "Apenas administradores podem deletar usuários" });
-        }
 
         if (currentUser.sub === id) {
             return res.status(400).json({ message: "Você não pode deletar sua própria conta" });

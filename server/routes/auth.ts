@@ -123,7 +123,8 @@ router.post("/auth/login", loginLimiter, async (req, res) => {
 // Registro público
 router.post("/register", async (req, res) => {
     try {
-        const validation = insertUserSchema.safeParse(req.body);
+        // 🔒 SECURITY: cadastro público sempre cria conta "tech" — role nunca vem do cliente
+        const validation = insertUserSchema.safeParse({ ...req.body, role: "tech" });
         if (!validation.success) {
             return res.status(400).json({ message: "Dados inválidos", errors: validation.error.issues });
         }
