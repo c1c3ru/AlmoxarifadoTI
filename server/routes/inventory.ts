@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { storage } from "../storage";
-import { authenticateJWT } from "../auth";
+import { authenticateJWT, requireAdmin } from "../auth";
 import { insertCategorySchema, insertItemSchema, insertMovementSchema } from "@shared/schema";
 import rateLimit from "express-rate-limit";
 import * as XLSX from "xlsx";
@@ -34,7 +34,7 @@ router.get("/categories/with-counts", authenticateJWT, async (_req, res) => {
     }
 });
 
-router.post("/categories", authenticateJWT, async (req, res) => {
+router.post("/categories", authenticateJWT, requireAdmin, async (req, res) => {
     try {
         const validation = insertCategorySchema.safeParse(req.body);
         if (!validation.success) {
@@ -48,7 +48,7 @@ router.post("/categories", authenticateJWT, async (req, res) => {
     }
 });
 
-router.put("/categories/:id", authenticateJWT, async (req, res) => {
+router.put("/categories/:id", authenticateJWT, requireAdmin, async (req, res) => {
     try {
         const { id } = req.params;
         const validation = insertCategorySchema.partial().safeParse(req.body);
@@ -64,7 +64,7 @@ router.put("/categories/:id", authenticateJWT, async (req, res) => {
     }
 });
 
-router.delete("/categories/:id", authenticateJWT, async (req, res) => {
+router.delete("/categories/:id", authenticateJWT, requireAdmin, async (req, res) => {
     try {
         const { id } = req.params;
         const success = await storage.deleteCategory(id);
@@ -144,7 +144,7 @@ router.put("/items/:id", authenticateJWT, async (req, res) => {
     }
 });
 
-router.delete("/items/:id", authenticateJWT, async (req, res) => {
+router.delete("/items/:id", authenticateJWT, requireAdmin, async (req, res) => {
     try {
         const { id } = req.params;
         const success = await storage.deleteItem(id);
@@ -190,7 +190,13 @@ router.post("/movements", authenticateJWT, async (req, res) => {
             }
         }
 
-        const movement = await storage.createMovement(validation.data);
+        // 🔒 SECURITY: a autoria da movimentação vem do token, nunca do corpo
+        // enviado pelo cliente — evita que um usuário atribua a movimentação
+        // a outra pessoa. Só cai no valor do corpo se a autenticação estiver
+        // explicitamente desligada (ENABLE_JWT=false), quando não há usuário
+        // verificado nenhum para usar.
+        const authenticatedUserId = req.user?.sub ?? validation.data.userId;
+        const movement = await storage.createMovement({ ...validation.data, userId: authenticatedUserId });
         res.status(201).json(movement);
     } catch (error) {
         console.error("Create movement error:", error);

@@ -21,9 +21,13 @@ if (process.env.NODE_ENV === "production") {
 
 const JWT_SECRET: Secret = JWT_SECRET_RAW as Secret;
 
+// 🔒 SECURITY: Autenticação é exigida por padrão. ENABLE_JWT só serve para
+// desativá-la explicitamente (ex.: ambiente de teste local) — nunca para
+// ativá-la. Antes, a ausência da variável desligava a autenticação inteira;
+// agora a ausência mantém a autenticação ligada (opt-out, não opt-in).
 export function isAuthEnabled() {
   const enableJwtValue = process.env.ENABLE_JWT;
-  return enableJwtValue === "true" || enableJwtValue === "1";
+  return enableJwtValue !== "false" && enableJwtValue !== "0";
 }
 
 export interface JwtPayload {
@@ -45,6 +49,16 @@ export function generateToken(payload: JwtPayload) {
   const expiresIn = process.env.JWT_EXPIRES_IN || "8h";
   const options: SignOptions = { expiresIn } as SignOptions;
   return jwt.sign(payload, JWT_SECRET, options);
+}
+
+// 🔒 SECURITY: Exige que o usuário autenticado tenha role "admin". Deve
+// sempre rodar depois de authenticateJWT na cadeia de middlewares.
+export function requireAdmin(req: Request, res: Response, next: NextFunction) {
+  if (!req.user) return res.status(401).json({ message: "Unauthorized" });
+  if (req.user.role !== "admin") {
+    return res.status(403).json({ message: "Apenas administradores podem executar esta ação" });
+  }
+  return next();
 }
 
 export async function authenticateJWT(req: Request, res: Response, next: NextFunction) {

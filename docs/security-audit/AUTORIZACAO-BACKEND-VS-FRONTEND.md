@@ -9,6 +9,13 @@
 **Data:** 2026-09-03 · **Branch:** `claude/authorization-backend-frontend-audit-529sur`
 **Stack:** Express 4 + Drizzle/Postgres (backend) · React 18 + Wouter + TanStack Query (frontend) · JWT (`jsonwebtoken`) + bcrypt
 
+> **Atualização (mesma PR):** os itens P0 e P1 da Seção 7 (middleware `requireAdmin` nas 8
+> rotas, autoria de `POST /api/movements` travada no token, `ENABLE_JWT` seguro por padrão e
+> CORS deny-by-default em produção) já foram corrigidos e estão neste mesmo PR — ver commit
+> que segue este documento. Os vereditos 🔴/🟠 abaixo descrevem o estado **antes** da correção;
+> cada um foi marcado com "✅ Corrigido" onde já resolvido. O item P2 (lista de matrículas no
+> bundle do cliente) segue em aberto.
+
 ---
 
 ## 1. Conclusão em uma frase
@@ -103,9 +110,9 @@ pelo qual F01 deveria ser tratado como bloqueador antes de qualquer outra corre�
 
 | Rota | Checagem exata no servidor | Barreira no frontend | Veredito |
 |---|---|---|---|
-| `GET /api/users` (`:9`) | **Só `authenticateJWT`.** Nenhuma verificação de `role`. | Página `/users` só é roteável via `AdminRoute` (`App.tsx:112-118`, redireciona se `user.role !== "admin"`) | 🔴 **BYPASS DE UI** — qualquer `tech` autenticado lê nome/e-mail/matrícula/role de todos os usuários chamando a API diretamente |
-| `POST /api/users` (`:21`) | **Só `authenticateJWT`.** Nenhuma verificação de `role`. | Botão "Novo Usuário" só existe dentro da página `/users` (admin-only) | 🔴 **BYPASS DE UI CRÍTICO** — um `tech` cria qualquer usuário, inclusive `role: "admin"` (basta usar uma das ~140 matrículas da allowlist) |
-| `PUT /api/users/:id` (`:48`) | **Só `authenticateJWT`.** `id` do path é um IDOR clássico — não há checagem de que `req.user.sub === id` nem de `req.user.role === "admin"`. A única validação condicional (`:61-81`) só roda **se** `role` ou `matricula` vierem no corpo, e mesmo assim só valida a allowlist de matrícula — nunca valida *quem* pode fazer a chamada. `storage.updateUser` (`storage.ts:170-183`) hasheia e grava qualquer `password` enviado. | Botão "Editar" só existe dentro de `/users` (admin-only); modal permite editar `password`, `email`, `role`, `isActive` de qualquer usuário da lista | 🔴 **BYPASS DE UI CRÍTICO + IDOR** — um `tech` chama `PUT /api/users/<id-de-qualquer-um>` com `{"password":"nova-senha"}` e assume a conta (inclusive de um admin), sem nunca ter passado pela tela de administração |
+| `GET /api/users` (`:9`) | ~~Só `authenticateJWT`~~ agora `authenticateJWT` + `requireAdmin` | Página `/users` só é roteável via `AdminRoute` (`App.tsx:112-118`, redireciona se `user.role !== "admin"`) | ✅ **Corrigido nesta PR** — antes: 🔴 BYPASS DE UI (qualquer `tech` autenticado lia nome/e-mail/matrícula/role de todos os usuários chamando a API diretamente) |
+| `POST /api/users` (`:21`) | ~~Só `authenticateJWT`~~ agora `authenticateJWT` + `requireAdmin` | Botão "Novo Usuário" só existe dentro da página `/users` (admin-only) | ✅ **Corrigido nesta PR** — antes: 🔴 BYPASS DE UI CRÍTICO (um `tech` criava qualquer usuário, inclusive `role: "admin"`) |
+| `PUT /api/users/:id` (`:48`) | ~~Só `authenticateJWT`~~ agora `authenticateJWT` + `requireAdmin`. A validação condicional de matrícula-admin (`:61-81`) continua existindo como checagem adicional de regra de negócio. | Botão "Editar" só existe dentro de `/users` (admin-only); modal permite editar `password`, `email`, `role`, `isActive` de qualquer usuário da lista | ✅ **Corrigido nesta PR** — antes: 🔴 BYPASS DE UI CRÍTICO + IDOR (um `tech` conseguia assumir a conta de qualquer usuário, inclusive admin, via `PUT` com `password` novo). A reautenticação extra sugerida para troca de e-mail (P1) segue em aberto. |
 | `DELETE /api/users/:id` (`:105`) | `authenticateJWT` **+** `if (currentUser.role !== "admin") return 403` (`:111`) **+** bloqueio de auto-exclusão (`:115`) | Botão "Deletar" só renderiza se `currentUser?.role === "admin"` (`users.tsx:621`) | ✅ **CORRETO** — único par frontend/backend do sistema inteiro onde o servidor replica fielmente a regra que o cliente já impõe visualmente. Referência de como as quatro linhas acima deveriam ter sido escritas. |
 
 ### 4.3 Categorias (`server/routes/inventory.ts`, montado em `/api`) — área "admin" no frontend
@@ -114,9 +121,9 @@ pelo qual F01 deveria ser tratado como bloqueador antes de qualquer outra corre�
 |---|---|---|---|
 | `GET /api/categories` (`:17`) | `authenticateJWT` | Dado não sensível, consumido também pelo dashboard | ✅ ok (leitura) |
 | `GET /api/categories/with-counts` (`:27`) | `authenticateJWT` | idem | ✅ ok |
-| `POST /api/categories` (`:37`) | **Só `authenticateJWT`.** Nenhuma verificação de `role`. | Página `/categories` inteira atrás de `AdminRoute` (`App.tsx:120-126`) | 🔴 **BYPASS DE UI** |
-| `PUT /api/categories/:id` (`:51`) | **Só `authenticateJWT`.** | idem | 🔴 **BYPASS DE UI** |
-| `DELETE /api/categories/:id` (`:67`) | **Só `authenticateJWT`.** | idem | 🔴 **BYPASS DE UI** — apaga uma categoria inteira (afeta todos os itens vinculados) com uma conta `tech` que nunca vê o link "Categorias" no menu |
+| `POST /api/categories` (`:37`) | ~~Só `authenticateJWT`~~ agora + `requireAdmin` | Página `/categories` inteira atrás de `AdminRoute` (`App.tsx:120-126`) | ✅ **Corrigido nesta PR** |
+| `PUT /api/categories/:id` (`:51`) | ~~Só `authenticateJWT`~~ agora + `requireAdmin` | idem | ✅ **Corrigido nesta PR** |
+| `DELETE /api/categories/:id` (`:67`) | ~~Só `authenticateJWT`~~ agora + `requireAdmin` | idem | ✅ **Corrigido nesta PR** — antes: 🔴 BYPASS DE UI (apagava categoria inteira, afetando todos os itens vinculados, com uma conta `tech` que nunca via o link "Categorias" no menu) |
 
 ### 4.4 Itens (`server/routes/inventory.ts`) — página aberta a todos os autenticados
 
@@ -125,7 +132,7 @@ pelo qual F01 deveria ser tratado como bloqueador antes de qualquer outra corre�
 | `GET /api/items`, `/items/search`, `/items/:id` | `authenticateJWT` | `/items` usa só `ProtectedRoute` (qualquer logado) | ✅ consistente — leitura é intencionalmente aberta a `tech` |
 | `POST /api/items` (`:117`) | `authenticateJWT`, sem checagem de `role` | Botão "Novo Item" sempre visível, sem gate de role (`items.tsx`) | ✅ consistente (aberto a ambos os papéis por design) — ver nota de escopo em §5.5 |
 | `PUT /api/items/:id` (`:131`) | `authenticateJWT`, sem checagem de `role` | Botão "Editar" sempre visível | ✅ consistente |
-| `DELETE /api/items/:id` (`:147`) | **Só `authenticateJWT`.** Nenhuma verificação de `role`. | Botão só renderiza se `canDeleteItems(user)` → `isAdmin(user)` (`items.tsx:568`, `lib/auth.ts:7-9`) | 🔴 **BYPASS DE UI** — `tech` sem o botão na tela apaga qualquer item via `DELETE /api/items/<id>` |
+| `DELETE /api/items/:id` (`:147`) | ~~Só `authenticateJWT`~~ agora + `requireAdmin` | Botão só renderiza se `canDeleteItems(user)` → `isAdmin(user)` (`items.tsx:568`, `lib/auth.ts:7-9`) | ✅ **Corrigido nesta PR** — antes: 🔴 BYPASS DE UI (`tech` sem o botão na tela apagava qualquer item via `DELETE /api/items/<id>`) |
 | `GET/POST /api/inventory/export*`, `/import` (`:203,229,259`) | `authenticateJWT` (+ rate limit no import) | `CSVImportExport` sempre visível, sem gate de role | ✅ consistente (aberto por design) |
 
 ### 4.5 Movimentações (`server/routes/inventory.ts`) — página aberta a todos os autenticados
@@ -133,7 +140,7 @@ pelo qual F01 deveria ser tratado como bloqueador antes de qualquer outra corre�
 | Rota | Checagem exata no servidor | Barreira no frontend | Veredito |
 |---|---|---|---|
 | `GET /api/movements` (`:160`) | `authenticateJWT` | `/movements` usa só `ProtectedRoute` | ✅ consistente |
-| `POST /api/movements` (`:174`) | `authenticateJWT`, sem checagem de `role`. Estoque insuficiente é bloqueado (`:181-190`) e `previousStock`/`newStock` são **sempre recalculados no servidor** a partir do estoque atual (`storage.ts:514-521`, correto — nunca confia no saldo enviado pelo cliente). **Porém `movement.userId` é gravado exatamente como veio no corpo da requisição** (`storage.ts:524-528`, `insertMovementSchema` não omite `userId` — `shared/schema.ts:112-117`) — o servidor nunca substitui esse campo por `req.user.sub`. | Todos os pontos que criam movimentação enviam `userId: user?.id` lido do `AuthContext`, que por sua vez vem de `localStorage.getItem("sgat-user")` — editável no DevTools do navegador: `items.tsx:411`, `scanner.tsx:46`, `movement-modal.tsx:76` | 🟠 **Falha correlata (não é bypass de UI, é falsificação de autoria)** — não há tela nem role escondendo nada aqui (a criação de movimentação é aberta a `tech` por design); o problema é que o *autor* registrado no histórico de auditoria é um dado que o cliente escolhe, não um dado que o servidor deriva do token. Ver §5.2. |
+| `POST /api/movements` (`:174`) | `authenticateJWT`, sem checagem de `role` (correto — aberta a `tech` por design). Estoque insuficiente é bloqueado (`:181-190`) e `previousStock`/`newStock` são **sempre recalculados no servidor** a partir do estoque atual (`storage.ts:514-521`, correto). ~~`movement.userId` era gravado exatamente como veio no corpo~~ agora o handler sobrescreve com `req.user.sub` antes de chamar `storage.createMovement` (só cai no valor do corpo se a autenticação estiver explicitamente desligada). | Todos os pontos que criam movimentação enviam `userId: user?.id` lido do `AuthContext` — client-side, mas agora irrelevante para o servidor: `items.tsx:411`, `scanner.tsx:46`, `movement-modal.tsx:76` | ✅ **Corrigido nesta PR** — antes: 🟠 falsificação de autoria possível (ver §5.2, agora histórico) |
 
 ### 4.6 Dashboard (`server/routes/dashboard.ts`, montado em `/api/dashboard`)
 
@@ -155,7 +162,7 @@ pelo qual F01 deveria ser tratado como bloqueador antes de qualquer outra corre�
 
 ## 5. Casos de Bypass de UI em detalhe
 
-### 🔴 5.1 — Gestão de usuários é "admin-only" só na tela (CRÍTICO)
+### 🔴 5.1 — Gestão de usuários é "admin-only" só na tela (CRÍTICO) — ✅ CORRIGIDO NESTA PR
 
 **Rotas:** `GET/POST/PUT /api/users*` · **Arquivo:** `server/routes/users.ts:9,21,48`
 
@@ -181,7 +188,7 @@ rotas, no mesmo padrão já usado em `DELETE /:id`. Para `PUT /:id`, considerar 
 que um usuário edite alguns poucos campos do próprio registro (nunca `role`) como exceção
 explícita, em vez de abrir a rota inteira.
 
-### 🔴 5.2 — Categorias: CRUD inteiro sem checagem de papel (ALTO)
+### 🔴 5.2 — Categorias: CRUD inteiro sem checagem de papel (ALTO) — ✅ CORRIGIDO NESTA PR
 
 **Rotas:** `POST/PUT/DELETE /api/categories/:id` · **Arquivo:** `server/routes/inventory.ts:37,51,67`
 
@@ -192,7 +199,7 @@ vinculados a ela — com uma chamada direta à API.
 
 **Correção:** mesmo `requireAdmin` sugerido acima, aplicado às três rotas de escrita.
 
-### 🔴 5.3 — Exclusão de itens (ALTO)
+### 🔴 5.3 — Exclusão de itens (ALTO) — ✅ CORRIGIDO NESTA PR
 
 **Rota:** `DELETE /api/items/:id` · **Arquivo:** `server/routes/inventory.ts:147`
 
@@ -206,7 +213,7 @@ viu.
 **Correção:** `requireAdmin` nesta rota especificamente (as demais rotas de item podem
 continuar abertas, já que refletem uma decisão de produto e não uma falha).
 
-### 🟠 5.4 — Cadeia crítica: IDOR em `PUT /api/users/:id` + recuperação de senha (CRÍTICO, herdado de F02+F03)
+### 🟠 5.4 — Cadeia crítica: IDOR em `PUT /api/users/:id` + recuperação de senha (CRÍTICO, herdado de F02+F03) — ✅ CORRIGIDO NESTA PR (via 5.1)
 
 Combinando 5.1 com o fluxo público de recuperação de senha:
 
@@ -263,14 +270,25 @@ padrão certo já existe no código — só não foi replicado nas rotas acima:
 
 ## 7. Priorização das correções
 
-| Prioridade | Ação | Rotas afetadas |
-|---|---|---|
-| **P0 — bloqueador** | Fazer `ENABLE_JWT` obrigatório (ou removê-lo e sempre autenticar), falhando o boot em produção se ausente, no mesmo padrão já usado para `JWT_SECRET` (`auth.ts:8-19`) | Todas |
-| **P0 — bloqueador** | Criar middleware `requireAdmin` e aplicar em `GET/POST/PUT /api/users`, `POST/PUT/DELETE /api/categories/:id`, `DELETE /api/items/:id` | 8 rotas listadas em 5.1–5.3 |
-| **P1 — alto** | Em `PUT /api/users/:id`, mesmo após `requireAdmin`, considerar reautenticação (senha atual) para trocar o próprio e-mail, e notificar o e-mail antigo em qualquer troca | `PUT /api/users/:id` |
-| **P1 — alto** | Em `POST /api/movements`, ignorar `userId` do corpo e usar sempre `req.user.sub` | `POST /api/movements` |
-| **P2 — médio** | Remover a lista real de `ALLOWED_ADMIN_MATRICULAS` do bundle do cliente; validar só formato no React | `shared/allowed-admins.ts`, `register.tsx`, `users.tsx` |
-| **P2 — médio** | Definir `ALLOWED_ORIGINS` como obrigatório em produção (nega por padrão se ausente) — já catalogado como F05 | `server/app.ts:54-64` |
+| Prioridade | Ação | Rotas afetadas | Status |
+|---|---|---|---|
+| **P0 — bloqueador** | Tornar a autenticação segura por padrão: `ENABLE_JWT` agora só desliga a autenticação se setado explicitamente para `"false"`/`"0"` — a ausência da variável mantém a autenticação **ligada** (antes era o oposto) | Todas | ✅ **Corrigido** (`server/auth.ts`) — optou-se por inverter o padrão em vez de `process.exit(1)` no boot (como faz `JWT_SECRET`) para não derrubar em produção um deploy que hoje já roda sem essa variável; ver nota de risco operacional abaixo |
+| **P0 — bloqueador** | Criar middleware `requireAdmin` e aplicar em `GET/POST/PUT /api/users`, `POST/PUT/DELETE /api/categories/:id`, `DELETE /api/items/:id` | 8 rotas listadas em 5.1–5.3 | ✅ **Corrigido** (`server/auth.ts`, `server/routes/users.ts`, `server/routes/inventory.ts`) |
+| **P1 — alto** | Em `PUT /api/users/:id`, mesmo após `requireAdmin`, considerar reautenticação (senha atual) para trocar o próprio e-mail, e notificar o e-mail antigo em qualquer troca | `PUT /api/users/:id` | ⏳ Em aberto — a rota já exige admin agora (fecha a cadeia crítica de 5.4), mas a reautenticação extra por e-mail não foi implementada nesta rodada |
+| **P1 — alto** | Em `POST /api/movements`, ignorar `userId` do corpo e usar sempre `req.user.sub` | `POST /api/movements` | ✅ **Corrigido** (`server/routes/inventory.ts`) |
+| **P2 — médio** | Remover a lista real de `ALLOWED_ADMIN_MATRICULAS` do bundle do cliente; validar só formato no React | `shared/allowed-admins.ts`, `register.tsx`, `users.tsx` | ⏳ Em aberto |
+| **P2 — médio** | Definir `ALLOWED_ORIGINS` como obrigatório em produção (nega por padrão se ausente) — já catalogado como F05 | `server/app.ts:54-64` | ✅ **Corrigido** — nega por padrão quando `NODE_ENV=production` e a variável está ausente |
+
+### Nota de risco operacional (ENABLE_JWT)
+
+Se o ambiente de produção atual **não** tiver `ENABLE_JWT` definido (o cenário provável, já que a
+variável nunca foi documentada), ele está rodando hoje com autenticação desligada. A partir do
+deploy desta correção, a autenticação passa a ficar **ligada por padrão** — o que é a correção
+correta, mas tem um efeito colateral esperado: qualquer sessão de navegador já aberta antes do
+deploy, que não tem token salvo (`sgat-token`) porque nunca precisou de um, vai passar a receber
+`401` na primeira chamada à API depois do deploy e ser redirecionada para `/login`
+(`client/src/lib/queryClient.ts:47-55`) — basta logar de novo para voltar ao normal, nenhum dado é
+perdido. Vale avisar os usuários do sistema com antecedência.
 
 ---
 
