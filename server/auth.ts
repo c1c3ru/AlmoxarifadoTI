@@ -21,11 +21,6 @@ if (process.env.NODE_ENV === "production") {
 
 const JWT_SECRET: Secret = JWT_SECRET_RAW as Secret;
 
-export function isAuthEnabled() {
-  const enableJwtValue = process.env.ENABLE_JWT;
-  return enableJwtValue === "true" || enableJwtValue === "1";
-}
-
 export interface JwtPayload {
   sub: string; // user id
   username: string;
@@ -48,8 +43,6 @@ export function generateToken(payload: JwtPayload) {
 }
 
 export async function authenticateJWT(req: Request, res: Response, next: NextFunction) {
-  if (!isAuthEnabled()) return next();
-
   const authHeader = req.headers["authorization"] as string | undefined;
   if (!authHeader || !authHeader.toLowerCase().startsWith("bearer ")) {
     return res.status(401).json({ message: "Unauthorized" });

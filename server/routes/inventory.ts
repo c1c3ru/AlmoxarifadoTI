@@ -7,6 +7,16 @@ import * as XLSX from "xlsx";
 
 const router = Router();
 
+// Gestão de categorias (criar/editar/excluir) é uma tela restrita a admins no
+// frontend (AdminRoute) — a leitura continua liberada para qualquer usuário
+// autenticado, que precisa das categorias para cadastrar/filtrar itens.
+function requireAdmin(req: import("express").Request, res: import("express").Response, next: import("express").NextFunction) {
+    if (req.user?.role !== "admin") {
+        return res.status(403).json({ message: "Apenas administradores podem gerenciar categorias" });
+    }
+    next();
+}
+
 const importLimiter = rateLimit({
     windowMs: 5 * 60 * 1000,
     max: 20,
@@ -34,7 +44,7 @@ router.get("/categories/with-counts", authenticateJWT, async (_req, res) => {
     }
 });
 
-router.post("/categories", authenticateJWT, async (req, res) => {
+router.post("/categories", authenticateJWT, requireAdmin, async (req, res) => {
     try {
         const validation = insertCategorySchema.safeParse(req.body);
         if (!validation.success) {
@@ -48,7 +58,7 @@ router.post("/categories", authenticateJWT, async (req, res) => {
     }
 });
 
-router.put("/categories/:id", authenticateJWT, async (req, res) => {
+router.put("/categories/:id", authenticateJWT, requireAdmin, async (req, res) => {
     try {
         const { id } = req.params;
         const validation = insertCategorySchema.partial().safeParse(req.body);
@@ -64,7 +74,7 @@ router.put("/categories/:id", authenticateJWT, async (req, res) => {
     }
 });
 
-router.delete("/categories/:id", authenticateJWT, async (req, res) => {
+router.delete("/categories/:id", authenticateJWT, requireAdmin, async (req, res) => {
     try {
         const { id } = req.params;
         const success = await storage.deleteCategory(id);

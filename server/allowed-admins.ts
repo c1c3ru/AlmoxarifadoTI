@@ -1,3 +1,7 @@
+// Lista de matrículas autorizadas a se cadastrar/serem promovidas a role "admin".
+// Mantido fora de shared/ propositalmente: este arquivo é importado só pelo servidor
+// para nunca ser incluído no bundle público do frontend (era o caso antes, quando
+// vivia em shared/allowed-admins.ts e era importado por telas do cliente).
 export const ALLOWED_ADMIN_MATRICULAS = [
     "2329311", "1570732", "1230014", "1556024", "1959539", "1652419", "1679143", "3505114", "2283495", "2410059",
     "1850744", "1552994", "1522667", "1757603", "1886617", "1779128", "1674404", "1890099", "1049432", "2031233",
@@ -14,3 +18,7 @@ export const ALLOWED_ADMIN_MATRICULAS = [
     "1795333", "1341697", "1757146", "1474264", "1648737", "2408042", "1759852", "1842499", "2418385", "1940463",
     "1612066", "2188682", "1057215", "3095244", "1957778", "208968", "3431093", "2009193"
 ];
+
+export function isAllowedAdminMatricula(matricula: string): boolean {
+    return ALLOWED_ADMIN_MATRICULAS.includes(matricula);
+}

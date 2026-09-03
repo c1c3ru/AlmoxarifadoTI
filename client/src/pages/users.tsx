@@ -19,8 +19,10 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import type { User } from "@shared/schema";
 
-import { ALLOWED_ADMIN_MATRICULAS } from "../../../shared/allowed-admins";
-
+// A validação de matrícula autorizada para o perfil "admin" é feita pelo
+// servidor (a lista não deve ser embutida no bundle público do cliente).
+// Um envio com matrícula não autorizada retorna erro 400 tratado no onError
+// das mutations abaixo.
 const userSchema = z.object({
   username: z.string().min(3, "Username deve ter pelo menos 3 caracteres"),
   password: z.string().optional().refine((val) => !val || val.length >= 6, {
@@ -31,14 +33,6 @@ const userSchema = z.object({
   matricula: z.string().min(1, "Matrícula é obrigatória"),
   role: z.enum(["admin", "tech"]),
   isActive: z.boolean(),
-}).superRefine((val, ctx) => {
-  if (val.role === "admin" && !ALLOWED_ADMIN_MATRICULAS.includes(val.matricula)) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: "Matrícula não autorizada para administrador",
-      path: ["matricula"],
-    });
-  }
 });
 
 type UserFormData = z.infer<typeof userSchema>;
