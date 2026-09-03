@@ -57,7 +57,11 @@ export async function createApp() {
   app.use(cors({
     origin: (origin, callback) => {
       if (!origin) return callback(null, true);
-      const isAllowed = allowedOrigins.length === 0 || allowedOrigins.includes(origin);
+      // 🔒 SECURITY: sem ALLOWED_ORIGINS configurado, nega por padrão em
+      // produção (só libera geral em desenvolvimento, por conveniência).
+      const isAllowed = allowedOrigins.length === 0
+        ? process.env.NODE_ENV !== 'production'
+        : allowedOrigins.includes(origin);
       return callback(isAllowed ? null : new Error('Not allowed by CORS'), isAllowed);
     },
     credentials: true,

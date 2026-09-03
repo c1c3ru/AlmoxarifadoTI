@@ -47,6 +47,8 @@ export function generateToken(payload: JwtPayload) {
   return jwt.sign(payload, JWT_SECRET, options);
 }
 
+// 🔒 SECURITY: Exige que o usuário autenticado tenha role "admin". Deve
+// sempre rodar depois de authenticateJWT na cadeia de middlewares.
 export function requireAdmin(req: Request, res: Response, next: NextFunction) {
   if (!req.user) {
     return res.status(401).json({ message: "Unauthorized" });

@@ -149,7 +149,7 @@ router.put("/items/:id", authenticateJWT, async (req, res) => {
     }
 });
 
-router.delete("/items/:id", authenticateJWT, async (req, res) => {
+router.delete("/items/:id", authenticateJWT, requireAdmin, async (req, res) => {
     try {
         const { id } = req.params;
         const success = await storage.deleteItem(id);
