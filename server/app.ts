@@ -4,6 +4,7 @@ import express from "express";
 import type { Request, Response, NextFunction } from "express";
 import cors from "cors";
 import helmet from "helmet";
+import cookieParser from "cookie-parser";
 import { registerRoutes } from "./routes";
 import { logError } from "./logger";
 // Avoid importing Vite in serverless runtime. Provide a minimal logger here.
@@ -35,19 +36,27 @@ export async function createApp() {
           "default-src": ["'self'"],
           "base-uri": ["'self'"],
           "block-all-mixed-content": [],
-          "font-src": ["'self'", "https:", "data:"],
+          // Font Awesome é servido pela própria origem (client/public/vendor/fontawesome);
+          // fonts.gstatic.com é o único host externo de fontes (Google Fonts).
+          "font-src": ["'self'", "https://fonts.gstatic.com", "data:"],
           "frame-ancestors": ["'self'"],
           "img-src": ["'self'", "data:", "https:"],
           "object-src": ["'none'"],
-          // Em produção ideal: migrar para nonces/hashes e remover 'unsafe-inline'.
-          "script-src": ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com"],
+          // Sem scripts inline no app (SPA React, tudo em bundles com <script src>) —
+          // 'unsafe-inline' não é necessário e o CDN do Font Awesome foi removido (self-hosted).
+          "script-src": ["'self'"],
           "script-src-attr": ["'none'"],
-          "style-src": ["'self'", "'unsafe-inline'", "https:"],
+          "style-src": ["'self'", "https://fonts.googleapis.com"],
+          // Radix UI (dialog/select/tooltip) define `style` inline via JS para posicionamento
+          // dinâmico (Floating UI) — CSP não tem nonce/hash para o atributo `style`, só para
+          // <style> como elemento. Por isso o atributo continua liberado, mas style-src (o
+          // elemento <style> e folhas externas) já não aceita mais 'unsafe-inline'.
+          "style-src-attr": ["'unsafe-inline'"],
           // Permite conexões ao próprio host, WebSocket (dev) e domínios extras via env CSV (CSP_CONNECT_SRC)
           "connect-src": ["'self'", "ws:"].concat(extraConnectSrc as string[]),
         },
       },
-      referrerPolicy: { policy: "no-referrer" },
+      referrerPolicy: { policy: "strict-origin-when-cross-origin" },
       frameguard: { action: "sameorigin" },
     })
   );
@@ -81,17 +90,30 @@ export async function createApp() {
     const isAllowed = isSameOrigin || (allowedOrigins.length === 0
       ? process.env.NODE_ENV !== 'production'
       : allowedOrigins.includes(origin));
-    if (!isAllowed) return callback(new Error('Not allowed by CORS'));
+    if (!isAllowed) {
+      const err: Error & { status?: number } = new Error('Not allowed by CORS');
+      err.status = 403;
+      return callback(err);
+    }
+    // origin: true (não a string '*') faz o pacote `cors` refletir de volta
+    // exatamente a origem validada da requisição — nunca o literal '*' — o
+    // que é obrigatório ao combinar com credentials: true (navegadores
+    // recusam a combinação 'Access-Control-Allow-Origin: *' + credenciais).
     return callback(null, { ...corsBaseOptions, origin: true });
   }));
+
+  // Necessário para authenticateJWT ler o token do cookie httpOnly (req.cookies)
+  app.use(cookieParser());
 
   // Body parsers
   app.use(express.json({ limit: "1mb" }));
   app.use(express.urlencoded({ extended: false, limit: "1mb" }));
 
   // Access log curto para /api em prod
-  // Não captura o corpo da resposta: respostas de auth podem conter o token
-  // JWT, e logar o JSON completo (mesmo truncado) arrisca expor segredos.
+  // Não captura o corpo da resposta: mesmo não contendo mais o token JWT
+  // (agora só em cookie httpOnly, nunca no body), outras rotas podem
+  // retornar dados sensíveis, e logar o JSON completo (mesmo truncado)
+  // arrisca expor segredos.
   app.use((req, res, next) => {
     const start = Date.now();
     const path = req.path;

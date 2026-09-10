@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { storage } from "../storage";
-import { authenticateJWT, generateToken } from "../auth";
+import { authenticateJWT, generateToken, setAuthCookie, clearAuthCookie } from "../auth";
 import { insertUserSchema } from "@shared/schema";
 import { isAllowedAdminMatricula } from "../allowed-admins";
 import bcrypt from "bcryptjs";
@@ -118,11 +118,21 @@ router.post("/auth/login", loginLimiter, async (req, res) => {
             username: user.username,
             role: user.role,
         });
-        res.json({ user: userWithoutPassword, token });
+        // 🔒 SECURITY: o JWT nunca vai no corpo da resposta — só em cookie
+        // httpOnly, inacessível a JavaScript no cliente (mitiga roubo via XSS).
+        setAuthCookie(res, token);
+        res.json({ user: userWithoutPassword });
     } catch (error) {
         logError("Login error:", error);
         res.status(500).json({ message: "Internal server error" });
     }
+});
+
+// Logout: limpa o cookie httpOnly no servidor (o cliente não tem como
+// apagar um cookie httpOnly diretamente via JavaScript).
+router.post("/auth/logout", (_req, res) => {
+    clearAuthCookie(res);
+    res.status(200).json({ message: "Logout realizado com sucesso" });
 });
 
 // Registro público
