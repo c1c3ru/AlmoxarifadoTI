@@ -110,17 +110,27 @@ router.post(
                 logError("[forgot-password] APP_URL não configurada; link de redefinição não pode ser gerado", undefined);
             } else {
                 const matches = await storage.getActiveUsersByUsernameOrEmail(parsed.data.usernameOrEmail);
+                if (matches.length === 0) {
+                    console.warn("[forgot-password] Nenhuma conta ativa com esse usuário/e-mail; nada enviado");
+                }
                 for (const user of matches) {
                     const last = await storage.getLatestPasswordResetCreatedAt(user.id);
-                    if (last && Date.now() - last.getTime() < RESEND_COOLDOWN_MS) continue;
+                    if (last && Date.now() - last.getTime() < RESEND_COOLDOWN_MS) {
+                        console.warn(`[forgot-password] Pedido ignorado para user ID ${user.id}: aguarde ${RESEND_COOLDOWN_MS / 1000}s entre envios`);
+                        continue;
+                    }
 
                     const token = crypto.randomBytes(32).toString("base64url");
                     const expiresAt = new Date(Date.now() + RESET_TOKEN_TTL_MINUTES * 60 * 1000);
                     await storage.createPasswordReset(user.id, hashResetToken(token), expiresAt);
 
                     const resetUrl = `${baseUrl}/reset-password?token=${encodeURIComponent(token)}`;
-                    await emailService.sendPasswordResetEmail(user.email, resetUrl, user.name || user.username, RESET_TOKEN_TTL_MINUTES);
-                    console.log(`[forgot-password] Reset token issued for user ID ${user.id}`);
+                    const sent = await emailService.sendPasswordResetEmail(user.email, resetUrl, user.name || user.username, RESET_TOKEN_TTL_MINUTES);
+                    if (sent) {
+                        console.log(`[forgot-password] Link de redefinição enviado para user ID ${user.id}`);
+                    } else {
+                        logError(`[forgot-password] Falha ao enviar o e-mail para user ID ${user.id}; veja o log [email] acima`, undefined);
+                    }
                 }
             }
         } catch (error) {
