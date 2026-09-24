@@ -156,48 +156,55 @@ export default function RegisterUserPage() {
         isActive: true,
       };
 
-      // Usar rota pública de registro (não requer autenticação)
-      const res = await apiRequest("POST", "/api/register", payload);
+      // Usar rota pública de registro (não requer autenticação).
+      // apiRequest lança Error("<status>: <corpo>") quando a resposta não é 2xx;
+      // o corpo JSON é lido aqui para mostrar só a mensagem, não o JSON cru.
+      try {
+        await apiRequest("POST", "/api/register", payload);
+      } catch (requestError) {
+        const raw = requestError instanceof Error ? requestError.message : "";
+        const match = /^(\d{3}): ([\s\S]*)$/.exec(raw);
+        if (!match) throw requestError;
 
-      if (!res.ok) {
-        const status = res.status;
-        const errBody = await res.json().catch(() => ({})) as Record<string, unknown>;
-        const rawMsg = (errBody?.message ?? "").toString();
+        const status = Number(match[1]);
+        let errBody: { message?: unknown; errors?: unknown } = {};
+        try {
+          errBody = JSON.parse(match[2]);
+        } catch {
+          errBody = { message: match[2] };
+        }
+        const rawMsg = (errBody.message ?? "").toString();
         const msg = rawMsg.toLowerCase();
 
-        // 1) Mapear erros de validação do backend (Zod)
-        const issues = Array.isArray(errBody?.errors) ? errBody.errors : [];
-        if (issues.length > 0) {
-          for (const issue of issues) {
-            const path = (issue?.path?.[0] ?? "") as keyof RegisterFormData;
-            const message = (issue?.message ?? "Campo inválido").toString();
-            if (path && form.getFieldState(path)) {
-              form.setError(path, { type: "server", message });
-            }
+        // 1) Erros de validação do backend (Zod) vão para o campo correspondente
+        const issues = Array.isArray(errBody.errors) ? errBody.errors : [];
+        let firstIssueMessage = "";
+        for (const issue of issues) {
+          const path = (issue?.path?.[0] ?? "") as keyof RegisterFormData;
+          const message = (issue?.message ?? "Campo inválido").toString();
+          firstIssueMessage ||= message;
+          if (path && form.getFieldState(path)) {
+            form.setError(path, { type: "server", message });
           }
         }
 
-        // 2) Duplicidade: matrícula / username / email
-        const looksLikeDuplicate =
-          status === 409 || /duplicate|unique constraint|violates unique/.test(msg);
-
-        if (looksLikeDuplicate || /matr[íi]cula/.test(msg)) {
-          form.setError("matricula", { type: "manual", message: "Matrícula já cadastrada" });
-          throw new Error("Matrícula já cadastrada");
+        // 2) Duplicidade: matrícula / username / email (409)
+        if (status === 409) {
+          if (/matr[íi]cula/.test(msg)) {
+            form.setError("matricula", { type: "manual", message: "Matrícula já cadastrada" });
+            throw new Error("Matrícula já cadastrada", { cause: requestError });
+          }
+          if (/email|usu[áa]rio/.test(msg)) {
+            form.setError("email", { type: "manual", message: rawMsg || "Email já cadastrado" });
+            throw new Error(rawMsg || "Email já cadastrado", { cause: requestError });
+          }
         }
 
-        if (/username|usuário/.test(msg)) {
-          form.setError("email", { type: "manual", message: "Usuário já existe" });
-          // Também pode marcar username se existir no form, mas aqui username = email
-          throw new Error("Usuário já existe");
+        if (status === 429) {
+          throw new Error(rawMsg || "Muitas tentativas. Aguarde alguns minutos e tente novamente.", { cause: requestError });
         }
 
-        if (/email/.test(msg)) {
-          form.setError("email", { type: "manual", message: "Email já cadastrado" });
-          throw new Error("Email já cadastrado");
-        }
-
-        throw new Error(rawMsg || "Erro ao cadastrar usuário");
+        throw new Error(firstIssueMessage || rawMsg || "Erro ao cadastrar usuário", { cause: requestError });
       }
 
       if (data.role === "admin") {

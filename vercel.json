@@ -7,7 +7,7 @@
     {
       "src": "/(.*)",
       "headers": {
-        "Content-Security-Policy": "default-src 'self'; base-uri 'self'; block-all-mixed-content; font-src 'self' https://fonts.gstatic.com data:; frame-ancestors 'self'; img-src 'self' data: https:; object-src 'none'; script-src 'self'; script-src-attr 'none'; style-src 'self' https://fonts.googleapis.com; style-src-attr 'unsafe-inline'; connect-src 'self'",
+        "Content-Security-Policy": "default-src 'self'; base-uri 'self'; block-all-mixed-content; font-src 'self' https://fonts.gstatic.com data:; frame-ancestors 'self'; img-src 'self' data: https:; object-src 'none'; script-src 'self'; script-src-attr 'none'; style-src 'self' https://fonts.googleapis.com; style-src-attr 'unsafe-inline'; style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com; connect-src 'self'",
         "X-Frame-Options": "SAMEORIGIN",
         "X-Content-Type-Options": "nosniff",
         "Referrer-Policy": "strict-origin-when-cross-origin"

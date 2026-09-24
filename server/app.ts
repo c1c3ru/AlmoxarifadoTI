@@ -52,6 +52,12 @@ export async function createApp() {
           // <style> como elemento. Por isso o atributo continua liberado, mas style-src (o
           // elemento <style> e folhas externas) já não aceita mais 'unsafe-inline'.
           "style-src-attr": ["'unsafe-inline'"],
+          // Elementos <style> criados em tempo de execução: o Radix (via
+          // react-remove-scroll-bar) injeta um <style> com valores calculados na hora
+          // para travar a rolagem ao abrir Select/Dialog, e o React insere <style>
+          // renderizados por componentes. O conteúdo muda a cada abertura, então não há
+          // hash fixo possível. Scripts continuam sem 'unsafe-inline'.
+          "style-src-elem": ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
           // Permite conexões ao próprio host, WebSocket (dev) e domínios extras via env CSV (CSP_CONNECT_SRC)
           "connect-src": ["'self'", "ws:"].concat(extraConnectSrc as string[]),
         },
