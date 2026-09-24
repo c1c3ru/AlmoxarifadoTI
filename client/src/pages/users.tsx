@@ -194,6 +194,24 @@ export default function Users() {
     setShowAddModal(true);
   };
 
+  // Contas inativas: servidores recém-cadastrados aguardando liberação (ou
+  // contas desativadas). Ficam em destaque e no topo da lista.
+  const pendingUsers = users.filter((u) => !u.isActive);
+  const sortedUsers = [...users].sort((a, b) => Number(a.isActive) - Number(b.isActive));
+
+  const handleApprove = (user: User) => {
+    toggleUserStatusMutation.mutate(
+      { id: user.id, isActive: true },
+      {
+        onSuccess: () =>
+          toast({
+            title: "Usuário liberado",
+            description: `${user.name} já pode entrar no sistema.`,
+          }),
+      },
+    );
+  };
+
   const handleToggleStatus = (user: User) => {
     toggleUserStatusMutation.mutate({
       id: user.id,
@@ -227,6 +245,56 @@ export default function Users() {
       subtitle="Controle de acesso e permissões do sistema"
       showAddButton={false}
     >
+      {currentUser?.role === "admin" && pendingUsers.length > 0 && (
+        <Card className="mb-8 border-2 border-amber-300 bg-amber-50 shadow-lg" role="alert" data-testid="pending-users">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-amber-500 rounded-xl flex items-center justify-center shadow">
+                <i className="fa-solid fa-user-clock text-white"></i>
+              </div>
+              <div>
+                <p className="text-lg font-bold text-amber-900">
+                  {pendingUsers.length === 1
+                    ? "1 usuário aguardando liberação"
+                    : `${pendingUsers.length} usuários aguardando liberação`}
+                </p>
+                <p className="text-sm text-amber-800">
+                  Essas contas só conseguem entrar no sistema depois que um administrador as libera.
+                </p>
+              </div>
+            </div>
+            <div className="space-y-2">
+              {pendingUsers.map((user) => (
+                <div
+                  key={user.id}
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-lg bg-white border border-amber-200 px-4 py-3"
+                >
+                  <div className="text-sm">
+                    <p className="font-semibold text-gray-900">
+                      {user.name}{" "}
+                      <span className="font-normal text-gray-500">· {getRoleLabel(user.role)}</span>
+                    </p>
+                    <p className="text-gray-600">
+                      {user.email} · Matrícula {user.matricula}
+                    </p>
+                  </div>
+                  <Button
+                    size="sm"
+                    onClick={() => handleApprove(user)}
+                    disabled={toggleUserStatusMutation.isPending}
+                    className="bg-green-600 hover:bg-green-700 text-white"
+                    data-testid={`button-approve-${user.id}`}
+                  >
+                    <i className="fa-solid fa-user-check mr-2"></i>
+                    Liberar acesso
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Hero Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-0 shadow-lg">
@@ -530,10 +598,13 @@ export default function Users() {
             </div>
           ) : (
             <div className="space-y-4">
-              {users.map((user) => (
+              {sortedUsers.map((user) => (
                 <div
                   key={user.id}
-                  className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 p-6 border border-gray-200 rounded-2xl hover:shadow-lg hover:border-blue-200 transition-all duration-300 group bg-gradient-to-r from-white to-gray-50"
+                  className={`flex flex-col md:flex-row items-start md:items-center justify-between gap-4 p-6 border rounded-2xl hover:shadow-lg transition-all duration-300 group ${user.isActive
+                    ? "border-gray-200 hover:border-blue-200 bg-gradient-to-r from-white to-gray-50"
+                    : "border-2 border-amber-300 bg-amber-50"
+                    }`}
                   data-testid={`user-${user.id}`}
                 >
                   <div className="flex items-center space-x-4">
@@ -556,9 +627,9 @@ export default function Users() {
                           {getRoleLabel(user.role)}
                         </Badge>
                         {!user.isActive && (
-                          <Badge className="bg-red-100 text-red-800 border-red-200 font-medium">
-                            <i className="fa-solid fa-user-slash mr-1 text-xs"></i>
-                            Inativo
+                          <Badge className="bg-amber-100 text-amber-900 border-amber-300 font-medium">
+                            <i className="fa-solid fa-user-clock mr-1 text-xs"></i>
+                            Aguardando liberação
                           </Badge>
                         )}
                       </div>
