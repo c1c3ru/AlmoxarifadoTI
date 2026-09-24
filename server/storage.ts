@@ -111,6 +111,7 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   getActiveUsersByUsernameOrEmail(usernameOrEmail: string): Promise<User[]>;
+  getUsersForLogin(identifier: string): Promise<User[]>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: string, user: Partial<InsertUser>): Promise<User | undefined>;
   getAllUsers(): Promise<User[]>;
@@ -187,6 +188,25 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(users.username, username), isNull(users.deletedAt)))
       .limit(1);
     return result[0];
+  }
+
+  async getUsersForLogin(identifier: string): Promise<User[]> {
+    // Login aceita usuário, e-mail ou matrícula (sem diferenciar maiúsculas).
+    // Email e matrícula não são únicos, então pode haver mais de uma conta:
+    // a rota confere a senha em cada candidata. Inativas entram para a rota
+    // poder avisar "aguardando liberação" depois de a senha conferir.
+    return getDb()
+      .select()
+      .from(users)
+      .where(and(
+        or(
+          sql`lower(${users.username}) = lower(${identifier})`,
+          sql`lower(${users.email}) = lower(${identifier})`,
+          eq(users.matricula, identifier)
+        ),
+        isNull(users.deletedAt)
+      ))
+      .limit(5);
   }
 
   async getActiveUsersByUsernameOrEmail(usernameOrEmail: string): Promise<User[]> {

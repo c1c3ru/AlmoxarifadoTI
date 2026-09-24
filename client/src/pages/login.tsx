@@ -13,7 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 const loginSchema = z.object({
-  username: z.string().min(1, "Nome de usuário é obrigatório"),
+  username: z.string().min(1, "Informe seu usuário, e-mail ou matrícula"),
   password: z.string().min(1, "Senha é obrigatória"),
 });
 
@@ -144,14 +144,14 @@ export default function Login() {
                 name="username"
                 render={({ field }) => (
                   <FormItem className="space-y-2">
-                    <FormLabel className="text-sm font-semibold text-gray-700">Nome de Usuário</FormLabel>
+                    <FormLabel className="text-sm font-semibold text-gray-700">Usuário, e-mail ou matrícula</FormLabel>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <i className="fa-solid fa-user text-gray-400 text-sm"></i>
                       </div>
                       <FormControl>
                         <Input
-                          placeholder="Digite seu nome de usuário"
+                          placeholder="E-mail institucional ou matrícula"
                           {...field}
                           data-testid="input-username"
                           className="pl-10 h-12 bg-gray-50/50 border-gray-200 focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all duration-200"

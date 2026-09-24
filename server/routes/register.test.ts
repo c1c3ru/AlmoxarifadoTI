@@ -16,6 +16,13 @@ vi.mock("../storage", () => ({
       return user;
     },
     getUserByUsername: async (username: string) => created.find((u) => u.username === username),
+    getUsersForLogin: async (identifier: string) =>
+      created.filter(
+        (u) =>
+          String(u.username).toLowerCase() === identifier.toLowerCase() ||
+          String(u.email ?? "").toLowerCase() === identifier.toLowerCase() ||
+          u.matricula === identifier
+      ),
   },
 }));
 
@@ -122,6 +129,45 @@ describe("POST /api/auth/login com conta aguardando liberação", () => {
 
   it("com a senha errada, não revela que a conta existe", async () => {
     const res = await login("errada");
+    expect(res.status).toBe(401);
+  });
+});
+
+describe("POST /api/auth/login por usuário, e-mail ou matrícula", () => {
+  beforeEach(async () => {
+    created.push({
+      id: "a1",
+      username: "daniel.regis@ifce.edu.br",
+      email: "Daniel.Regis@ifce.edu.br",
+      matricula: "1234567",
+      password: await bcrypt.hash("Senha@Forte1", 4),
+      role: "admin",
+      isActive: true,
+    });
+  });
+
+  function login(username: string, password = "Senha@Forte1") {
+    return fetch(`${baseUrl}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
+    });
+  }
+
+  it.each([
+    ["username exato", "daniel.regis@ifce.edu.br"],
+    ["e-mail com maiúsculas e espaços", "  DANIEL.REGIS@IFCE.EDU.BR "],
+    ["matrícula", "1234567"],
+  ])("entra com %s", async (_label, identifier) => {
+    const res = await login(identifier);
+    const body = await res.json();
+    expect(res.status).toBe(200);
+    expect(body.user.id).toBe("a1");
+    expect(body.user.password).toBeUndefined();
+  });
+
+  it("recusa senha errada mesmo com matrícula válida", async () => {
+    const res = await login("1234567", "errada");
     expect(res.status).toBe(401);
   });
 });

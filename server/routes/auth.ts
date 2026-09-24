@@ -30,13 +30,24 @@ router.post("/auth/login", loginLimiter, async (req, res) => {
             return res.status(400).json({ message: "Username and password are required" });
         }
 
-        const user = await storage.getUserByUsername(username);
-        if (!user) {
-            return res.status(401).json({ message: "Invalid credentials" });
-        }
+        // Aceita usuário, e-mail ou matrícula: muita gente digita o nome, a
+        // matrícula ou o e-mail com maiúsculas em vez do username exato.
+        const identifier = String(username).trim();
+        const candidates = await storage.getUsersForLogin(identifier);
+        // Username exato primeiro; depois contas ativas antes das pendentes.
+        candidates.sort((a, b) =>
+            Number(b.username === identifier) - Number(a.username === identifier) ||
+            Number(b.isActive) - Number(a.isActive)
+        );
 
-        const isValidPassword = await bcrypt.compare(password, user.password);
-        if (!isValidPassword) {
+        let user: (typeof candidates)[number] | undefined;
+        for (const candidate of candidates) {
+            if (await bcrypt.compare(String(password), candidate.password)) {
+                user = candidate;
+                break;
+            }
+        }
+        if (!user) {
             return res.status(401).json({ message: "Invalid credentials" });
         }
 
