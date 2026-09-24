@@ -47,6 +47,34 @@ export function generateToken(payload: JwtPayload) {
   return jwt.sign(payload, JWT_SECRET, options);
 }
 
+// 🔒 SECURITY: nome do cookie httpOnly que carrega o JWT. O token nunca mais
+// trafega no corpo da resposta de login nem é lido/gravado pelo frontend —
+// isso o torna inacessível a JavaScript (e, por consequência, a XSS).
+export const AUTH_COOKIE_NAME = "sgat_token";
+
+function authCookieOptions() {
+  return {
+    httpOnly: true,
+    // Secure exige HTTPS; relaxado fora de produção para funcionar em
+    // desenvolvimento local via http://localhost.
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict" as const,
+    path: "/",
+  };
+}
+
+export function setAuthCookie(res: Response, token: string) {
+  const decoded = jwt.decode(token) as { exp?: number } | null;
+  const maxAge = decoded?.exp
+    ? Math.max(decoded.exp * 1000 - Date.now(), 0)
+    : 8 * 60 * 60 * 1000;
+  res.cookie(AUTH_COOKIE_NAME, token, { ...authCookieOptions(), maxAge });
+}
+
+export function clearAuthCookie(res: Response) {
+  res.clearCookie(AUTH_COOKIE_NAME, authCookieOptions());
+}
+
 // 🔒 SECURITY: Exige que o usuário autenticado tenha role "admin". Deve
 // sempre rodar depois de authenticateJWT na cadeia de middlewares.
 export function requireAdmin(req: Request, res: Response, next: NextFunction) {
@@ -60,11 +88,18 @@ export function requireAdmin(req: Request, res: Response, next: NextFunction) {
 }
 
 export async function authenticateJWT(req: Request, res: Response, next: NextFunction) {
+  // Fonte primária: cookie httpOnly (fluxo do frontend web). O header
+  // Authorization: Bearer segue aceito como alternativa para clientes que
+  // não são navegador (scripts, apps mobile, integrações server-to-server).
+  const cookieToken = req.cookies?.[AUTH_COOKIE_NAME] as string | undefined;
   const authHeader = req.headers["authorization"] as string | undefined;
-  if (!authHeader || !authHeader.toLowerCase().startsWith("bearer ")) {
+  const headerToken = authHeader?.toLowerCase().startsWith("bearer ")
+    ? authHeader.slice(7)
+    : undefined;
+  const token = cookieToken || headerToken;
+  if (!token) {
     return res.status(401).json({ message: "Unauthorized" });
   }
-  const token = authHeader.slice(7);
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
     // Anexa info do usuário ao request

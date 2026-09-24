@@ -21,6 +21,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (savedUser) {
       setUser(JSON.parse(savedUser));
     }
+    // 🔒 SECURITY: o JWT passou a ser entregue só via cookie httpOnly.
+    // Remove qualquer token residente de sessões antigas (pré-migração)
+    // que ainda esteja acessível a JavaScript no navegador do usuário.
+    localStorage.removeItem("sgat-token");
     setIsLoading(false);
   }, []);
 
@@ -30,17 +34,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         username,
         password,
       });
-      
+
       const data = await response.json();
       setUser(data.user);
       localStorage.setItem("sgat-user", JSON.stringify(data.user));
-      // Se o servidor estiver com JWT habilitado, virá um token
-      if (data.token) {
-        localStorage.setItem("sgat-token", data.token as string);
-      } else {
-        // Garante limpeza caso tenha token antigo
-        localStorage.removeItem("sgat-token");
-      }
+      // O JWT chega em cookie httpOnly (Set-Cookie), nunca no corpo da
+      // resposta — nada a armazenar aqui.
       return true;
     } catch (error) {
       console.error("[auth] Login failed:", error);
@@ -51,7 +50,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = () => {
     setUser(null);
     localStorage.removeItem("sgat-user");
-    localStorage.removeItem("sgat-token");
+    // Cookie httpOnly não pode ser apagado via JavaScript: pede ao servidor
+    // para limpá-lo. Best-effort — o estado local já foi limpo acima.
+    apiRequest("POST", "/api/auth/logout").catch(() => {});
   };
 
   return (

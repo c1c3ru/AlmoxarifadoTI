@@ -8,7 +8,6 @@ function handleUnauthorizedRedirect() {
   isRedirecting401 = true;
   try {
     localStorage.removeItem('sgat-user');
-    localStorage.removeItem('sgat-token');
   } catch {}
   const current = window.location.pathname + window.location.search + window.location.hash;
   if (!current.startsWith('/login')) {
@@ -60,10 +59,10 @@ export async function apiRequest(
   data?: unknown | undefined,
 ): Promise<Response> {
   const finalUrl = buildUrl(url);
-  const token = typeof localStorage !== 'undefined' ? localStorage.getItem('sgat-token') : null;
   const headers: Record<string, string> = {};
   if (data) headers["Content-Type"] = "application/json";
-  if (token) headers["Authorization"] = `Bearer ${token}`;
+  // Autenticação viaja no cookie httpOnly (sgat_token), incluído
+  // automaticamente pelo navegador via credentials: "include" abaixo.
 
   const res = await fetch(finalUrl, {
     method,
@@ -94,13 +93,10 @@ export const getQueryFn: <T>(options: {
       }
     }
     const finalUrl = buildUrl(pathOrUrl);
-    const token = typeof localStorage !== 'undefined' ? localStorage.getItem('sgat-token') : null;
-    const headers: Record<string, string> = {};
-    if (token) headers["Authorization"] = `Bearer ${token}`;
-
+    // Autenticação viaja no cookie httpOnly (sgat_token), incluído
+    // automaticamente pelo navegador via credentials: "include" abaixo.
     const res = await fetch(finalUrl, {
       credentials: "include",
-      headers,
     });
 
     if (res.status === 401) {
