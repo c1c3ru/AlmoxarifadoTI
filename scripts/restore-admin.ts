@@ -31,7 +31,7 @@ async function restoreAdminUser() {
         const generatedPassword = generateRandomPassword();
         const hashedPassword = await bcrypt.hash(generatedPassword, 10);
 
-        const result = await sql(`
+        await sql(`
       INSERT INTO "users" (username, password, name, email, matricula, role, is_active)
       VALUES ($1, $2, $3, $4, $5, $6, $7)
       RETURNING id, username, email, role

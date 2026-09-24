@@ -78,7 +78,7 @@ export async function createApp() {
     // "externa", e exigir ALLOWED_ORIGINS pra cada domínio de preview não
     // é viável. Comparar contra o Host da própria requisição cobre isso
     // sem depender de configuração alguma.
-    let isSameOrigin = false;
+    let isSameOrigin: boolean;
     try {
       isSameOrigin = new URL(origin).host === req.headers.host;
     } catch {
