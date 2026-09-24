@@ -249,7 +249,7 @@ export default function Users() {
         <Card className="mb-8 border-2 border-amber-300 bg-amber-50 shadow-lg" role="alert" data-testid="pending-users">
           <CardContent className="p-6">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-amber-500 rounded-xl flex items-center justify-center shadow">
+              <div className="w-10 h-10 shrink-0 bg-amber-500 rounded-xl flex items-center justify-center shadow">
                 <i className="fa-solid fa-user-clock text-white"></i>
               </div>
               <div>
@@ -269,12 +269,12 @@ export default function Users() {
                   key={user.id}
                   className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-lg bg-white border border-amber-200 px-4 py-3"
                 >
-                  <div className="text-sm">
+                  <div className="text-sm min-w-0 break-words">
                     <p className="font-semibold text-gray-900">
                       {user.name}{" "}
                       <span className="font-normal text-gray-500">· {getRoleLabel(user.role)}</span>
                     </p>
-                    <p className="text-gray-600">
+                    <p className="text-gray-600 break-all">
                       {user.email} · Matrícula {user.matricula}
                     </p>
                   </div>
@@ -607,16 +607,16 @@ export default function Users() {
                     }`}
                   data-testid={`user-${user.id}`}
                 >
-                  <div className="flex items-center space-x-4">
-                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg ${user.role === 'admin'
+                  <div className="flex items-start sm:items-center gap-4 w-full md:w-auto min-w-0">
+                    <div className={`w-12 h-12 sm:w-16 sm:h-16 shrink-0 rounded-2xl flex items-center justify-center shadow-lg ${user.role === 'admin'
                       ? 'bg-gradient-to-br from-purple-400 to-purple-600'
                       : 'bg-gradient-to-br from-blue-400 to-blue-600'
                       }`}>
                       <i className={`${getRoleIcon(user.role)} text-white text-xl`}></i>
                     </div>
-                    <div>
-                      <div className="flex items-center space-x-3 mb-2">
-                        <p className="font-bold text-gray-900 text-lg group-hover:text-blue-700 transition-colors" data-testid={`user-name-${user.id}`}>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2 mb-2">
+                        <p className="font-bold text-gray-900 text-lg break-words group-hover:text-blue-700 transition-colors" data-testid={`user-name-${user.id}`}>
                           {user.name}
                         </p>
                         <Badge
@@ -634,19 +634,19 @@ export default function Users() {
                         )}
                       </div>
                       <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-gray-600">
-                        <span className="flex items-center">
+                        <span className="flex items-center min-w-0 break-all">
                           <i className="fa-solid fa-user mr-2 text-blue-500"></i>
                           {user.username}
                         </span>
-                        <span className="flex items-center">
+                        <span className="flex items-center min-w-0 break-all">
                           <i className="fa-solid fa-envelope mr-2 text-blue-500"></i>
                           {user.email}
                         </span>
-                        <span className="flex items-center">
+                        <span className="flex items-center min-w-0 break-all">
                           <i className="fa-solid fa-id-card mr-2 text-blue-500"></i>
                           {user.matricula}
                         </span>
-                        <span className="flex items-center">
+                        <span className="flex items-center min-w-0 break-all">
                           <i className="fa-solid fa-calendar mr-2 text-green-500"></i>
                           {new Date(user.createdAt).toLocaleDateString("pt-BR")}
                         </span>
