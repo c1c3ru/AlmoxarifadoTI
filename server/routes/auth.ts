@@ -68,15 +68,23 @@ router.post("/auth/logout", (_req, res) => {
 // Registro público
 router.post("/register", sensitiveActionLimiter, async (req, res) => {
     try {
-        // 🔒 SECURITY: cadastro público sempre cria conta "tech" — role nunca vem do cliente
-        const validation = insertUserSchema.safeParse({ ...req.body, role: "tech" });
+        // 🔒 SECURITY: o cliente só escolhe entre aluno ("tech") e servidor ("admin").
+        // Conta de servidor exige matrícula na lista autorizada e nasce inativa:
+        // só entra no sistema depois que um administrador a ativa em Usuários.
+        // Assim, saber a matrícula SIAPE de alguém não basta para virar admin.
+        const role = req.body?.role === "admin" ? "admin" : "tech";
+        const validation = insertUserSchema.safeParse({
+            ...req.body,
+            role,
+            isActive: role === "admin" ? false : true,
+        });
         if (!validation.success) {
             return res.status(400).json({ message: "Dados inválidos", errors: validation.error.issues });
         }
 
-        if (validation.data.role === "admin" && !isAllowedAdminMatricula(validation.data.matricula)) {
+        if (role === "admin" && !isAllowedAdminMatricula(validation.data.matricula)) {
             return res.status(400).json({
-                message: "Invalid user data",
+                message: "Matrícula não autorizada para perfil de administrador",
                 errors: [{ path: ["matricula"], message: "Matrícula não autorizada para perfil de administrador" }],
             });
         }
@@ -84,7 +92,10 @@ router.post("/register", sensitiveActionLimiter, async (req, res) => {
         const user = await storage.createUser(validation.data);
         const { password: _, ...userWithoutPassword } = user;
         res.status(201).json({
-            message: "Usuário cadastrado com sucesso",
+            message: role === "admin"
+                ? "Cadastro enviado. Um administrador precisa ativar sua conta."
+                : "Usuário cadastrado com sucesso",
+            pendingApproval: role === "admin",
             user: userWithoutPassword
         });
     } catch (error: any) {
