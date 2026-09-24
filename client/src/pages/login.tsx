@@ -55,9 +55,10 @@ export default function Login() {
         });
       }
     } catch (error) {
+      const message = error instanceof Error && error.message ? error.message : "";
       toast({
-        title: "Erro no login",
-        description: "Ocorreu um erro inesperado. Tente novamente.",
+        title: message ? "Conta aguardando liberação" : "Erro no login",
+        description: message || "Ocorreu um erro inesperado. Tente novamente.",
         variant: "destructive",
       });
     } finally {

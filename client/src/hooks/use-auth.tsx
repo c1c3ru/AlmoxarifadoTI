@@ -42,6 +42,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // resposta — nada a armazenar aqui.
       return true;
     } catch (error) {
+      // 403 = senha correta, mas conta ainda não liberada por um admin:
+      // repassa a mensagem do servidor para a tela de login mostrar.
+      const raw = error instanceof Error ? error.message : "";
+      const pending = /^403: ([\s\S]*)$/.exec(raw);
+      if (pending) {
+        let message = "Sua conta ainda não foi liberada por um administrador.";
+        try {
+          message = JSON.parse(pending[1]).message || message;
+        } catch {
+          // corpo não-JSON: mantém a mensagem padrão
+        }
+        throw new Error(message, { cause: error });
+      }
       console.error("[auth] Login failed:", error);
       return false;
     }

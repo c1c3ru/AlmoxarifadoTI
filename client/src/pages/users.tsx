@@ -19,10 +19,9 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import type { User } from "@shared/schema";
 
-// A validação de matrícula autorizada para o perfil "admin" é feita pelo
-// servidor (server/allowed-admins.ts / server/routes/users.ts), que retorna
-// 400 se a matrícula não for permitida — nunca embutida no bundle público do
-// cliente. Erro tratado no onError das mutations abaixo.
+// Regras de matrícula (14 dígitos para aluno, 7 para servidor) são validadas
+// pelo servidor (shared/schema.ts), que retorna 400; o erro é tratado no
+// onError das mutations abaixo.
 const userSchema = z.object({
   username: z.string().min(3, "Username deve ter pelo menos 3 caracteres"),
   password: z.string().optional().refine((val) => !val || val.length >= 6, {
