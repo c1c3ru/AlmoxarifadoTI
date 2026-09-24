@@ -12,6 +12,15 @@ interface EmailConfig {
   };
 }
 
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 class EmailService {
   private transporter: Transporter | null = null;
   private isConfigured = false;
@@ -46,31 +55,59 @@ class EmailService {
     console.log('[email] Email service configured successfully');
   }
 
-  async sendPasswordResetEmail(email: string, resetCode: string, username: string): Promise<boolean> {
+  async sendPasswordResetEmail(
+    email: string,
+    resetUrl: string,
+    name: string,
+    expiresInMinutes: number,
+  ): Promise<boolean> {
     if (!this.isConfigured || !this.transporter) {
       console.error('[email] Email service not configured');
+      // Só em desenvolvimento: sem SMTP configurado, o link vai para o log do
+      // servidor para permitir testar o fluxo localmente. Nunca em produção.
+      if (process.env.NODE_ENV !== 'production') {
+        console.warn(`[email][dev] Link de redefinição para ${email}: ${resetUrl}`);
+      }
       return false;
     }
+
+    const safeName = escapeHtml(name);
+    const safeUrl = escapeHtml(resetUrl);
 
     try {
       const mailOptions = {
         from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
         to: email,
-        subject: 'Recuperação de Senha - Almoxarifado TI',
+        subject: 'Redefinição de Senha - Almoxarifado TI',
+        text: [
+          `Olá ${name},`,
+          '',
+          'Recebemos um pedido para redefinir a senha da sua conta no Sistema de Almoxarifado TI.',
+          `Acesse o link abaixo para criar uma nova senha (válido por ${expiresInMinutes} minutos e de uso único):`,
+          '',
+          resetUrl,
+          '',
+          'Se você não fez este pedido, ignore este email. Sua senha permanecerá inalterada.',
+        ].join('\n'),
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px;">
-              <h2 style="color: #333; text-align: center;">Recuperação de Senha</h2>
-              <p>Olá <strong>${username}</strong>,</p>
-              <p>Você solicitou a recuperação de senha para sua conta no Sistema de Almoxarifado TI.</p>
-              <div style="background-color: #fff; padding: 20px; border-radius: 4px; margin: 20px 0; text-align: center;">
-                <p style="margin: 0; font-size: 14px; color: #666;">Seu código de recuperação é:</p>
-                <h1 style="color: #007bff; font-size: 32px; margin: 10px 0; letter-spacing: 4px;">${resetCode}</h1>
-                <p style="margin: 0; font-size: 12px; color: #999;">Este código expira em 15 minutos</p>
+              <h2 style="color: #333; text-align: center;">Redefinição de Senha</h2>
+              <p>Olá <strong>${safeName}</strong>,</p>
+              <p>Recebemos um pedido para redefinir a senha da sua conta no Sistema de Almoxarifado TI.</p>
+              <div style="text-align: center; margin: 28px 0;">
+                <a href="${safeUrl}" style="background-color: #007bff; color: #fff; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; display: inline-block;">
+                  Criar nova senha
+                </a>
+                <p style="margin: 12px 0 0; font-size: 12px; color: #999;">
+                  O link expira em ${expiresInMinutes} minutos e só pode ser usado uma vez.
+                </p>
               </div>
-              <p>Use este código na tela de redefinição de senha do sistema.</p>
+              <p style="font-size: 12px; color: #666; word-break: break-all;">
+                Se o botão não funcionar, copie e cole este endereço no navegador:<br>${safeUrl}
+              </p>
               <p style="color: #666; font-size: 14px;">
-                <strong>Importante:</strong> Se você não solicitou esta recuperação, ignore este email. 
+                <strong>Importante:</strong> Se você não fez este pedido, ignore este email.
                 Sua senha permanecerá inalterada.
               </p>
               <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
@@ -88,6 +125,37 @@ class EmailService {
       return true;
     } catch (error) {
       logError('[email] Failed to send password reset email:', error);
+      return false;
+    }
+  }
+
+  // Aviso de que a senha foi alterada, para o dono da conta perceber uma
+  // redefinição que não pediu.
+  async sendPasswordChangedEmail(email: string, name: string): Promise<boolean> {
+    if (!this.isConfigured || !this.transporter) return false;
+
+    try {
+      await this.transporter.sendMail({
+        from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+        to: email,
+        subject: 'Sua senha foi alterada - Almoxarifado TI',
+        text: `Olá ${name},\n\nA senha da sua conta no Sistema de Almoxarifado TI acabou de ser redefinida.\nSe não foi você, procure imediatamente o administrador do sistema.`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px;">
+              <h2 style="color: #333; text-align: center;">Senha alterada</h2>
+              <p>Olá <strong>${escapeHtml(name)}</strong>,</p>
+              <p>A senha da sua conta no Sistema de Almoxarifado TI acabou de ser redefinida.</p>
+              <p style="color: #666; font-size: 14px;">
+                <strong>Não foi você?</strong> Procure imediatamente o administrador do sistema.
+              </p>
+            </div>
+          </div>
+        `,
+      });
+      return true;
+    } catch (error) {
+      logError('[email] Failed to send password changed email:', error);
       return false;
     }
   }

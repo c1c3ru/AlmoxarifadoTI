@@ -16,6 +16,7 @@ import Users from "@/pages/users";
 import Categories from "@/pages/categories";
 import NotFound from "@/pages/not-found";
 import RegisterUserPage from "@/pages/register";
+import ResetPassword from "@/pages/reset-password";
 import ConsumptionDashboard from "@/pages/consumption";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 
@@ -61,6 +62,10 @@ function Router() {
 
       <Route path="/register">
         {user ? <Redirect to="/" /> : <RegisterUserPage />}
+      </Route>
+
+      <Route path="/reset-password">
+        <ResetPassword />
       </Route>
       
       <Route path="/">

@@ -10,8 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 const loginSchema = z.object({
   username: z.string().min(1, "Nome de usuário é obrigatório"),
@@ -22,22 +21,12 @@ const recoverSchema = z.object({
   usernameOrEmail: z.string().min(1, "Informe seu usuário ou email"),
 });
 
-const resetSchema = z
-  .object({
-    usernameOrEmail: z.string().min(1, "Usuário ou email é obrigatório"),
-    code: z.string().min(4, "Código inválido"),
-    newPassword: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
-    confirmPassword: z.string().min(6, "Confirmação obrigatória"),
-  })
-  .refine((data) => data.newPassword === data.confirmPassword, {
-    message: "Senhas não coincidem",
-    path: ["confirmPassword"],
-  });
-
 type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
+  const [isRecovering, setIsRecovering] = useState(false);
+  const [recoverSent, setRecoverSent] = useState(false);
   const { login } = useAuth();
   const { toast } = useToast();
 
@@ -52,11 +41,6 @@ export default function Login() {
   const recoverForm = useForm<z.infer<typeof recoverSchema>>({
     resolver: zodResolver(recoverSchema),
     defaultValues: { usernameOrEmail: "" },
-  });
-
-  const resetForm = useForm<z.infer<typeof resetSchema>>({
-    resolver: zodResolver(resetSchema),
-    defaultValues: { usernameOrEmail: "", code: "", newPassword: "", confirmPassword: "" },
   });
 
   const onSubmit = async (data: LoginFormData) => {
@@ -82,8 +66,9 @@ export default function Login() {
   };
 
   const onRecover = async (data: z.infer<typeof recoverSchema>) => {
+    setIsRecovering(true);
     try {
-      const response = await fetch('/api/password-recovery', {
+      const response = await fetch('/api/auth/forgot-password', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -99,10 +84,7 @@ export default function Login() {
       }
 
       if (response.ok) {
-        toast({
-          title: "Solicitação enviada",
-          description: result.message,
-        });
+        setRecoverSent(true);
         recoverForm.reset();
       } else {
         toast({
@@ -117,44 +99,8 @@ export default function Login() {
         description: "Erro de conexão. Tente novamente.",
         variant: "destructive",
       });
-    }
-  };
-
-  const onReset = async (data: z.infer<typeof resetSchema>) => {
-    try {
-      const response = await fetch('/api/password-reset', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          usernameOrEmail: data.usernameOrEmail,
-          code: data.code,
-          newPassword: data.newPassword,
-        }),
-      });
-
-      const result = await response.json();
-
-      if (response.ok) {
-        toast({
-          title: "Senha redefinida",
-          description: result.message,
-        });
-        resetForm.reset();
-      } else {
-        toast({
-          title: "Erro",
-          description: result.message || "Erro ao redefinir senha",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Erro de conexão. Tente novamente.",
-        variant: "destructive",
-      });
+    } finally {
+      setIsRecovering(false);
     }
   };
 
@@ -262,117 +208,71 @@ export default function Login() {
 
               <div className="flex items-center justify-between pt-2">
                 <div className="w-full text-center">
-                  <Dialog>
+                  <Dialog onOpenChange={(open) => { if (!open) setRecoverSent(false); }}>
                     <DialogTrigger asChild>
-                      <button type="button" className="text-blue-600 hover:text-blue-700 font-medium text-sm hover:underline transition-colors">
+                      <button type="button" className="text-blue-600 hover:text-blue-700 font-medium text-sm hover:underline transition-colors" data-testid="link-forgot-password">
                         <i className="fa-solid fa-key mr-2"></i>
                         Esqueceu a senha?
                       </button>
                     </DialogTrigger>
-                    <DialogContent aria-describedby={undefined} className="sm:max-w-md bg-white shadow-2xl border border-gray-200">
+                    <DialogContent className="sm:max-w-md bg-white shadow-2xl border border-gray-200">
                       <DialogHeader>
                         <DialogTitle className="text-xl font-bold text-center">Recuperar Acesso</DialogTitle>
+                        <DialogDescription className="text-center">
+                          Informe seu usuário ou email institucional. Enviaremos um link para você criar uma nova senha.
+                        </DialogDescription>
                       </DialogHeader>
-                      <Tabs defaultValue="recover">
-                        <TabsList className="grid grid-cols-2 w-full">
-                          <TabsTrigger value="recover" className="font-medium">Recuperar</TabsTrigger>
-                          <TabsTrigger value="reset" className="font-medium">Redefinir</TabsTrigger>
-                        </TabsList>
-
-                        <TabsContent value="recover" className="mt-6">
-                          <Form {...recoverForm}>
-                            <form onSubmit={recoverForm.handleSubmit(onRecover)} className="space-y-4">
-                              <FormField
-                                control={recoverForm.control}
-                                name="usernameOrEmail"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel className="font-semibold">Usuário ou Email</FormLabel>
-                                    <FormControl>
-                                      <Input
-                                        placeholder="Digite seu usuário ou email"
-                                        {...field}
-                                        className="h-11"
-                                      />
-                                    </FormControl>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-                              <Button type="submit" className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 h-11">
-                                <i className="fa-solid fa-envelope mr-2"></i>
-                                Enviar Instruções
-                              </Button>
-                              <p className="text-xs text-gray-500 text-center">
-                                Você receberá um código para redefinir sua senha.
-                              </p>
-                            </form>
-                          </Form>
-                        </TabsContent>
-
-                        <TabsContent value="reset" className="mt-6">
-                          <Form {...resetForm}>
-                            <form onSubmit={resetForm.handleSubmit(onReset)} className="space-y-4">
-                              <FormField
-                                control={resetForm.control}
-                                name="usernameOrEmail"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel className="font-semibold">Usuário ou Email</FormLabel>
-                                    <FormControl>
-                                      <Input placeholder="Seu usuário ou email" {...field} className="h-10" />
-                                    </FormControl>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-                              <FormField
-                                control={resetForm.control}
-                                name="code"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel className="font-semibold">Código</FormLabel>
-                                    <FormControl>
-                                      <Input placeholder="Código recebido" {...field} className="h-10" />
-                                    </FormControl>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-                              <FormField
-                                control={resetForm.control}
-                                name="newPassword"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel className="font-semibold">Nova Senha</FormLabel>
-                                    <FormControl>
-                                      <Input type="password" placeholder="Nova senha" {...field} className="h-10" />
-                                    </FormControl>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-                              <FormField
-                                control={resetForm.control}
-                                name="confirmPassword"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel className="font-semibold">Confirmar Senha</FormLabel>
-                                    <FormControl>
-                                      <Input type="password" placeholder="Confirme a nova senha" {...field} className="h-10" />
-                                    </FormControl>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-                              <Button type="submit" className="w-full bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 h-11">
-                                <i className="fa-solid fa-check mr-2"></i>
-                                Redefinir Senha
-                              </Button>
-                            </form>
-                          </Form>
-                        </TabsContent>
-                      </Tabs>
+                      {recoverSent ? (
+                        <div className="text-center space-y-3 py-2" role="status">
+                          <i className="fa-solid fa-envelope-circle-check text-green-500 text-4xl"></i>
+                          <p className="text-sm text-gray-600">
+                            Se existir uma conta ativa para os dados informados, você receberá um email com o link de redefinição.
+                            O link vale por 30 minutos e só pode ser usado uma vez.
+                          </p>
+                          <p className="text-xs text-gray-500">Não chegou? Confira a caixa de spam ou tente de novo em alguns minutos.</p>
+                        </div>
+                      ) : (
+                        <Form {...recoverForm}>
+                          <form
+                            // O Dialog é renderizado em portal, mas no React o submit ainda
+                            // propaga para o formulário de login que o envolve.
+                            onSubmit={(e) => { e.stopPropagation(); recoverForm.handleSubmit(onRecover)(e); }}
+                            className="space-y-4"
+                          >
+                            <FormField
+                              control={recoverForm.control}
+                              name="usernameOrEmail"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel className="font-semibold">Usuário ou Email</FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      placeholder="Digite seu usuário ou email"
+                                      autoComplete="username"
+                                      {...field}
+                                      className="h-11"
+                                      data-testid="input-recover-identifier"
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <Button
+                              type="submit"
+                              disabled={isRecovering}
+                              className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 h-11"
+                              data-testid="button-send-recovery"
+                            >
+                              {isRecovering ? (
+                                <><i className="fa-solid fa-spinner fa-spin mr-2"></i>Enviando...</>
+                              ) : (
+                                <><i className="fa-solid fa-envelope mr-2"></i>Enviar link</>
+                              )}
+                            </Button>
+                          </form>
+                        </Form>
+                      )}
                     </DialogContent>
                   </Dialog>
                 </div>

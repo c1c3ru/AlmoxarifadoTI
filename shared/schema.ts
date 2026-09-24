@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, integer, timestamp, uuid, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, timestamp, uuid, boolean, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -56,13 +56,18 @@ export const movements = pgTable("movements", {
   createdAt: timestamp("created_at").notNull().default(sql`now()`),
 });
 
+// Tokens de recuperação de senha. Só o hash SHA-256 do token é persistido:
+// o token em claro trafega apenas no link enviado por e-mail. Cada token é de
+// uso único (a linha é apagada ao ser consumida) e expira em poucos minutos.
 export const passwordResets = pgTable("password_resets", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: uuid("user_id").references(() => users.id).notNull(),
-  code: text("code").notNull(),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  tokenHash: text("token_hash").notNull().unique(),
   expiresAt: timestamp("expires_at").notNull(),
   createdAt: timestamp("created_at").notNull().default(sql`now()`),
-});
+}, (table) => [
+  index("idx_password_resets_user_id").on(table.userId),
+]);
 
 export const userActivity = pgTable("user_activity", {
   userId: uuid("user_id").primaryKey().references(() => users.id).notNull(),

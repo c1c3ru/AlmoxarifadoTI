@@ -4,8 +4,6 @@ import { authenticateJWT, generateToken } from "../auth";
 import { insertUserSchema } from "@shared/schema";
 import { isAllowedAdminMatricula } from "../allowed-admins";
 import bcrypt from "bcryptjs";
-import crypto from "crypto";
-import { emailService } from "../email";
 import rateLimit from "express-rate-limit";
 import { logError } from "../logger";
 
@@ -18,79 +16,11 @@ const loginLimiter = rateLimit({
     message: { message: "Muitas tentativas de login. Tente novamente após 15 minutos." },
 });
 
-// Limitador para endpoints públicos sensíveis (registro e recuperação/redefinição de senha)
+// Limitador para o registro público
 const sensitiveActionLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 10,
     message: { message: "Muitas solicitações. Tente novamente após 15 minutos." },
-});
-
-// Password recovery endpoint
-router.post("/password-recovery", sensitiveActionLimiter, async (req, res) => {
-    try {
-        const { usernameOrEmail } = req.body;
-        if (!usernameOrEmail) {
-            return res.status(400).json({ message: "Username ou email é obrigatório" });
-        }
-
-        const user = await storage.getUserByUsernameOrEmailIncludingDeleted(usernameOrEmail);
-        if (!user) {
-            return res.status(200).json({
-                message: "Se existir uma conta para este usuário/email, enviaremos instruções de recuperação."
-            });
-        }
-
-        const resetCode = crypto.randomInt(100000, 999999).toString();
-        const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
-
-        await storage.createPasswordReset(user.id.toString(), resetCode, expiresAt);
-
-        console.log(`[password-recovery] Reset code generated for user ID ${user.id}`);
-
-        await emailService.sendPasswordResetEmail(user.email, resetCode, user.username);
-
-        res.status(200).json({
-            message: "Se existir uma conta para este usuário/email, enviaremos instruções de recuperação."
-        });
-    } catch (error) {
-        logError('[password-recovery] Error:', error);
-        res.status(500).json({ message: "Erro interno do servidor" });
-    }
-});
-
-// Password reset endpoint
-router.post("/password-reset", sensitiveActionLimiter, async (req, res) => {
-    try {
-        const { usernameOrEmail, code, newPassword } = req.body;
-
-        if (!usernameOrEmail || !code || !newPassword) {
-            return res.status(400).json({ message: "Todos os campos são obrigatórios" });
-        }
-
-        const user = await storage.getUserByUsernameOrEmailIncludingDeleted(usernameOrEmail);
-        if (!user) {
-            return res.status(400).json({ message: "Código inválido ou expirado" });
-        }
-
-        const resetData = await storage.getPasswordReset(user.id.toString());
-
-        if (!resetData || resetData.code !== code || new Date() > resetData.expiresAt) {
-            return res.status(400).json({ message: "Código inválido ou expirado" });
-        }
-
-        const hashedPassword = await bcrypt.hash(newPassword, 10);
-        await storage.updateUserPassword(user.id.toString(), hashedPassword);
-
-        if (user.deletedAt) {
-            await storage.reactivateUser(user.id.toString());
-        }
-
-        await storage.deletePasswordReset(user.id.toString());
-        res.status(200).json({ message: "Senha redefinida com sucesso" });
-    } catch (error) {
-        logError('[password-reset] Error:', error);
-        res.status(500).json({ message: "Erro interno do servidor" });
-    }
 });
 
 // Login

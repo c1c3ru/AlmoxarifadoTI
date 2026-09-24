@@ -1,6 +1,7 @@
 import { Express } from "express";
 import { createServer, Server } from "http";
 import authRouter from "./auth";
+import passwordResetRouter from "./password-reset";
 import inventoryRouter from "./inventory";
 import usersRouter from "./users";
 import dashboardRouter from "./dashboard";
@@ -9,6 +10,9 @@ import activityRouter from "./activity";
 export async function registerRoutes(app: Express): Promise<Server> {
     // Rotas de Autenticação e Perfil
     app.use("/api", authRouter);
+
+    // Recuperação de senha (esqueci a senha / redefinir)
+    app.use("/api", passwordResetRouter);
 
     // Rotas de Atividade (Heartbeat, Online)
     app.use("/api", activityRouter);

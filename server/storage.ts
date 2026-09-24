@@ -7,12 +7,13 @@ import {
 } from "@shared/schema";
 import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
-import { eq, desc, asc, and, or, ilike, sql, count, isNull } from "drizzle-orm";
+import { eq, desc, asc, and, or, ilike, sql, count, isNull, lt } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { logWarn } from "./logger";
 
 let _db: ReturnType<typeof drizzle> | undefined;
 let _migrationChecked = false;
+let _passwordResetsReady: Promise<void> | undefined;
 
 function getDb() {
   if (_db) {
@@ -35,6 +36,48 @@ function getDb() {
   }
 
   return _db;
+}
+
+// Garante que password_resets está no formato atual (token_hash de uso único).
+// O formato antigo guardava um código de 6 dígitos em texto puro na coluna
+// "code"; como a tabela só tem dados temporários, ela é recriada.
+// Espelha migrations/password-resets-token-hash.sql.
+async function ensurePasswordResetsTable() {
+  const url = process.env.DATABASE_URL;
+  if (!url) return;
+  const client = neon(url);
+  await client`
+    DO $$
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'password_resets' AND column_name = 'token_hash'
+      ) THEN
+        DROP TABLE IF EXISTS password_resets;
+        CREATE TABLE password_resets (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          token_hash TEXT NOT NULL UNIQUE,
+          expires_at TIMESTAMP NOT NULL,
+          created_at TIMESTAMP NOT NULL DEFAULT now()
+        );
+        CREATE INDEX IF NOT EXISTS idx_password_resets_user_id ON password_resets(user_id);
+      END IF;
+    END $$;
+  `;
+}
+
+// As rotas de recuperação dependem da tabela nova, então aguardam a migração
+// (diferente de deleted_at, que roda em segundo plano). Se falhar, a próxima
+// chamada tenta de novo.
+function passwordResetsReady(): Promise<void> {
+  if (!_passwordResetsReady) {
+    _passwordResetsReady = ensurePasswordResetsTable().catch((err) => {
+      _passwordResetsReady = undefined;
+      logWarn("Warning: Could not ensure password_resets table is up to date:", err);
+    });
+  }
+  return _passwordResetsReady;
 }
 
 async function ensureDeletedAtColumn() {
@@ -67,13 +110,12 @@ export interface IStorage {
   // Users
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
-  getUserByUsernameOrEmailIncludingDeleted(usernameOrEmail: string): Promise<User | undefined>;
+  getActiveUsersByUsernameOrEmail(usernameOrEmail: string): Promise<User[]>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: string, user: Partial<InsertUser>): Promise<User | undefined>;
   getAllUsers(): Promise<User[]>;
   deleteUser(id: string): Promise<{ success: boolean; softDelete: boolean }>;
   updateUserPassword(id: string, hashedPassword: string): Promise<void>;
-  reactivateUser(id: string): Promise<void>;
 
   // Categories
   getCategory(id: string): Promise<Category | undefined>;
@@ -123,9 +165,10 @@ export interface IStorage {
   }>>
 
   // Password Resets
-  createPasswordReset(userId: string, code: string, expiresAt: Date): Promise<void>;
-  getPasswordReset(userId: string): Promise<{ code: string; expiresAt: Date } | undefined>;
-  deletePasswordReset(userId: string): Promise<void>;
+  getLatestPasswordResetCreatedAt(userId: string): Promise<Date | undefined>;
+  createPasswordReset(userId: string, tokenHash: string, expiresAt: Date): Promise<void>;
+  consumePasswordReset(tokenHash: string): Promise<{ userId: string; expiresAt: Date } | undefined>;
+  deletePasswordResetsForUser(userId: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -146,17 +189,21 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
-  async getUserByUsernameOrEmailIncludingDeleted(usernameOrEmail: string): Promise<User | undefined> {
-    // Buscar usuário incluindo deletados (para reset de senha)
-    const result = await getDb()
+  async getActiveUsersByUsernameOrEmail(usernameOrEmail: string): Promise<User[]> {
+    // Recuperação de senha: só contas ativas e não excluídas (as mesmas que
+    // podem fazer login). Email não é único, então pode haver mais de uma.
+    return getDb()
       .select()
       .from(users)
-      .where(or(
-        eq(users.username, usernameOrEmail),
-        eq(users.email, usernameOrEmail)
+      .where(and(
+        or(
+          eq(users.username, usernameOrEmail),
+          sql`lower(${users.email}) = lower(${usernameOrEmail})`
+        ),
+        isNull(users.deletedAt),
+        eq(users.isActive, true)
       ))
-      .limit(1);
-    return result[0];
+      .limit(5);
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
@@ -187,16 +234,6 @@ export class DatabaseStorage implements IStorage {
     await getDb().update(users).set({ password: hashedPassword }).where(eq(users.id, id));
   }
 
-  async reactivateUser(id: string): Promise<void> {
-    // Reativar usuário deletado (soft delete)
-    await getDb()
-      .update(users)
-      .set({
-        isActive: true,
-        deletedAt: sql`NULL`
-      })
-      .where(eq(users.id, id));
-  }
 
   async getAllUsers(): Promise<User[]> {
     // Filtrar apenas usuários não deletados (deletedAt IS NULL)
@@ -688,35 +725,42 @@ export class DatabaseStorage implements IStorage {
 
 
   // Password Resets
-  async createPasswordReset(userId: string, code: string, expiresAt: Date): Promise<void> {
-    // Primeiro limpa qualquer código existente para este usuário
-    await this.deletePasswordReset(userId);
-
-    await getDb().insert(passwordResets).values({
-      userId,
-      code,
-      expiresAt: expiresAt,
-    });
+  async getLatestPasswordResetCreatedAt(userId: string): Promise<Date | undefined> {
+    await passwordResetsReady();
+    const result = await getDb()
+      .select({ createdAt: passwordResets.createdAt })
+      .from(passwordResets)
+      .where(eq(passwordResets.userId, userId))
+      .orderBy(desc(passwordResets.createdAt))
+      .limit(1);
+    return result[0]?.createdAt;
   }
 
-  async getPasswordReset(userId: string): Promise<{ code: string; expiresAt: Date } | undefined> {
-    const result = await getDb().execute(sql`
-      SELECT code, expires_at FROM password_resets 
-      WHERE user_id = ${userId} 
-      ORDER BY created_at DESC 
-      LIMIT 1
-    `);
-    const resultObj = result as unknown as { rows?: Array<{ code: string; expires_at: Date | string }> };
-    const rows = resultObj.rows ?? result;
-    if (!Array.isArray(rows) || rows.length === 0) return undefined;
-    return {
-      code: rows[0].code,
-      expiresAt: new Date(rows[0].expires_at)
-    };
+  async createPasswordReset(userId: string, tokenHash: string, expiresAt: Date): Promise<void> {
+    await passwordResetsReady();
+    // Um único token válido por usuário: um pedido novo invalida os anteriores.
+    // Aproveita para limpar tokens expirados de qualquer usuário.
+    await getDb()
+      .delete(passwordResets)
+      .where(or(eq(passwordResets.userId, userId), lt(passwordResets.expiresAt, new Date())));
+
+    await getDb().insert(passwordResets).values({ userId, tokenHash, expiresAt });
   }
 
-  async deletePasswordReset(userId: string): Promise<void> {
-    await getDb().execute(sql`DELETE FROM password_resets WHERE user_id = ${userId}`);
+  async consumePasswordReset(tokenHash: string): Promise<{ userId: string; expiresAt: Date } | undefined> {
+    await passwordResetsReady();
+    // DELETE ... RETURNING é atômico: duas requisições simultâneas com o mesmo
+    // token não conseguem usá-lo duas vezes. Quem chama valida a expiração.
+    const result = await getDb()
+      .delete(passwordResets)
+      .where(eq(passwordResets.tokenHash, tokenHash))
+      .returning({ userId: passwordResets.userId, expiresAt: passwordResets.expiresAt });
+    return result[0];
+  }
+
+  async deletePasswordResetsForUser(userId: string): Promise<void> {
+    await passwordResetsReady();
+    await getDb().delete(passwordResets).where(eq(passwordResets.userId, userId));
   }
 }
 
