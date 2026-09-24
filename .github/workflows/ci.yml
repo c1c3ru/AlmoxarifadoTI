@@ -50,14 +50,18 @@ jobs:
     name: Auditoria de dependências
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    # Informativo por enquanto: há vulnerabilidades conhecidas sem correção
-    # disponível (ex.: xlsx). Quando forem resolvidas, remova continue-on-error
-    # para bloquear PRs que introduzam dependências vulneráveis.
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
           cache: npm
-      - run: npm audit --omit=dev --audit-level=high
+      # Informativo por enquanto: há vulnerabilidades conhecidas sem correção
+      # disponível (ex.: xlsx). O resultado aparece como aviso no run, sem
+      # deixar o check vermelho. Quando forem resolvidas, troque este passo por
+      # `npm audit --omit=dev --audit-level=high` para bloquear PRs.
+      - name: npm audit (produção)
+        run: |
+          if ! npm audit --omit=dev --audit-level=high; then
+            echo "::warning title=npm audit::Há vulnerabilidades altas ou críticas em dependências de produção. Veja o log deste passo."
+          fi
