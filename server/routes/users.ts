@@ -2,7 +2,6 @@ import { Router } from "express";
 import { storage } from "../storage";
 import { authenticateJWT, requireAdmin } from "../auth";
 import { insertUserSchema, baseInsertUserSchema } from "@shared/schema";
-import { isAllowedAdminMatricula } from "../allowed-admins";
 import { logError } from "../logger";
 
 const router = Router();
@@ -27,12 +26,6 @@ router.post("/", authenticateJWT, requireAdmin, async (req, res) => {
             return res.status(400).json({ message: "Invalid user data", errors: validation.error.issues });
         }
 
-        if (validation.data.role === "admin" && !isAllowedAdminMatricula(validation.data.matricula)) {
-            return res.status(400).json({
-                message: "Invalid user data",
-                errors: [{ path: ["matricula"], message: "Matrícula não autorizada para perfil de administrador" }],
-            });
-        }
 
         const user = await storage.createUser(validation.data);
         const { password: _, ...userWithoutPassword } = user;
@@ -64,25 +57,6 @@ router.put("/:id", authenticateJWT, requireAdmin, async (req, res) => {
 
         const updateData = { ...validation.data };
         if (!updateData.password) delete updateData.password;
-
-        // Validar regra de negócio: Se for admin, matricula deve ser permitida
-        // Precisamos verificar se role ou matricula estão sendo alterados, ou pegar do banco se faltar um
-        if (updateData.role === 'admin' || updateData.matricula) {
-            // Se mudou role para admin OU mudou matricula
-            // Precisamos do estado final para validar
-            const currentUser = await storage.getUser(id);
-            if (currentUser) {
-                const finalRole = updateData.role || currentUser.role;
-                const finalMatricula = updateData.matricula || currentUser.matricula;
-
-                if (finalRole === 'admin' && !isAllowedAdminMatricula(finalMatricula)) {
-                    return res.status(400).json({
-                        message: "Invalid user data",
-                        errors: [{ path: ["matricula"], message: "Matrícula não autorizada para perfil de administrador" }]
-                    });
-                }
-            }
-        }
 
         const user = await storage.updateUser(id, updateData);
         if (!user) return res.status(404).json({ message: "User not found" });

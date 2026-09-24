@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import ifceLogo from "@publicAssets/ifce_logo.png";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -62,8 +62,6 @@ const registerSchema = z
       });
     }
 
-    // Se a matrícula de servidor está na lista autorizada é checado só pelo
-    // servidor (server/allowed-admins.ts), nunca no bundle público do cliente.
     // A conta de servidor é criada inativa e precisa ser ativada por um admin.
 
     // Validações de segurança para senha
@@ -104,6 +102,8 @@ type RegisterFormData = z.infer<typeof registerSchema>;
 
 export default function RegisterUserPage() {
   const { toast } = useToast();
+  // Nome do servidor cujo cadastro foi enviado e aguarda liberação por um admin
+  const [pendingApprovalName, setPendingApprovalName] = useState<string | null>(null);
 
   const form = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
@@ -208,10 +208,7 @@ export default function RegisterUserPage() {
       }
 
       if (data.role === "admin") {
-        toast({
-          title: "Cadastro enviado",
-          description: `${data.name}, sua conta de servidor foi criada e aguarda a ativação por um administrador.`,
-        });
+        setPendingApprovalName(data.name);
       } else {
         toast({
           title: "Usuário cadastrado com sucesso",
@@ -247,6 +244,24 @@ export default function RegisterUserPage() {
             <p className="text-sm text-gray-600">Adicione um novo usuário ao sistema</p>
           </div>
 
+          {pendingApprovalName ? (
+            <div className="space-y-5 text-center" role="status">
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-5 text-left">
+                <p className="font-semibold text-amber-900 flex items-center">
+                  <i className="fa-solid fa-hourglass-half mr-2"></i>
+                  Cadastro enviado, aguardando liberação
+                </p>
+                <p className="mt-2 text-sm text-amber-800">
+                  {pendingApprovalName}, sua conta de servidor foi criada, mas ainda não pode entrar no
+                  sistema. Um administrador precisa liberá-la. Assim que isso acontecer, você poderá
+                  fazer login com o e-mail e a senha que acabou de cadastrar.
+                </p>
+              </div>
+              <Link href="/login">
+                <Button className="w-full">Voltar para o Login</Button>
+              </Link>
+            </div>
+          ) : (
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
               {/* Perfil/Role vem primeiro para definir tipo de matrícula */}
@@ -620,6 +635,7 @@ export default function RegisterUserPage() {
               </div>
             </form>
           </Form>
+          )}
         </CardContent>
       </Card>
     </div>

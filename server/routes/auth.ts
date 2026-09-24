@@ -2,7 +2,6 @@ import { Router } from "express";
 import { storage } from "../storage";
 import { authenticateJWT, generateToken, setAuthCookie, clearAuthCookie } from "../auth";
 import { insertUserSchema } from "@shared/schema";
-import { isAllowedAdminMatricula } from "../allowed-admins";
 import bcrypt from "bcryptjs";
 import rateLimit from "express-rate-limit";
 import { logError } from "../logger";
@@ -32,13 +31,23 @@ router.post("/auth/login", loginLimiter, async (req, res) => {
         }
 
         const user = await storage.getUserByUsername(username);
-        if (!user || !user.isActive) {
+        if (!user) {
             return res.status(401).json({ message: "Invalid credentials" });
         }
 
         const isValidPassword = await bcrypt.compare(password, user.password);
         if (!isValidPassword) {
             return res.status(401).json({ message: "Invalid credentials" });
+        }
+
+        // Só depois de a senha conferir: avisa que a conta existe mas ainda não
+        // foi liberada (ex.: servidor recém-cadastrado aguardando um admin).
+        // Antes da senha a resposta segue genérica, sem revelar contas.
+        if (!user.isActive) {
+            return res.status(403).json({
+                code: "ACCOUNT_PENDING_APPROVAL",
+                message: "Sua conta ainda não foi liberada. Aguarde um administrador ativá-la para entrar.",
+            });
         }
 
         const { password: _, ...userWithoutPassword } = user;
@@ -69,9 +78,9 @@ router.post("/auth/logout", (_req, res) => {
 router.post("/register", sensitiveActionLimiter, async (req, res) => {
     try {
         // 🔒 SECURITY: o cliente só escolhe entre aluno ("tech") e servidor ("admin").
-        // Conta de servidor exige matrícula na lista autorizada e nasce inativa:
-        // só entra no sistema depois que um administrador a ativa em Usuários.
-        // Assim, saber a matrícula SIAPE de alguém não basta para virar admin.
+        // Conta de servidor nasce inativa: só entra no sistema depois que um
+        // administrador a ativa em Usuários. Essa aprovação é a barreira; saber a
+        // matrícula SIAPE de alguém não basta para virar admin.
         const role = req.body?.role === "admin" ? "admin" : "tech";
         const validation = insertUserSchema.safeParse({
             ...req.body,
@@ -82,12 +91,6 @@ router.post("/register", sensitiveActionLimiter, async (req, res) => {
             return res.status(400).json({ message: "Dados inválidos", errors: validation.error.issues });
         }
 
-        if (role === "admin" && !isAllowedAdminMatricula(validation.data.matricula)) {
-            return res.status(400).json({
-                message: "Matrícula não autorizada para perfil de administrador",
-                errors: [{ path: ["matricula"], message: "Matrícula não autorizada para perfil de administrador" }],
-            });
-        }
 
         const user = await storage.createUser(validation.data);
         const { password: _, ...userWithoutPassword } = user;

@@ -102,9 +102,8 @@ export const insertUserSchema = baseInsertUserSchema.superRefine((data, ctx) => 
     });
   }
 
-  // A checagem de matrícula autorizada para role "admin" é feita só no servidor
-  // (server/allowed-admins.ts), pois este schema é compartilhado com o bundle do
-  // cliente e não deve carregar a lista de matrículas autorizadas.
+  // Não há lista de matrículas autorizadas: no cadastro público, a conta de
+  // servidor nasce inativa e só entra depois que um admin a ativa.
 });
 
 export const insertCategorySchema = createInsertSchema(categories).omit({
