@@ -216,7 +216,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateUser(id: string, user: Partial<InsertUser>): Promise<User | undefined> {
-    let updateData = { ...user };
+    const updateData = { ...user };
 
     // Remove password field if it's empty, null, or undefined
     if (!updateData.password || updateData.password.trim() === "") {

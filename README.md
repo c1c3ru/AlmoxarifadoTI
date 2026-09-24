@@ -20,7 +20,7 @@ Aplicação full‑stack para gestão de itens de TI, movimentações (entrada/s
 - Compartilhado: Tipos/Esquemas em TypeScript com Zod (`shared/`)
 
 ## Requisitos
-- Node.js 18+
+- Node.js 22+ (versão em `.nvmrc`)
 - PostgreSQL (ex.: Supabase/Neon)
 
 ## Instalação
@@ -38,8 +38,17 @@ npm run db:push
 - `npm run dev`: inicia o servidor Express com tsx (desenvolvimento)
 - `npm run build`: build do client (Vite) e bundle do server (esbuild)
 - `npm start`: inicia o server compilado de produção
-- `npm run check`: checagem TypeScript
+- `npm run typecheck`: checagem de tipos TypeScript (`npm run check` continua como alias)
+- `npm run lint` / `npm run lint:fix`: ESLint (TypeScript + regras de hooks do React)
+- `npm test` / `npm run test:watch`: testes automatizados (Vitest)
+- `npm run verify`: roda typecheck, lint, testes e build, na mesma ordem do CI
 - `npm run db:push`: aplica schema Drizzle
+
+### CI/CD
+- **GitHub Actions** (`.github/workflows/ci.yml`): em todo PR e push no `main`, roda typecheck, lint, testes e build. A auditoria de dependências (`npm audit`) roda como informativa enquanto houver vulnerabilidades sem correção disponível.
+- **Dependabot** (`.github/dependabot.yml`): abre PRs semanais de atualização do npm (menores agrupadas) e mensais das Actions.
+- **Vercel**: os checks nativos de "lint" e "typecheck" usam os scripts acima.
+- Recomendado: em Settings → Branches, proteja o `main` exigindo os checks "Typecheck, lint e testes" e "Build" antes do merge.
 
 ## Variáveis de Ambiente
 Crie `.env` na raiz com, por exemplo:
