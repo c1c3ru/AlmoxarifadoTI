@@ -54,3 +54,13 @@ auditoria para manter identidade visual comparável ao longo do tempo:
 A skill `.claudecode/skills/audit-security.md` na raiz do repositório ensina
 a Claude a repetir esse processo (reconhecimento de stack → varredura →
 atualização de `audit_data.py` → regeneração do PDF) sempre que solicitado.
+
+## Deploy na Vercel
+
+Esta pasta não é um site. O projeto "security-audit" da Vercel aponta para ela
+como Root Directory, e sem configuração própria ele rodava o build do app (o
+npm sobe até o `package.json` da raiz) e falhava procurando uma pasta `public`
+aqui dentro. O `vercel.json` desta pasta usa `ignoreCommand` para que esse
+projeto pule o build em todo commit. Publicar o conteúdo também não seria
+desejável: o relatório descreve vulnerabilidades do sistema.
+
