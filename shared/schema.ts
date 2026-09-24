@@ -84,10 +84,20 @@ export const insertUserSchema = baseInsertUserSchema.superRefine((data, ctx) => 
   const role = data.role || "tech";
   const matricula = data.matricula;
 
-  if (role === "tech" && matricula.length !== 14) {
+  // Aluno/técnico: matrícula acadêmica de 14 dígitos.
+  // Servidor/administrador: matrícula SIAPE de 7 dígitos.
+  if (role === "tech" && !/^\d{14}$/.test(matricula)) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: "Matrícula de técnico deve ter 14 dígitos",
+      message: "Matrícula de aluno/técnico deve ter 14 dígitos",
+      path: ["matricula"],
+    });
+  }
+
+  if (role === "admin" && !/^\d{7}$/.test(matricula)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Matrícula de servidor deve ter 7 dígitos",
       path: ["matricula"],
     });
   }

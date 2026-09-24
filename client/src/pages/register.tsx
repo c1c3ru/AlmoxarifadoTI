@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import ifceLogo from "@publicAssets/ifce_logo.png";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -42,21 +43,28 @@ const registerSchema = z
   })
   .superRefine((val, ctx) => {
     // Validação de matrícula baseada no perfil
-    const techLen = 14;  // Técnico/Servidor: 20261193010007 -> 14 caracteres
+    const techLen = 14;  // Aluno/técnico: 20261193010007 -> 14 dígitos
+    const adminLen = 7;  // Servidor/administrador (SIAPE): 1678389 -> 7 dígitos
 
     if (val.role === "tech" && val.matricula.length !== techLen) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: `Matrícula de técnico/servidor deve ter exatamente ${techLen} dígitos`,
+        message: `Matrícula de aluno/técnico deve ter exatamente ${techLen} dígitos`,
         path: ["matricula"],
       });
     }
 
-    // A validação de matrícula autorizada para o perfil "admin" é feita pelo
-    // servidor (server/allowed-admins.ts) e nunca embutida no bundle público
-    // do cliente. Na prática, POST /api/register sempre cria conta "tech"
-    // (role vem fixo do servidor); contas admin só são criadas por um admin
-    // já autenticado via POST /api/users.
+    if (val.role === "admin" && val.matricula.length !== adminLen) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `Matrícula de servidor deve ter exatamente ${adminLen} dígitos`,
+        path: ["matricula"],
+      });
+    }
+
+    // Se a matrícula de servidor está na lista autorizada é checado só pelo
+    // servidor (server/allowed-admins.ts), nunca no bundle público do cliente.
+    // A conta de servidor é criada inativa e precisa ser ativada por um admin.
 
     // Validações de segurança para senha
     if (val.password === val.email) {
@@ -118,15 +126,15 @@ export default function RegisterUserPage() {
       return {
         placeholder: "Ex: 20261193010007 (14 dígitos)",
         maxLength: 14,
-        description: "Matrícula do técnico/servidor (14 dígitos)"
+        description: "Matrícula acadêmica do aluno/técnico (14 dígitos)"
       };
     }
 
     // Admin default
     return {
-      placeholder: "Ex: 1678389 (Autorizados apenas)",
-      maxLength: 10,
-      description: "Matrícula do servidor administrativo (lista restrita)"
+      placeholder: "Ex: 1678389 (7 dígitos)",
+      maxLength: 7,
+      description: "Matrícula SIAPE do servidor (7 dígitos). A conta precisa ser ativada por um administrador."
     };
   }, [selectedRole]);
 
@@ -192,10 +200,17 @@ export default function RegisterUserPage() {
         throw new Error(rawMsg || "Erro ao cadastrar usuário");
       }
 
-      toast({
-        title: "Usuário cadastrado com sucesso",
-        description: `${data.role === 'admin' ? 'Administrador' : 'Técnico'} ${data.name} foi adicionado ao sistema.`,
-      });
+      if (data.role === "admin") {
+        toast({
+          title: "Cadastro enviado",
+          description: `${data.name}, sua conta de servidor foi criada e aguarda a ativação por um administrador.`,
+        });
+      } else {
+        toast({
+          title: "Usuário cadastrado com sucesso",
+          description: `Aluno/técnico ${data.name} foi adicionado ao sistema.`,
+        });
+      }
 
       form.reset();
     } catch (error: unknown) {
@@ -212,8 +227,14 @@ export default function RegisterUserPage() {
       <Card className="w-full max-w-md border border-gray-200 shadow-lg">
         <CardContent className="p-6">
           <div className="text-center mb-6">
-            <div className="w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center mb-4 shadow-lg">
-              <i className="fa-solid fa-user-plus text-white text-xl"></i>
+            <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-primary to-primary-700 flex items-center justify-center mb-4 shadow-lg">
+              <img
+                src={ifceLogo}
+                alt="IFCE"
+                className="h-10 w-auto object-contain brightness-0 invert opacity-90"
+                loading="eager"
+                decoding="async"
+              />
             </div>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">Cadastrar Usuário</h1>
             <p className="text-sm text-gray-600">Adicione um novo usuário ao sistema</p>
@@ -249,13 +270,13 @@ export default function RegisterUserPage() {
                           <SelectItem value="tech">
                             <div className="flex items-center">
                               <i className="fa-solid fa-screwdriver-wrench mr-2 text-blue-600"></i>
-                              Técnico em Informática
+                              Aluno / Técnico
                             </div>
                           </SelectItem>
                           <SelectItem value="admin">
                             <div className="flex items-center">
                               <i className="fa-solid fa-user-tie mr-2 text-purple-600"></i>
-                              Administrador
+                              Servidor / Administrador
                             </div>
                           </SelectItem>
                         </SelectContent>

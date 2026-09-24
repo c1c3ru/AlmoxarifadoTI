@@ -1,0 +1,97 @@
+import express from "express";
+import type { AddressInfo } from "net";
+import type { Server } from "http";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+// Banco substituído por um dublê em memória: estes testes cobrem as regras do
+// cadastro público (perfil, tamanho de matrícula, aprovação de servidor).
+const created = vi.hoisted(() => [] as Array<Record<string, unknown>>);
+
+vi.mock("../storage", () => ({
+  storage: {
+    createUser: async (data: Record<string, unknown>) => {
+      const user = { id: `u${created.length + 1}`, ...data };
+      created.push(user);
+      return user;
+    },
+  },
+}));
+
+vi.mock("../allowed-admins", () => ({
+  isAllowedAdminMatricula: (matricula: string) => matricula === "1678389",
+}));
+
+let server: Server | undefined;
+let baseUrl: string;
+
+beforeEach(async () => {
+  created.length = 0;
+  vi.resetModules();
+  const mod = await import("./auth");
+  const app = express();
+  app.use(express.json());
+  app.use("/api", mod.default);
+  server = app.listen(0);
+  await new Promise((resolve) => server!.once("listening", resolve));
+  baseUrl = `http://127.0.0.1:${(server.address() as AddressInfo).port}/api`;
+});
+
+afterEach(() => {
+  server?.close();
+});
+
+const base = {
+  username: "fulano@ifce.edu.br",
+  email: "fulano@ifce.edu.br",
+  name: "Fulano de Tal",
+  password: "Senha@Forte1",
+  isActive: true,
+};
+
+function register(body: Record<string, unknown>) {
+  return fetch(`${baseUrl}/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+describe("POST /api/register", () => {
+  it("cadastra aluno/técnico com matrícula de 14 dígitos já ativo", async () => {
+    const res = await register({ ...base, role: "tech", matricula: "20261193010007" });
+    expect(res.status).toBe(201);
+    expect(created[0]).toMatchObject({ role: "tech", isActive: true });
+  });
+
+  it("recusa aluno/técnico com matrícula de 7 dígitos", async () => {
+    const res = await register({ ...base, role: "tech", matricula: "1678389" });
+    expect(res.status).toBe(400);
+    expect(created).toHaveLength(0);
+  });
+
+  it("cadastra servidor autorizado com 7 dígitos, mas inativo até aprovação", async () => {
+    const res = await register({ ...base, role: "admin", matricula: "1678389", isActive: true });
+    const body = await res.json();
+    expect(res.status).toBe(201);
+    expect(body.pendingApproval).toBe(true);
+    expect(created[0]).toMatchObject({ role: "admin", isActive: false });
+  });
+
+  it("recusa servidor fora da lista autorizada", async () => {
+    const res = await register({ ...base, role: "admin", matricula: "7654321" });
+    expect(res.status).toBe(400);
+    expect(created).toHaveLength(0);
+  });
+
+  it("recusa servidor com matrícula de 14 dígitos", async () => {
+    const res = await register({ ...base, role: "admin", matricula: "20261193010007" });
+    expect(res.status).toBe(400);
+    expect(created).toHaveLength(0);
+  });
+
+  it("trata qualquer perfil desconhecido como aluno/técnico", async () => {
+    const res = await register({ ...base, role: "superuser", matricula: "20261193010007" });
+    expect(res.status).toBe(201);
+    expect(created[0]).toMatchObject({ role: "tech" });
+  });
+});
