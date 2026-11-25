@@ -22,3 +22,16 @@
 - Avaliação: rede resolvida com execução autorizada; preservar DNS como histórico, remover bloqueio ativo. CI do PR #34 passou em quality, build e audit; conferir novamente após novo commit.
 - Reflexão: um bloqueio do sandbox deve usar o fluxo de permissão apropriado, sem abandonar os testes nem inferir sucesso a partir de CI antigo.
 - Próxima ação: verify local, commit/push e merge autorizado do PR de documentos; UI-01 com browser real e fixtures sintéticas. Evidências de hardware informadas pelo usuário aguardam localização; não declarar homologação concluída.
+
+## R-005 · 2026-11-25 · UI-01 · contratos reais
+- Evidência: `test:e2e:integration` em PostgreSQL 17 descartável executou auth/RBAC/storage/SQL reais. Baseline 7/9 PASS, unidade omitida e scanner 404 FAIL.
+- Ação: mantenedor autorizou explicitamente as duas correções mínimas de backend; PR #36 inclui projeções de unidade e rota autenticada reutilizando getItemByCode.
+- Avaliação: 9/9 contratos PASS após correção; verify isolado PASS com 29 testes. Não alterar outros contratos para facilitar o baseline.
+- Próxima ação: revalidar com main atualizada pelo PR #26 (Neon 1.1.0), conferir CI e fazer merge autorizado do PR #36.
+
+## R-006 · UI-01 · baseline visual e harness
+- Evidência: 18/18 testes de reflow/navegação PASS e 81 capturas; screenshot 320px mostra clipping no inventário apesar de document.scrollWidth normal. Axe aponta violações críticas/sérias em todas as nove rotas. Testes específicos detectam falso estado vazio em erro de API e informações ocultas em mobile.
+- Reflexão: overflow hidden pode esconder defeitos de reflow; largura global não substitui verificação de conteúdo. Capturar defeitos e manter asserts; não fabricar verde.
+- Ajustes do harness: script local Speed Insights retorna HTML no servidor estático de testes, agora interceptado explicitamente; relatórios gerados excluídos de lint; Escape de QR pode fechar tooltip antes do dialog, smoke usa o botão Close e teste de Escape separado no formulário sem tooltip. Vídeo de câmera simulado precisa emitir quadros continuamente; scanner simulado PASS após corrigir isso. Essas falhas de fixture não são defeitos de produto.
+- Ambiente: WebKit baixado mas biblioteca libmanette ausente; sudo precisa senha. Executar WebKit no CI com dependências reais, sem skip. Fontes externas bloqueadas explicitamente nos mocks; screenshots usam fallback local estável, não certificam tipografia de produção.
+- Próxima ação: publicar baseline e obter exceção explícita para avançar aos ciclos de correção com falhas conhecidas registradas; manter gate final de release bloqueado. Artifacts gerados não vão para Git.

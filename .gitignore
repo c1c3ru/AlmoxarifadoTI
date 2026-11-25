@@ -7,6 +7,8 @@ vite.config.ts.*
 .env
 .env.*
 .vercel
+playwright-report/
+test-results/
 
 # Auditoria de segurança (docs/security-audit) — script isolado
 docs/security-audit/.venv
