@@ -41,3 +41,9 @@
 - Causa: `node_modules/drizzle-orm/neon-http/session.js` chama `this.client(sql, params, options)`; Neon >=1 aceita somente tagged template ou `.query`. Confirmado em [changelog oficial](https://github.com/neondatabase/serverless/blob/main/CHANGELOG.md#100-2025-03-25). O erro acontece antes do adapter de transporte do harness.
 - Avaliação: FAIL/P0, bloqueia próximos merges de produto. Não é falha da fixture e não deve ser mascarada adaptando o harness para aceitar chamadas que produção rejeita.
 - Próxima ação: decisão do mantenedor sobre restauração do driver compatível 0.10.4 (solicitada). Se autorizado, hotfix separado, npm/lockfile gerados normalmente, verify e nove contratos reais antes do merge.
+
+## R-008 · UI-02 · layout e navegação
+- Autorização: mantenedor aceitou avançar UI-02 a UI-06 com os defeitos conhecidos documentados e gate final bloqueado; também autorizou restaurar Neon 0.10.4.
+- Ação: drawer Radix <1024, compacto 1024–1279, expandido >=1280, preferência desktop separada de abertura mobile; mudanças de altura não fecham o drawer. Uma única árvore de navegação, foco preso e restaurado, links com aria-current, senha/logout acessíveis recolhido; removido maximum-scale e clipping global. Heartbeat inalterado.
+- Evidência: 12/12 testes focados Chromium PASS; TypeScript, lint e build PASS. Vídeo/QR e banco seguem nos respectivos gates.
+- Próxima ação: concluir verify, PR pequeno para a base explícita UI-01; UI-03 modais. Não atribuir ao layout a correção de defeitos de inventário/contraste ainda pendentes.

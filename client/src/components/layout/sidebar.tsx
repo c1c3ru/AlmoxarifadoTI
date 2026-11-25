@@ -15,6 +15,36 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { cn } from "@/lib/utils";
+import * as DialogPrimitive from "@radix-ui/react-dialog";
+
+function SidebarFrame({ children, className, restoreFocus }: { children: React.ReactNode; className: string; restoreFocus: boolean }) {
+  const { isMobile, isOpen, open, close } = useSidebar();
+  if (!isMobile) return <aside id="app-sidebar" aria-label="Menu principal" className={className}>{children}</aside>;
+  return (
+    <DialogPrimitive.Root open={isOpen} onOpenChange={(value) => value ? open() : close()}>
+      <DialogPrimitive.Portal>
+        <DialogPrimitive.Overlay className="fixed inset-0 bg-black/50 z-50" data-testid="sidebar-overlay" />
+        <DialogPrimitive.Content
+          id="app-sidebar"
+          aria-describedby={undefined}
+          className={cn(className, "inset-y-0 left-0 max-w-[calc(100vw-1rem)] outline-none")}
+          onCloseAutoFocus={(event) => {
+            event.preventDefault();
+            if (restoreFocus) requestAnimationFrame(() => document.getElementById("sidebar-toggle")?.focus());
+          }}
+        >
+          <DialogPrimitive.Title className="sr-only">Menu principal</DialogPrimitive.Title>
+          <DialogPrimitive.Close asChild>
+            <Button variant="ghost" size="icon" aria-label="Fechar menu" className="absolute top-1 right-1 h-11 w-11">
+              <i aria-hidden="true" className="fas fa-xmark" />
+            </Button>
+          </DialogPrimitive.Close>
+          {children}
+        </DialogPrimitive.Content>
+      </DialogPrimitive.Portal>
+    </DialogPrimitive.Root>
+  );
+}
 
 const changePasswordSchema = z.object({
   currentPassword: z.string().min(1, "Senha atual é obrigatória"),
@@ -45,7 +75,7 @@ const adminItems = [
 export function Sidebar() {
   const [location] = useLocation();
   const { user, logout } = useAuth();
-  const { isCollapsed, isMobile, isOpen, close } = useSidebar();
+  const { isCollapsed, isMobile, close } = useSidebar();
   const [showChangePassword, setShowChangePassword] = useState(false);
   const { toast } = useToast();
 
@@ -96,27 +126,17 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Mobile Overlay */}
-      {isMobile && isOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40 md:hidden"
-          onClick={close}
-          data-testid="sidebar-overlay"
-        />
-      )}
-
-      <aside className={cn(
-        "bg-sidebar shadow-xl border-r border-sidebar-border fixed h-full z-50 transition-all duration-300 ease-in-out",
+      <SidebarFrame restoreFocus={!showChangePassword} className={cn(
+        "bg-sidebar shadow-xl border-r border-sidebar-border fixed inset-y-0 min-h-0 flex flex-col z-50 transition-[width] duration-300 ease-in-out",
         // Desktop behavior
         !isMobile && isCollapsed && "w-20",
         !isMobile && !isCollapsed && "w-72",
         // Mobile behavior  
-        isMobile && isOpen && "w-72 translate-x-0",
-        isMobile && !isOpen && "w-72 -translate-x-full"
+        isMobile && "w-72"
       )}>
         {/* Header */}
         <div className={cn(
-          "h-20 flex items-center border-b border-sidebar-border transition-all duration-300",
+          "h-20 shrink-0 flex items-center border-b border-sidebar-border transition-all duration-300",
           isCollapsed && !isMobile ? "justify-center px-2" : "px-6"
         )}>
           <div className={cn(
@@ -132,22 +152,22 @@ export function Sidebar() {
                   <img src={ifceLogo} alt="IFCE" className="h-5 w-auto object-contain" />
                   <h1 className="text-lg font-bold text-sidebar-foreground tracking-tight">SGAT-TI</h1>
                 </div>
-                <p className="text-xs text-sidebar-foreground/60 font-medium">Almoxarifado T.I.</p>
+                <p className="text-xs text-sidebar-foreground font-medium">Almoxarifado T.I.</p>
               </div>
             )}
           </div>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto py-6 px-3 space-y-1">
+        <nav aria-label="Navegação principal" className="min-h-0 flex-1 overflow-y-auto overscroll-contain py-3 px-3 space-y-1">
           {menuItems.map((item) => (
-            <Link key={item.route} href={item.route}>
+            <Link key={item.route} href={item.route} aria-label={item.label} aria-current={isActiveRoute(item.route) ? "page" : undefined} onClick={() => { if (isMobile) close(); }}>
               <div
                 className={cn(
                   "flex items-center rounded-xl transition-all duration-200 cursor-pointer group relative",
                   isActiveRoute(item.route)
                     ? "bg-sidebar-accent text-sidebar-accent-foreground font-semibold shadow-sm"
-                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
+                    : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
                   isCollapsed && !isMobile ? "h-12 w-12 justify-center mx-auto" : "px-4 py-3 space-x-3 mb-1"
                 )}
                 data-testid={`nav-${item.route.replace("/", "") || "dashboard"}`}
@@ -170,18 +190,18 @@ export function Sidebar() {
           {isAdmin(user) && (
             <div className="pt-6 mt-6 border-t border-sidebar-border/50">
               {(!isCollapsed || isMobile) && (
-                <p className="text-xs text-sidebar-foreground/40 uppercase tracking-wider font-bold px-4 mb-3 transition-opacity duration-300">
+                <p className="text-xs text-sidebar-foreground uppercase tracking-wider font-bold px-4 mb-3 transition-opacity duration-300">
                   Administração
                 </p>
               )}
               {adminItems.map((item) => (
-                <Link key={item.route} href={item.route}>
+                <Link key={item.route} href={item.route} aria-label={item.label} aria-current={isActiveRoute(item.route) ? "page" : undefined} onClick={() => { if (isMobile) close(); }}>
                   <div
                     className={cn(
                       "flex items-center rounded-xl transition-all duration-200 cursor-pointer group relative",
                       isActiveRoute(item.route)
                         ? "bg-sidebar-accent text-sidebar-accent-foreground font-semibold shadow-sm"
-                        : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
+                        : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
                       isCollapsed && !isMobile ? "h-12 w-12 justify-center mx-auto" : "px-4 py-3 space-x-3 mb-1"
                     )}
                     data-testid={`nav-${item.route.replace("/", "")}`}
@@ -205,7 +225,7 @@ export function Sidebar() {
 
         {/* User Section */}
         <div className={cn(
-          "border-t border-sidebar-border bg-sidebar/50 backdrop-blur-sm transition-all duration-300",
+          "shrink-0 border-t border-sidebar-border bg-sidebar transition-all duration-300",
           isCollapsed && !isMobile ? "p-3" : "p-4"
         )}>
           <div className={cn(
@@ -221,46 +241,29 @@ export function Sidebar() {
               </AvatarFallback>
             </Avatar>
             {(!isCollapsed || isMobile) && (
-              <>
-                <div className="flex-1 min-w-0 transition-opacity duration-300">
-                  <p className="text-sm font-semibold text-sidebar-foreground truncate" data-testid="user-name">
-                    {user?.name || "Usuário"}
-                  </p>
-                  <p className="text-xs text-sidebar-foreground/60 truncate" data-testid="user-role">
-                    {user?.role === "admin" ? "Administrador" : "Técnico"}
-                  </p>
-                </div>
-                <div className="flex items-center -mr-2">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setShowChangePassword(true)}
-                    className="h-8 w-8 text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent"
-                    data-testid="button-change-password"
-                    title="Alterar senha"
-                  >
-                    <i className="fas fa-key text-xs"></i>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={logout}
-                    className="h-8 w-8 text-sidebar-foreground/50 hover:text-destructive hover:bg-destructive/10"
-                    data-testid="button-logout"
-                    title="Sair"
-                  >
-                    <i className="fas fa-sign-out-alt text-xs"></i>
-                  </Button>
-                </div>
-              </>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-sidebar-foreground truncate" data-testid="user-name">{user?.name || "Usuário"}</p>
+                <p className="text-xs text-sidebar-foreground truncate" data-testid="user-role">{user?.role === "admin" ? "Administrador" : "Técnico"}</p>
+              </div>
             )}
+            <div className={cn("flex items-center", isCollapsed && !isMobile && "flex-col")}>
+              <Button variant="ghost" size="icon" aria-label="Alterar senha" title="Alterar senha"
+                onClick={() => { setShowChangePassword(true); if (isMobile) close(); }}
+                className="h-11 w-11 text-sidebar-foreground hover:bg-sidebar-accent" data-testid="button-change-password">
+                <i aria-hidden="true" className="fas fa-key text-xs" />
+              </Button>
+              <Button variant="ghost" size="icon" aria-label="Sair" title="Sair" onClick={logout}
+                className="h-11 w-11 text-sidebar-foreground hover:text-destructive hover:bg-destructive/10" data-testid="button-logout">
+                <i aria-hidden="true" className="fas fa-sign-out-alt text-xs" />
+              </Button>
+            </div>
           </div>
         </div>
-      </aside>
+      </SidebarFrame>
 
       {/* Change Password Dialog */}
       <Dialog open={showChangePassword} onOpenChange={setShowChangePassword}>
-        <DialogContent className="max-w-md">
+        <DialogContent aria-describedby={undefined} className="max-w-md" onCloseAutoFocus={(event) => { if (isMobile) { event.preventDefault(); document.getElementById("sidebar-toggle")?.focus(); } }}>
           <DialogHeader>
             <DialogTitle>Alterar Senha</DialogTitle>
           </DialogHeader>
