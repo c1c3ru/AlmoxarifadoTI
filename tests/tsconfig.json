@@ -1,0 +1,9 @@
+{
+  "extends": "../tsconfig.json",
+  "include": ["./**/*.ts", "../playwright*.config.ts"],
+  "exclude": [],
+  "compilerOptions": {
+    "target": "ES2022",
+    "incremental": false
+  }
+}

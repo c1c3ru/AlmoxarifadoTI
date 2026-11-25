@@ -65,11 +65,11 @@ export function MainLayout({
   }, []);
 
   return (
-    <div className="flex min-h-screen bg-background relative overflow-x-hidden">
+    <div className="flex min-h-screen min-h-dvh bg-background relative">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary-100/30 via-background to-background pointer-events-none" />
       <Sidebar />
       <main className={cn(
-        "flex-1 transition-all duration-300 ease-in-out relative z-10 flex flex-col w-full max-w-full overflow-x-hidden",
+        "min-w-0 flex-1 transition-[margin] duration-300 ease-in-out relative z-10 flex flex-col",
         // Desktop margins
         !isMobile && isCollapsed && "ml-20",
         !isMobile && !isCollapsed && "ml-72",
@@ -85,7 +85,7 @@ export function MainLayout({
           addButtonIconClass={addButtonIconClass}
           addButtonClassName={addButtonClassName}
         />
-        <div className="p-4 md:p-6 lg:p-8 animate-fade-in flex-1 w-full max-w-full overflow-x-hidden">
+        <div className="p-4 md:p-6 lg:p-8 animate-fade-in flex-1 min-w-0">
           {children}
         </div>
       </main>
