@@ -107,6 +107,17 @@ router.get("/items/search", authenticateJWT, async (req, res) => {
     }
 });
 
+router.get("/items/by-code/:code", authenticateJWT, async (req, res) => {
+    try {
+        const item = await storage.getItemByCode(req.params.code);
+        if (!item) return res.status(404).json({ message: "Item not found" });
+        res.json(item);
+    } catch (error) {
+        logError("Get item by code error:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+});
+
 router.get("/items/:id", authenticateJWT, async (req, res) => {
     try {
         const { id } = req.params;
