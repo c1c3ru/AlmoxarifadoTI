@@ -6,7 +6,7 @@ Issue #33 · 2026-11-25 · base 75b89194f12a537b9640aad5f1f290f75d736252 · bran
 | UI-00 | DOING | PR #34 mergeado com CI verde; checkout e verify reais; baseline visual capturado em UI-01, aceite pendente |
 | UI-01 | DOING | Playwright/axe e integração PostgreSQL implementados; nove contratos integrados PASS após correção autorizada; baseline UI registra falhas reais, sem skip ou asserts relaxados |
 | UI-02 | DOING | Drawer Radix, estados separados, foco, ações recolhidas e zoom implementados. Typecheck/lint/build PASS; 12/12 testes focados Chromium PASS (foco preso/restaurado, Escape, resize, CRUD/inline/CSV/roles). Verify em execução; aceite final segue bloqueado |
-| UI-03 | TODO | Depende UI-02 |
+| UI-03 | DOING | Dialog/AlertDialog com vh/dvh, margem, scroll e Close traduzido; foco externo restaurado e labels reais do cadastro. Verify PASS (30 testes); 6/6 testes focados PASS. Teclado virtual físico pendente |
 | UI-04 | TODO | Depende UI-03 |
 | UI-05 | TODO | Depende UI-04 |
 | UI-06 | TODO | Depende UI-05 |

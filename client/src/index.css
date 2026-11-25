@@ -2,6 +2,25 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Bound modal geometry independently of consumer width/height utility overrides. */
+.sgat-dialog {
+  width: calc(100% - 2rem);
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+@supports (max-height: 100dvh) {
+  .sgat-dialog { max-height: calc(100dvh - 2rem); }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;
