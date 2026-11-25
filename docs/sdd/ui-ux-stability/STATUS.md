@@ -14,7 +14,7 @@ Issue #33 · 2026-11-25 · base 75b89194f12a537b9640aad5f1f290f75d736252 · bran
 | UI-08 | TODO | Depende UI-07 e todos gates |
 ## Evidências
 - CI histórico [36035074897](https://github.com/c1c3ru/AlmoxarifadoTI/actions/runs/36035074897): npm ci, typecheck, lint, Vitest, build: PASS no SHA base. Audit informativo.
-- `npm run verify` executado no checkout do PR #34: PASS (typecheck, lint sem erros, 36 avisos preexistentes, 32 testes Vitest e build). Execução HTTP local exige sair do sandbox; a tentativa restrita foi interrompida, sem relaxar testes. Revisão técnica em duas passagens (contratos/escopo e consistência documental); não equivale a aprovação visual humana.
+- `npm run verify` executado no checkout do PR #34: PASS (typecheck, lint sem erros, 36 avisos preexistentes, 26 testes Vitest e build). Execução HTTP local exige sair do sandbox; a tentativa restrita foi interrompida, sem relaxar testes. Revisão técnica em duas passagens (contratos/escopo e consistência documental); não equivale a aprovação visual humana.
 - Bloqueio de DNS inicial superado com execução autorizada. Checkout isolado atualizado; `npm ci` PASS (817 pacotes), Node 22.19.0/npm 11.6.0. Sem `.env` de produção.
 - Playwright, axe, visual, integração e hardware: NOT_RUN.
 - Alterações desta branch são apenas documentação/skill. Nenhum arquivo de produto, dependência ou produção alterado.
