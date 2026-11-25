@@ -10,7 +10,8 @@ if (process.env.DATABASE_URL) throw new Error("Unset DATABASE_URL before running
 const connectionString = process.env.E2E_DATABASE_URL;
 if (!connectionString) throw new Error("E2E_DATABASE_URL is required (disposable local PostgreSQL)");
 const url = new URL(connectionString);
-if (!["127.0.0.1", "localhost", "[::1]"].includes(url.hostname) || url.pathname !== "/sgat_ui_regression") {
+if (!["postgres:", "postgresql:"].includes(url.protocol) || url.search || url.hash ||
+    !["127.0.0.1", "localhost", "[::1]"].includes(url.hostname) || url.pathname !== "/sgat_ui_regression") {
   throw new Error("Only a loopback sgat_ui_regression database is allowed");
 }
 const database = new pg.Client({ connectionString });

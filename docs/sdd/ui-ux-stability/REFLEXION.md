@@ -35,3 +35,9 @@
 - Ajustes do harness: script local Speed Insights retorna HTML no servidor estático de testes, agora interceptado explicitamente; relatórios gerados excluídos de lint; Escape de QR pode fechar tooltip antes do dialog, smoke usa o botão Close e teste de Escape separado no formulário sem tooltip. Vídeo de câmera simulado precisa emitir quadros continuamente; scanner simulado PASS após corrigir isso. Essas falhas de fixture não são defeitos de produto.
 - Ambiente: WebKit baixado mas biblioteca libmanette ausente; sudo precisa senha. Executar WebKit no CI com dependências reais, sem skip. Fontes externas bloqueadas explicitamente nos mocks; screenshots usam fallback local estável, não certificam tipografia de produção.
 - Próxima ação: publicar baseline e obter exceção explícita para avançar aos ciclos de correção com falhas conhecidas registradas; manter gate final de release bloqueado. Artifacts gerados não vão para Git.
+
+## R-007 · UI-01 · regressão concorrente de dependência / P0
+- Evidência: PR #26 entrou em main durante o trabalho; base `080f5a0`, Neon 1.1.0. Lockfile regenerado preservando versões remotas. Integração real: 8 falhas de login HTTP 500, 1 teste anônimo passou. Verify com mocks continuou PASS.
+- Causa: `node_modules/drizzle-orm/neon-http/session.js` chama `this.client(sql, params, options)`; Neon >=1 aceita somente tagged template ou `.query`. Confirmado em [changelog oficial](https://github.com/neondatabase/serverless/blob/main/CHANGELOG.md#100-2025-03-25). O erro acontece antes do adapter de transporte do harness.
+- Avaliação: FAIL/P0, bloqueia próximos merges de produto. Não é falha da fixture e não deve ser mascarada adaptando o harness para aceitar chamadas que produção rejeita.
+- Próxima ação: decisão do mantenedor sobre restauração do driver compatível 0.10.4 (solicitada). Se autorizado, hotfix separado, npm/lockfile gerados normalmente, verify e nove contratos reais antes do merge.
