@@ -8,6 +8,8 @@ export default tseslint.config(
   {
     ignores: [
       "dist/**",
+      "playwright-report/**",
+      "test-results/**",
       "node_modules/**",
       "server/public/**",
       "attached_assets/**",
@@ -50,7 +52,7 @@ export default tseslint.config(
   },
   // Backend, scripts e configuração (Node)
   {
-    files: ["server/**/*.ts", "api/**/*.ts", "scripts/**/*.ts", "shared/**/*.ts", "*.{js,ts}"],
+    files: ["server/**/*.ts", "api/**/*.ts", "scripts/**/*.ts", "shared/**/*.ts", "tests/**/*.ts", "*.{js,ts}"],
     languageOptions: { globals: globals.node },
   },
 );

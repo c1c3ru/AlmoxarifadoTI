@@ -46,6 +46,68 @@ jobs:
       - run: npm ci
       - run: npm run build
 
+  ui:
+    name: UI smoke, responsividade e axe
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium firefox webkit
+      - run: npm run build
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ui-baseline-report
+          path: |
+            playwright-report/ui
+            test-results/ui
+          retention-days: 14
+
+  integration:
+    name: API, autenticação e PostgreSQL descartável
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: synthetic-local-only
+          POSTGRES_DB: sgat_ui_regression
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      E2E_DATABASE_URL: postgresql://postgres:synthetic-local-only@127.0.0.1:5432/sgat_ui_regression
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - run: npm run test:e2e:integration
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: integration-baseline-report
+          path: |
+            playwright-report/integration
+            test-results/integration
+          retention-days: 14
+
   audit:
     name: Auditoria de dependências
     runs-on: ubuntu-latest
