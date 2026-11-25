@@ -147,7 +147,7 @@ export function Sidebar() {
               <i className="fas fa-warehouse text-white text-lg"></i>
             </div>
             {(!isCollapsed || isMobile) && (
-              <div className="transition-opacity duration-300 animate-fade-in">
+              <div className="transition-opacity duration-300 motion-safe:animate-fade-in">
                 <div className="flex items-center gap-2">
                   <img src={ifceLogo} alt="IFCE" className="h-5 w-auto object-contain" />
                   <h1 className="text-lg font-bold text-sidebar-foreground tracking-tight">SGAT-TI</h1>

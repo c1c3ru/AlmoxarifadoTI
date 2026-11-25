@@ -81,7 +81,7 @@ export default function Movements() {
             <h3 className="text-xl font-bold text-emerald-900 mb-2">Registrar Entrada</h3>
             <p className="text-emerald-700 mb-6">Adicionar itens ao estoque do almoxarifado</p>
             <Button
-              className="w-full bg-emerald-600 hover:bg-emerald-700 shadow-lg h-12 text-base font-semibold"
+              className="w-full bg-emerald-700 hover:bg-emerald-800 shadow-lg h-12 text-base font-semibold"
               data-testid="button-register-entry"
               onClick={(e) => { e.stopPropagation(); handleNewMovement("entrada"); }}
             >
@@ -141,7 +141,7 @@ export default function Movements() {
             </div>
             <div className="w-full lg:w-64">
               <Select value={selectedItemFilter} onValueChange={setSelectedItemFilter}>
-                <SelectTrigger data-testid="select-item-filter">
+                <SelectTrigger aria-label="Filtrar por item" data-testid="select-item-filter">
                   <SelectValue placeholder="Filtrar por item" />
                 </SelectTrigger>
                 <SelectContent>
@@ -219,7 +219,7 @@ export default function Movements() {
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <Button
                   onClick={() => handleNewMovement("entrada")}
-                  className="bg-emerald-600 hover:bg-emerald-700"
+                  className="bg-emerald-700 hover:bg-emerald-800"
                   data-testid="button-first-entry"
                 >
                   <i className="fa-solid fa-arrow-down mr-2"></i>

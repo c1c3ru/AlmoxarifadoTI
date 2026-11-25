@@ -33,7 +33,7 @@ export default function Items() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: items = [], isLoading } = useQuery<ItemWithCategory[]>({
+  const { data: items = [], isLoading, isLoadingError, isFetching, refetch } = useQuery<ItemWithCategory[]>({
     queryKey: ["/api/items"],
   });
 
@@ -177,30 +177,21 @@ export default function Items() {
     >
       {/* Hero Section with CSV */}
       <Card className="bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 border-0 shadow-lg mb-8">
-        <CardContent className="p-8">
-          <div className="flex items-center justify-between">
+        <CardContent className="flex flex-wrap items-center justify-between gap-4 p-4 sm:p-8">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 shrink-0 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+              <i className="fa-solid fa-file-csv text-white text-xl"></i>
+            </div>
             <div>
-              <div className="flex items-center space-x-3 mb-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                  <i className="fa-solid fa-file-csv text-white text-xl"></i>
-                </div>
-                <div>
-                  <h3 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                    Gerenciar Inventário
-                  </h3>
-                  <p className="text-gray-600 font-medium">
-                    Importe ou exporte itens em formato CSV para gerenciamento em lote
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="hidden md:block">
-              <CSVImportExport />
+              <h3 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                Gerenciar Inventário
+              </h3>
+              <p className="text-gray-600 font-medium">
+                Importe ou exporte itens em formato CSV para gerenciamento em lote
+              </p>
             </div>
           </div>
-          <div className="md:hidden mt-4 flex justify-center">
-            <CSVImportExport />
-          </div>
+          <CSVImportExport />
         </CardContent>
       </Card>
 
@@ -234,13 +225,14 @@ export default function Items() {
 
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
-                <tr>
+            <table className="w-full max-md:block" role="table" aria-label="Inventário">
+              <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200 max-md:block" role="rowgroup">
+                <tr className="max-md:block" role="row">
                   <th className="px-4 py-3 sm:px-6 sm:py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
                     <div className="flex items-center space-x-2">
                       <input
                         type="checkbox"
+                        aria-label="Selecionar todos os itens"
                         checked={selectedItems.size === items.length && items.length > 0}
                         onChange={(e) => {
                           if (e.target.checked) {
@@ -255,7 +247,7 @@ export default function Items() {
                       <span>Item</span>
                     </div>
                   </th>
-                  <th className="hidden sm:table-cell px-4 py-3 sm:px-6 sm:py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
+                  <th className="hidden md:table-cell px-4 py-3 sm:px-6 sm:py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
                     <i className="fa-solid fa-barcode mr-2 text-green-500"></i>
                     Código
                   </th>
@@ -267,22 +259,21 @@ export default function Items() {
                     <i className="fa-solid fa-warehouse mr-2 text-orange-500"></i>
                     Estoque
                   </th>
-                  <th className="hidden sm:table-cell px-4 py-3 sm:px-6 sm:py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
+                  <th className="hidden md:table-cell px-4 py-3 sm:px-6 sm:py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
                     <i className="fa-solid fa-info-circle mr-2 text-blue-500"></i>
                     Status
                   </th>
-                  <th className="px-2 py-3 sm:px-4 md:px-6 sm:py-4 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">
+                  <th className="hidden md:table-cell px-6 py-4 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">
                     <i className="fa-solid fa-qrcode mr-1 sm:mr-2 text-indigo-500"></i>
-                    <span className="hidden sm:inline">QR Code</span>
-                    <span className="sm:hidden">QR</span>
+                    QR Code
                   </th>
-                  <th className="px-4 py-3 sm:px-6 sm:py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
+                  <th className="hidden md:table-cell px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
                     <i className="fa-solid fa-cog mr-2 text-gray-500"></i>
                     Ações
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-100">
+              <tbody className="bg-white divide-y divide-gray-100 max-md:block" role="rowgroup">
                 {isLoading ? (
                   Array.from({ length: 5 }).map((_, i) => (
                     <tr key={i} className="hover:bg-gray-50 transition-colors">
@@ -303,6 +294,15 @@ export default function Items() {
                       <td className="px-6 py-4"><Skeleton className="h-8 w-32" /></td>
                     </tr>
                   ))
+                ) : isLoadingError ? (
+                  <tr>
+                    <td colSpan={7} className="px-6 py-12 text-center">
+                      <p role="alert" className="mb-4 font-medium text-red-700">Não foi possível carregar o inventário.</p>
+                      <Button variant="outline" onClick={() => void refetch()} disabled={isFetching}>
+                        Tentar novamente
+                      </Button>
+                    </td>
+                  </tr>
                 ) : items.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="px-6 py-16 text-center">
@@ -328,13 +328,15 @@ export default function Items() {
                   items.map((item) => (
                     <tr
                       key={item.id}
-                      className="hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-200 group"
+                      className="hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-200 group max-md:grid max-md:grid-cols-2"
+                      role="row"
                       data-testid={`item-row-${item.id}`}
                     >
-                      <td className="px-4 py-3 sm:px-6 sm:py-4">
+                      <td className="px-4 py-3 sm:px-6 sm:py-4 max-md:col-span-2" role="cell">
                         <div className="flex items-center space-x-4">
                           <input
                             type="checkbox"
+                            aria-label={`Selecionar ${item.name}`}
                             checked={selectedItems.has(item.id)}
                             onChange={(e) => {
                               const newSelected = new Set(selectedItems);
@@ -361,33 +363,22 @@ export default function Items() {
                               </p>
                             )}
                             {item.location && (
-                              <p className="text-xs text-gray-400 flex items-center mt-1 truncate max-w-[200px] sm:max-w-[260px] md:max-w-none">
+                              <p className="text-xs text-gray-600 flex items-center mt-1 truncate max-w-[200px] sm:max-w-[260px] md:max-w-none">
                                 <i className="fa-solid fa-location-dot mr-1"></i>
                                 {item.location}
                               </p>
                             )}
-
-                            {/* Mobile Info (Visible only on small screens) */}
-                            <div className="md:hidden flex flex-wrap gap-2 mt-2">
-                              <Badge variant="outline" className={`${item.currentStock <= item.minStock ? 'bg-red-50 text-red-700 border-red-200' : 'bg-green-50 text-green-700 border-green-200'
-                                } text-xs px-1.5 py-0 h-5`}>
-                                <i className="fa-solid fa-layer-group mr-1 text-[10px]"></i>
-                                {item.currentStock} {item.unit}
-                              </Badge>
-                              <Badge variant="outline" className="text-xs border-gray-200 text-gray-500 px-1.5 py-0 h-5">
-                                <i className={`${getStatusIcon(item.status)} mr-1 text-[10px]`}></i>
-                                {getStatusLabel(item.status)}
-                              </Badge>
-                            </div>
                           </div>
                         </div>
                       </td>
-                      <td className="hidden sm:table-cell px-4 py-3 sm:px-6 sm:py-4">
-                        <div className="bg-gray-50 px-3 py-1 rounded-lg border font-mono text-sm text-gray-900" data-testid={`item-code-${item.id}`}>
+                      <td className="px-4 py-3 sm:px-6 sm:py-4 min-w-0" role="cell">
+                        <span className="mb-1 block text-xs font-medium text-gray-600 md:hidden">Código</span>
+                        <div className="bg-gray-50 px-3 py-1 rounded-lg border font-mono text-sm text-gray-900 break-all md:break-normal" data-testid={`item-code-${item.id}`}>
                           {item.internalCode}
                         </div>
                       </td>
-                      <td className="hidden md:table-cell px-4 py-3 sm:px-6 sm:py-4">
+                      <td className="px-4 py-3 sm:px-6 sm:py-4 min-w-0" role="cell">
+                        <span className="mb-1 block text-xs font-medium text-gray-600 md:hidden">Categoria</span>
                         <Badge
                           className="bg-gradient-to-r from-purple-100 to-blue-100 text-purple-800 border-purple-200 font-medium"
                           data-testid={`item-category-${item.id}`}
@@ -396,9 +387,10 @@ export default function Items() {
                           {item.category?.name}
                         </Badge>
                       </td>
-                      <td className="hidden md:table-cell px-4 py-3 sm:px-6 sm:py-4" data-testid={`item-stock-${item.id}`}>
+                      <td className="px-4 py-3 sm:px-6 sm:py-4 min-w-0" role="cell" data-testid={`item-stock-${item.id}`}>
+                        <span className="mb-1 block text-xs font-medium text-gray-600 md:hidden">Estoque</span>
                         <div className="flex flex-col space-y-2">
-                          <div className="flex items-center space-x-2">
+                          <div className="flex flex-wrap items-center gap-2">
                             <input
                               type="number"
                               defaultValue={item.currentStock}
@@ -446,7 +438,8 @@ export default function Items() {
                           </div>
                         </div>
                       </td>
-                      <td className="hidden sm:table-cell px-4 py-3 sm:px-6 sm:py-4">
+                      <td className="px-4 py-3 sm:px-6 sm:py-4" role="cell">
+                        <span className="mb-1 block text-xs font-medium text-gray-600 md:hidden">Status</span>
                         <Badge
                           className={`${getStatusColor(item.status)} font-medium flex items-center w-fit`}
                           data-testid={`item-status-${item.id}`}
@@ -455,18 +448,13 @@ export default function Items() {
                           {getStatusLabel(item.status)}
                         </Badge>
                       </td>
-                      <td className="px-2 py-3 sm:px-4 md:px-6 sm:py-4">
-                        <div className="flex items-center justify-center space-x-1 sm:space-x-2">
+                      <td className="px-4 py-3 sm:px-6 sm:py-4 max-md:col-span-2" role="cell">
+                        <div className="flex items-center justify-center gap-2 max-md:justify-start">
                           <div className="p-0.5 sm:p-1 bg-white rounded-lg shadow-sm border">
                             <QRCodeGenerator
                               value={`ITEM:${item.id}:${item.internalCode}`}
-                              size={24}
-                              className="cursor-pointer hover:scale-110 transition-transform sm:hidden"
-                            />
-                            <QRCodeGenerator
-                              value={`ITEM:${item.id}:${item.internalCode}`}
                               size={32}
-                              className="cursor-pointer hover:scale-110 transition-transform hidden sm:block"
+                              className="cursor-pointer hover:scale-110 transition-transform"
                             />
                           </div>
                           <TooltipProvider>
@@ -488,7 +476,7 @@ export default function Items() {
                           </TooltipProvider>
                         </div>
                       </td>
-                      <td className="px-4 py-3 sm:px-6 sm:py-4">
+                      <td className="px-4 py-3 sm:px-6 sm:py-4 max-md:col-span-2" role="cell">
                         <div className="flex flex-wrap items-center gap-2">
                           {/* QR Code button for mobile/tablet screens */}
                           <div className="lg:hidden">

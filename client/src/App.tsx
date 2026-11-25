@@ -69,13 +69,9 @@ function Router() {
       </Route>
       
       <Route path="/">
-        {user ? (
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-        ) : (
-          <Redirect to="/login" />
-        )}
+        <ProtectedRoute>
+          <Dashboard />
+        </ProtectedRoute>
       </Route>
       
       <Route path="/items">

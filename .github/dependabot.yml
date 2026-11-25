@@ -19,6 +19,9 @@ updates:
       # typescript-eslint aceita TypeScript <6.1; reavaliar junto ao tooling.
       - dependency-name: typescript
         versions: [">=6.1.0"]
+      # tailwind-merge 3 requer a migração do Tailwind CSS para a v4.
+      - dependency-name: tailwind-merge
+        versions: [">=3.0.0"]
     groups:
       # Runtime e tipos React precisam migrar juntos, inclusive nas majors.
       react:

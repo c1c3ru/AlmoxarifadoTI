@@ -184,7 +184,7 @@ export default function Dashboard() {
                 onlineUsers.slice(0, 8).map((u) => (
                   <div key={u.id} className="flex items-center justify-between p-2 rounded-xl hover:bg-muted/50 transition-all duration-200 gap-3">
                     <div className="flex items-center space-x-3 min-w-0">
-                      <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm flex-shrink-0">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 text-foreground flex items-center justify-center font-bold text-sm flex-shrink-0">
                         {u.username.slice(0, 2).toUpperCase()}
                       </div>
                       <div className="min-w-0">
@@ -288,7 +288,7 @@ export default function Dashboard() {
                       <i className="fa-solid fa-inbox text-muted-foreground text-xl"></i>
                     </div>
                     <p className="text-muted-foreground font-medium">Nenhuma movimentação recente</p>
-                    <p className="text-sm text-muted-foreground/60">As atividades aparecerão aqui</p>
+                    <p className="text-sm text-muted-foreground">As atividades aparecerão aqui</p>
                   </div>
                 ) : (
                   recentMovements.map((movement) => (
@@ -348,7 +348,7 @@ export default function Dashboard() {
                     <i className="fa-solid fa-tags text-muted-foreground text-xl"></i>
                   </div>
                   <p className="text-muted-foreground font-medium">Nenhuma categoria cadastrada</p>
-                  <p className="text-sm text-muted-foreground/60">Organize seus itens em categorias</p>
+                  <p className="text-sm text-muted-foreground">Organize seus itens em categorias</p>
                 </div>
               ) : (
                 categories.map((category, index) => (

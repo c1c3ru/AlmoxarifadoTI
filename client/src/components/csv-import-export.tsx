@@ -276,7 +276,7 @@ Teclado ABNT2,"Teclado padrão brasileiro",15,3,"Sala A - Prateleira 2"
 Monitor LED 19,"Monitor LED 19 polegadas",8,2,"Sala B - Mesa 1"`;
 
   return (
-    <div className="flex items-center space-x-3">
+    <div className="flex flex-wrap items-center gap-3">
       <Button
         onClick={() => exportMutation.mutate()}
         disabled={exportMutation.isPending || exportExcelMutation.isPending}

@@ -168,7 +168,7 @@ export default function Search() {
             </div>
             
             <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger className="h-14 border-2 border-gray-200 focus:border-blue-400" data-testid="select-category-filter">
+              <SelectTrigger aria-label="Filtrar por categoria" className="h-14 border-2 border-gray-200 focus:border-blue-400" data-testid="select-category-filter">
                 <div className="flex items-center space-x-2">
                   <i className="fa-solid fa-tags text-purple-500"></i>
                   <SelectValue placeholder="Todas as Categorias" />
@@ -188,7 +188,7 @@ export default function Search() {
             </Select>
             
             <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-              <SelectTrigger className="h-14 border-2 border-gray-200 focus:border-blue-400" data-testid="select-status-filter">
+              <SelectTrigger aria-label="Filtrar por status" className="h-14 border-2 border-gray-200 focus:border-blue-400" data-testid="select-status-filter">
                 <div className="flex items-center space-x-2">
                   <i className="fa-solid fa-info-circle text-blue-500"></i>
                   <SelectValue placeholder="Todos os Status" />
@@ -269,7 +269,7 @@ export default function Search() {
               <i className="fa-solid fa-search text-blue-500 text-3xl"></i>
             </div>
             <h3 className="text-xl font-bold text-gray-900 mb-3">Pronto para Pesquisar</h3>
-            <p className="text-gray-500">Digite algo no campo de pesquisa ou selecione filtros para encontrar itens</p>
+            <p className="text-gray-600">Digite algo no campo de pesquisa ou selecione filtros para encontrar itens</p>
           </CardContent>
         </Card>
       ) : (

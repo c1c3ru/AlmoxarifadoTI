@@ -37,7 +37,7 @@ export function Topbar({ title, subtitle, onAddItem, showAddButton = true, addBu
               {title}
             </h1>
             {subtitle && (
-              <p className="text-muted-foreground mt-0.5 text-sm md:text-base animate-fade-in" data-testid="page-subtitle">
+              <p className="text-muted-foreground mt-0.5 text-sm md:text-base motion-safe:animate-fade-in" data-testid="page-subtitle">
                 {subtitle}
               </p>
             )}

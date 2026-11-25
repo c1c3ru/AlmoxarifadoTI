@@ -11,8 +11,12 @@ test("inventory failure is distinguished from an empty inventory", async ({ page
   api.failedPaths.add("/api/items");
   await openPage(page, "/items");
   await expect(page.getByRole("alert")).toBeVisible();
-  await expect(page.getByRole("button", { name: /Tentar novamente/i })).toBeVisible();
   await expect(page.getByText("Nenhum item cadastrado")).toHaveCount(0);
+
+  api.failedPaths.delete("/api/items");
+  await page.getByRole("button", { name: /Tentar novamente/i }).click();
+  await expect(page.getByTestId(`item-row-${item.id}`)).toBeVisible();
+  await expect(page.getByRole("alert")).toHaveCount(0);
 });
 
 test("mobile inventory exposes code, category and unit", async ({ page }) => {

@@ -85,7 +85,7 @@ export function MainLayout({
           addButtonIconClass={addButtonIconClass}
           addButtonClassName={addButtonClassName}
         />
-        <div className="p-4 md:p-6 lg:p-8 animate-fade-in flex-1 min-w-0">
+        <div className="p-4 md:p-6 lg:p-8 motion-safe:animate-fade-in flex-1 min-w-0">
           {children}
         </div>
       </main>

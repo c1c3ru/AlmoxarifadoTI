@@ -382,7 +382,7 @@ export default function Categories() {
                       </div>
                     </div>
                     
-                    <div className="text-xs text-gray-400 mb-4 border-t border-gray-100 pt-3">
+                    <div className="text-xs text-gray-600 mb-4 border-t border-gray-100 pt-3">
                       Criado em: {new Date(category.createdAt).toLocaleDateString("pt-BR")}
                     </div>
                     
@@ -404,7 +404,7 @@ export default function Categories() {
                         size="sm"
                         onClick={() => handleDelete(category)}
                         disabled={deleteCategoryMutation.isPending}
-                        className="hover:bg-red-600"
+                        className="bg-red-700 hover:bg-red-800"
                         data-testid={`button-delete-${category.id}`}
                         title="Excluir categoria"
                         aria-label={`Excluir categoria ${category.name}`}

@@ -153,7 +153,7 @@ export default function History() {
               </div>
 
               <Select value={selectedItemFilter} onValueChange={setSelectedItemFilter}>
-                <SelectTrigger className="w-full sm:w-48" data-testid="select-item-filter">
+                <SelectTrigger aria-label="Filtrar por item" className="w-full sm:w-48" data-testid="select-item-filter">
                   <SelectValue placeholder="Filtrar por item" />
                 </SelectTrigger>
                 <SelectContent>
@@ -169,7 +169,7 @@ export default function History() {
               </Select>
 
               <Select value={selectedTypeFilter} onValueChange={setSelectedTypeFilter}>
-                <SelectTrigger className="w-full sm:w-32" data-testid="select-type-filter">
+                <SelectTrigger aria-label="Filtrar por tipo de movimentação" className="w-full sm:w-32" data-testid="select-type-filter">
                   <SelectValue placeholder="Tipo" />
                 </SelectTrigger>
                 <SelectContent>
@@ -205,7 +205,7 @@ export default function History() {
                 <i className="fa-solid fa-history text-gray-400 text-3xl"></i>
               </div>
               <h4 className="text-xl font-bold text-gray-900 mb-3">Nenhuma movimentação encontrada</h4>
-              <p className="text-gray-500">
+              <p className="text-gray-700">
                 {selectedItemFilter !== ALL || selectedTypeFilter !== ALL || searchQuery
                   ? "Nenhuma movimentação corresponde aos filtros selecionados"
                   : "Ainda não há movimentações registradas no sistema"

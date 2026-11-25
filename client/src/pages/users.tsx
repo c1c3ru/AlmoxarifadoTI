@@ -666,6 +666,7 @@ export default function Users() {
                         </span>
                       </div>
                       <Switch
+                        aria-label={`Acesso de ${user.name}`}
                         checked={user.isActive}
                         onCheckedChange={() => handleToggleStatus(user)}
                         disabled={toggleUserStatusMutation.isPending}
