@@ -47,3 +47,9 @@
 - Ação: drawer Radix <1024, compacto 1024–1279, expandido >=1280, preferência desktop separada de abertura mobile; mudanças de altura não fecham o drawer. Uma única árvore de navegação, foco preso e restaurado, links com aria-current, senha/logout acessíveis recolhido; removido maximum-scale e clipping global. Heartbeat inalterado.
 - Evidência: 12/12 testes focados Chromium PASS; TypeScript, lint e build PASS. Vídeo/QR e banco seguem nos respectivos gates.
 - Próxima ação: concluir verify, PR pequeno para a base explícita UI-01; UI-03 modais. Não atribuir ao layout a correção de defeitos de inventário/contraste ainda pendentes.
+
+## R-009 · UI-03 · diálogos
+- Ação: limites de viewport com fallback vh/dvh, rolagem interna e botões Fechar 44px; restauração de foco de triggers externos sem substituir callbacks Radix. Labels de cadastro corrigidos movendo FormControl para o input real. Autocomplete e redução de movimento; validação e payloads preservados.
+- Evidência: verify PASS (30 testes), 6/6 testes focados PASS; diálogos 320x568 e 844x390 com ações alcançáveis, submit inválido sem mutation, foco restaurado e labels apontando para INPUT.
+- Limite: redução de altura em navegador é emulação, não valida teclado virtual físico. Não declarar essa homologação.
+- Próxima ação: UI-04 tokens/contraste/estados; manter baseline e invariantes.

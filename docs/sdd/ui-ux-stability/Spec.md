@@ -32,6 +32,7 @@ Sem alterar server/, shared/, API, rotas, autenticação, RBAC, heartbeat, query
 - MODIFY client/src/components/layout/topbar.tsx: wrap/stack em espaço estreito; aria-label, aria-expanded/controls, ícone único; garantir ação principal legível.
 - Gate: menu, logout/senha e navegação com teclado, resize dentro do mesmo breakpoint sem reset, 320px e landscape; testes atuais.
 ## UI-03 — modais
+- Geometria compartilhada `.sgat-dialog` no CSS, width viewport menos 32px e altura máxima vh/dvh, independente dos overrides de classes nos consumidores; max-w específico de cada consumidor preservado. Capturar/restaurar foco de triggers externos no DialogContent, encadeando callbacks Radix sem sobrescrevê-los. Corrigir FormControl envolvendo div no cadastro para que label/id/aria sejam aplicados ao input real. Sem mudanças de validação ou submissão.
 - MODIFY client/src/components/ui/dialog.tsx e alert-dialog.tsx: manter Radix e classes de animação; margem e max-height dinâmica com fallback, scroll interno, focus, fechar traduzido. Validar override de max-w/max-h nos consumidores; garantir ações alcançáveis. Não mexer em contratos de refs.
 - MODIFY client/src/components/modals/{add-item-modal,edit-item-modal,movement-modal,qr-code-modal}.tsx e client/src/pages/{users,categories,login,register,reset-password}.tsx somente nos pontos afetados: empilhar ações, labels, autoComplete e foco; preservar submit/validação.
 - Gate: Escape, Tab, restauração, cancelamento, erros, mobile teclado virtual manual; sem mutação adicional.

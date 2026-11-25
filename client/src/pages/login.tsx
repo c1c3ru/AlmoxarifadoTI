@@ -153,6 +153,7 @@ export default function Login() {
                         <Input
                           placeholder="E-mail institucional ou matrícula"
                           {...field}
+                          autoComplete="username"
                           data-testid="input-username"
                           className="pl-10 h-12 bg-gray-50/50 border-gray-200 focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all duration-200"
                         />
@@ -178,6 +179,7 @@ export default function Login() {
                           type="password"
                           placeholder="Digite sua senha"
                           {...field}
+                          autoComplete="current-password"
                           data-testid="input-password"
                           className="pl-10 h-12 bg-gray-50/50 border-gray-200 focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all duration-200"
                         />
