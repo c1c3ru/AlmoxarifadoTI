@@ -5,7 +5,24 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    # Estas migrações precisam de alterações coordenadas no código e testes.
+    # Em pacotes 0.x, uma minor também pode quebrar compatibilidade.
+    ignore:
+      - dependency-name: drizzle-orm
+        versions: [">=0.40.0"]
+      - dependency-name: drizzle-zod
+        versions: [">=0.8.0"]
+      - dependency-name: drizzle-kit
+        versions: [">=0.31.0"]
+      - dependency-name: "@neondatabase/serverless"
+        versions: [">=1.0.0"]
+      # typescript-eslint aceita TypeScript <6.1; reavaliar junto ao tooling.
+      - dependency-name: typescript
+        versions: [">=6.1.0"]
     groups:
+      # Runtime e tipos React precisam migrar juntos, inclusive nas majors.
+      react:
+        patterns: [react, react-dom, "@types/react", "@types/react-dom"]
       # Atualizações menores e de correção chegam juntas em um único PR.
       minor-and-patch:
         update-types: [minor, patch]
