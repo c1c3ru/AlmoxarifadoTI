@@ -174,20 +174,20 @@ export default function Items() {
       onAddItem={() => setShowAddModal(true)}
       addButtonLabel="Novo Item"
       addButtonIconClass="fa-solid fa-plus"
-      addButtonClassName="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 shadow-lg hover:shadow-xl"
+      addButtonClassName="bg-primary hover:bg-primary/90"
     >
       {isError ? <ErrorState message="Não foi possível carregar o inventário." onRetry={() => { void refetch(); }} isRetrying={isFetching} /> : <>
       {/* Hero Section with CSV */}
-      <Card className="bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 border-0 shadow-lg mb-8">
-        <CardContent className="p-8">
-          <div className="flex items-center justify-between">
+      <Card className="bg-card border-border shadow-sm mb-6">
+        <CardContent className="p-4 sm:p-6">
+          <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
             <div>
               <div className="flex items-center space-x-3 mb-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                <div className="shrink-0 w-12 h-12 bg-primary rounded-xl flex items-center justify-center shadow-lg">
                   <i className="fa-solid fa-file-csv text-white text-xl"></i>
                 </div>
                 <div>
-                  <h3 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                  <h3 className="text-xl font-bold text-foreground">
                     Gerenciar Inventário
                   </h3>
                   <p className="text-gray-600 font-medium">
@@ -196,27 +196,38 @@ export default function Items() {
                 </div>
               </div>
             </div>
-            <div className="hidden md:block">
-              <CSVImportExport />
-            </div>
+            <div className="min-w-0 w-full xl:w-auto"><CSVImportExport /></div>
           </div>
-          <div className="md:hidden mt-4 flex justify-center">
-            <CSVImportExport />
-          </div>
+
         </CardContent>
       </Card>
 
       {/* Items Grid */}
       <Card className="bg-white border-0 shadow-xl overflow-hidden">
         <div className="bg-gradient-to-r from-gray-50 to-blue-50 px-6 py-4 border-b border-gray-200">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center space-x-3">
               <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
                 <i className="fa-solid fa-boxes-stacked text-white text-sm"></i>
               </div>
               <h3 className="text-xl font-bold text-gray-900">Itens Cadastrados</h3>
             </div>
-            <div className="flex items-center space-x-3">
+            <div className="flex flex-wrap items-center gap-3">
+              <label className="flex min-h-11 cursor-pointer items-center gap-2 text-sm text-foreground">
+                <input
+                        type="checkbox"
+                        checked={selectedItems.size === items.length && items.length > 0}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedItems(new Set(items.map(item => item.id)));
+                          } else {
+                            setSelectedItems(new Set());
+                          }
+                        }}
+                        className="h-5 w-5 shrink-0 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                <span>Selecionar todos</span>
+              </label>
               {selectedItems.size > 0 && (
                 <Button
                   onClick={() => setShowThermalPrinter(true)}
@@ -235,60 +246,49 @@ export default function Items() {
         </div>
 
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
-                <tr>
-                  <th className="px-4 py-3 sm:px-6 sm:py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
+          <div className="overflow-x-auto min-w-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring" role="region" aria-label="Inventário de itens" tabIndex={0}>
+            <table role="table" aria-label="Itens cadastrados" aria-busy={isLoading} className="inventory-table w-full md:min-w-[64rem]">
+              <thead role="rowgroup" className="sr-only md:not-sr-only bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
+                <tr role="row">
+                  <th scope="col" role="columnheader" className="px-4 py-3 sm:px-6 sm:py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
                     <div className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        checked={selectedItems.size === items.length && items.length > 0}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setSelectedItems(new Set(items.map(item => item.id)));
-                          } else {
-                            setSelectedItems(new Set());
-                          }
-                        }}
-                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                      />
+
                       <i className="fa-solid fa-cube text-blue-500"></i>
                       <span>Item</span>
                     </div>
                   </th>
-                  <th className="hidden sm:table-cell px-4 py-3 sm:px-6 sm:py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
+                  <th scope="col" role="columnheader" className="px-4 py-3 sm:px-6 sm:py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
                     <i className="fa-solid fa-barcode mr-2 text-green-500"></i>
                     Código
                   </th>
-                  <th className="hidden md:table-cell px-4 py-3 sm:px-6 sm:py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
+                  <th scope="col" role="columnheader" className="px-4 py-3 sm:px-6 sm:py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
                     <i className="fa-solid fa-tags mr-2 text-purple-500"></i>
                     Categoria
                   </th>
-                  <th className="hidden md:table-cell px-4 py-3 sm:px-6 sm:py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
+                  <th scope="col" role="columnheader" className="px-4 py-3 sm:px-6 sm:py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
                     <i className="fa-solid fa-warehouse mr-2 text-orange-500"></i>
                     Estoque
                   </th>
-                  <th className="hidden sm:table-cell px-4 py-3 sm:px-6 sm:py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
+                  <th scope="col" role="columnheader" className="px-4 py-3 sm:px-6 sm:py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
                     <i className="fa-solid fa-info-circle mr-2 text-blue-500"></i>
                     Status
                   </th>
-                  <th className="px-2 py-3 sm:px-4 md:px-6 sm:py-4 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">
+                  <th scope="col" role="columnheader" className="px-2 py-3 sm:px-4 md:px-6 sm:py-4 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">
                     <i className="fa-solid fa-qrcode mr-1 sm:mr-2 text-indigo-500"></i>
                     <span className="hidden sm:inline">QR Code</span>
                     <span className="sm:hidden">QR</span>
                   </th>
-                  <th className="px-4 py-3 sm:px-6 sm:py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
+                  <th scope="col" role="columnheader" className="px-4 py-3 sm:px-6 sm:py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
                     <i className="fa-solid fa-cog mr-2 text-gray-500"></i>
                     Ações
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-100">
+              <tbody role="rowgroup" className="bg-white divide-y divide-gray-100">
                 {isLoading ? (
                   Array.from({ length: 5 }).map((_, i) => (
-                    <tr key={i} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4">
+                    <tr role="row" key={i} className="hover:bg-gray-50 transition-colors">
+                      <td role="cell" className="px-6 py-4">
                         <div className="flex items-center space-x-3">
                           <Skeleton className="h-10 w-10 rounded-lg" />
                           <div className="space-y-2">
@@ -297,17 +297,17 @@ export default function Items() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4"><Skeleton className="h-4 w-20" /></td>
-                      <td className="px-6 py-4"><Skeleton className="h-6 w-16" /></td>
-                      <td className="px-6 py-4"><Skeleton className="h-4 w-16" /></td>
-                      <td className="px-6 py-4"><Skeleton className="h-6 w-20" /></td>
-                      <td className="px-6 py-4"><Skeleton className="h-8 w-8" /></td>
-                      <td className="px-6 py-4"><Skeleton className="h-8 w-32" /></td>
+                      <td role="cell" className="px-6 py-4"><Skeleton className="h-4 w-20" /></td>
+                      <td role="cell" className="px-6 py-4"><Skeleton className="h-6 w-16" /></td>
+                      <td role="cell" className="px-6 py-4"><Skeleton className="h-4 w-16" /></td>
+                      <td role="cell" className="px-6 py-4"><Skeleton className="h-6 w-20" /></td>
+                      <td role="cell" className="px-6 py-4"><Skeleton className="h-8 w-8" /></td>
+                      <td role="cell" className="px-6 py-4"><Skeleton className="h-8 w-32" /></td>
                     </tr>
                   ))
                 ) : items.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="px-6 py-16 text-center">
+                  <tr role="row">
+                    <td role="cell" colSpan={7} className="px-6 py-16 text-center">
                       <div className="flex flex-col items-center space-y-4">
                         <div className="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center">
                           <i className="fa-solid fa-inbox text-gray-400 text-3xl"></i>
@@ -328,14 +328,14 @@ export default function Items() {
                   </tr>
                 ) : (
                   items.map((item) => (
-                    <tr
+                    <tr role="row"
                       key={item.id}
-                      className="hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-200 group"
+                      className="hover:bg-muted/40 transition-colors group"
                       data-testid={`item-row-${item.id}`}
                     >
-                      <td className="px-4 py-3 sm:px-6 sm:py-4">
+                      <td role="cell" className="px-4 py-3 sm:px-6 sm:py-4">
                         <div className="flex items-center space-x-4">
-                          <input
+                          <label className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center"><input
                             type="checkbox"
                             checked={selectedItems.has(item.id)}
                             onChange={(e) => {
@@ -347,58 +347,50 @@ export default function Items() {
                               }
                               setSelectedItems(newSelected);
                             }}
-                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                          />
-                          <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-purple-100 rounded-xl flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
+                            className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          /><span className="sr-only">Selecionar {item.name}</span></label>
+                          <div className="shrink-0 w-12 h-12 bg-gradient-to-br from-blue-100 to-purple-100 rounded-xl flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
                             <i className={`${item.category?.icon || 'fa-solid fa-cube'} text-blue-600 text-lg`}></i>
                           </div>
-                          <div>
-                            <p className="font-semibold text-gray-900 group-hover:text-blue-700 transition-colors truncate max-w-[160px] sm:max-w-[240px] md:max-w-none" data-testid={`item-name-${item.id}`}>
+                          <div className="min-w-0 flex-1">
+                            <p className="font-semibold text-gray-900 group-hover:text-blue-700 transition-colors break-words" data-testid={`item-name-${item.id}`}>
                               {item.name}
                             </p>
                             {item.serialNumber && (
-                              <p className="text-sm text-gray-500 flex items-center mt-1 truncate max-w-[200px] sm:max-w-[260px] md:max-w-none">
+                              <p className="text-sm text-gray-500 flex items-center mt-1 break-words">
                                 <i className="fa-solid fa-hashtag mr-1 text-xs"></i>
                                 {item.serialNumber}
                               </p>
                             )}
                             {item.location && (
-                              <p className="text-xs text-gray-400 flex items-center mt-1 truncate max-w-[200px] sm:max-w-[260px] md:max-w-none">
+                              <p className="text-xs text-muted-foreground flex items-start mt-1 break-words">
                                 <i className="fa-solid fa-location-dot mr-1"></i>
                                 {item.location}
                               </p>
                             )}
 
-                            {/* Mobile Info (Visible only on small screens) */}
-                            <div className="md:hidden flex flex-wrap gap-2 mt-2">
-                              <Badge variant="outline" className={`${item.currentStock <= item.minStock ? 'bg-red-50 text-red-700 border-red-200' : 'bg-green-50 text-green-700 border-green-200'
-                                } text-xs px-1.5 py-0 h-5`}>
-                                <i className="fa-solid fa-layer-group mr-1 text-[10px]"></i>
-                                {item.currentStock} {item.unit}
-                              </Badge>
-                              <Badge variant="outline" className="text-xs border-gray-200 text-gray-500 px-1.5 py-0 h-5">
-                                <i className={`${getStatusIcon(item.status)} mr-1 text-[10px]`}></i>
-                                {getStatusLabel(item.status)}
-                              </Badge>
-                            </div>
+
                           </div>
                         </div>
                       </td>
-                      <td className="hidden sm:table-cell px-4 py-3 sm:px-6 sm:py-4">
+                      <td role="cell" className="px-4 py-3 sm:px-6 sm:py-4">
+                        <span className="md:hidden text-xs font-medium text-muted-foreground">Código</span>
                         <div className="bg-gray-50 px-3 py-1 rounded-lg border font-mono text-sm text-gray-900" data-testid={`item-code-${item.id}`}>
                           {item.internalCode}
                         </div>
                       </td>
-                      <td className="hidden md:table-cell px-4 py-3 sm:px-6 sm:py-4">
+                      <td role="cell" className="px-4 py-3 sm:px-6 sm:py-4">
                         <Badge
                           className="bg-gradient-to-r from-purple-100 to-blue-100 text-purple-800 border-purple-200 font-medium"
+                          aria-label={`Categoria: ${item.category?.name}`}
                           data-testid={`item-category-${item.id}`}
                         >
                           <i className={`${item.category?.icon || 'fa-solid fa-tag'} mr-2 text-xs`}></i>
                           {item.category?.name}
                         </Badge>
                       </td>
-                      <td className="hidden md:table-cell px-4 py-3 sm:px-6 sm:py-4" data-testid={`item-stock-${item.id}`}>
+                      <td role="cell" className="px-4 py-3 sm:px-6 sm:py-4" data-testid={`item-stock-${item.id}`}>
+                        <p className="md:hidden text-xs font-medium text-muted-foreground mb-1">Estoque e unidade</p>
                         <div className="flex flex-col space-y-2">
                           <div className="flex items-center space-x-2">
                             <input
@@ -417,8 +409,9 @@ export default function Items() {
                                   });
                                 }
                               }}
+                              aria-label={`Quantidade de ${item.name}`}
                               title="Editar quantidade (Gera Movimentação)"
-                              className={`w-16 px-2 py-1 rounded-lg font-bold text-center border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none shadow-sm transition-all ${item.currentStock <= item.minStock
+                              className={`h-11 w-20 px-2 py-1 rounded-lg font-bold text-center border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none shadow-sm transition-all ${item.currentStock <= item.minStock
                                 ? 'bg-red-50 text-red-800 border-red-200'
                                 : 'bg-green-50 text-green-800 border-green-200'
                                 }`}
@@ -432,15 +425,16 @@ export default function Items() {
                                   updateItemMutation.mutate({ id: item.id, data: { unit: newUnit } });
                                 }
                               }}
+                              aria-label={`Unidade de ${item.name}`}
                               title="Editar unidade"
-                              className="w-14 px-2 py-1 text-sm font-semibold uppercase rounded-lg border border-gray-200 bg-white text-gray-700 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none shadow-sm transition-all text-center"
+                              className="h-11 w-16 px-2 py-1 text-sm font-semibold uppercase rounded-lg border border-gray-200 bg-white text-gray-700 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none shadow-sm transition-all text-center"
                               placeholder="UN"
                             />
                           </div>
                           <div className="text-xs text-gray-500 flex items-center space-x-2">
                             <div>de {item.minStock} mín</div>
                             {item.currentStock <= item.minStock && (
-                              <div className="text-red-500 font-medium flex items-center">
+                              <div className="text-red-700 font-medium flex items-center">
                                 <i className="fa-solid fa-triangle-exclamation mr-1 animate-pulse"></i>
                                 Baixo!
                               </div>
@@ -448,7 +442,7 @@ export default function Items() {
                           </div>
                         </div>
                       </td>
-                      <td className="hidden sm:table-cell px-4 py-3 sm:px-6 sm:py-4">
+                      <td role="cell" className="px-4 py-3 sm:px-6 sm:py-4">
                         <Badge
                           className={`${getStatusColor(item.status)} font-medium flex items-center w-fit`}
                           data-testid={`item-status-${item.id}`}
@@ -457,18 +451,13 @@ export default function Items() {
                           {getStatusLabel(item.status)}
                         </Badge>
                       </td>
-                      <td className="px-2 py-3 sm:px-4 md:px-6 sm:py-4">
+                      <td role="cell" className="px-2 py-3 sm:px-4 md:px-6 sm:py-4">
                         <div className="flex items-center justify-center space-x-1 sm:space-x-2">
                           <div className="p-0.5 sm:p-1 bg-white rounded-lg shadow-sm border">
                             <QRCodeGenerator
                               value={`ITEM:${item.id}:${item.internalCode}`}
-                              size={24}
-                              className="cursor-pointer hover:scale-110 transition-transform sm:hidden"
-                            />
-                            <QRCodeGenerator
-                              value={`ITEM:${item.id}:${item.internalCode}`}
                               size={32}
-                              className="cursor-pointer hover:scale-110 transition-transform hidden sm:block"
+                              className="shrink-0"
                             />
                           </div>
                           <TooltipProvider>
@@ -478,7 +467,7 @@ export default function Items() {
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => handleShowQR(item)}
-                                  className="text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 w-6 h-6 sm:w-8 sm:h-8 p-0"
+                                  className="hidden md:inline-flex text-indigo-700 hover:bg-indigo-50 min-h-11 w-11 p-0"
                                   data-testid={`button-qr-modal-${item.id}`}
                                   aria-label="Ver QR em tamanho maior"
                                 >
@@ -490,10 +479,10 @@ export default function Items() {
                           </TooltipProvider>
                         </div>
                       </td>
-                      <td className="px-4 py-3 sm:px-6 sm:py-4">
+                      <td role="cell" className="px-4 py-3 sm:px-6 sm:py-4">
                         <div className="flex flex-wrap items-center gap-2">
                           {/* QR Code button for mobile/tablet screens */}
-                          <div className="lg:hidden">
+                          <div className="md:hidden">
                             <TooltipProvider>
                               <Tooltip>
                                 <TooltipTrigger asChild>
@@ -519,7 +508,7 @@ export default function Items() {
                                 <Button
                                   size="sm"
                                   onClick={() => handleEdit(item)}
-                                  className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-sm"
+                                  className="bg-primary hover:bg-primary/90 text-white shadow-sm"
                                   data-testid={`button-edit-${item.id}`}
                                   aria-label="Editar item"
                                 >
@@ -537,7 +526,7 @@ export default function Items() {
                                 <Button
                                   size="sm"
                                   onClick={() => handleMovement(item, "entrada")}
-                                  className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-sm"
+                                  className="bg-emerald-700 hover:bg-emerald-800 text-white shadow-sm"
                                   data-testid={`button-entrada-${item.id}`}
                                   aria-label="Registrar entrada"
                                 >
@@ -555,7 +544,7 @@ export default function Items() {
                                 <Button
                                   size="sm"
                                   onClick={() => handleMovement(item, "saida")}
-                                  className="bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white shadow-sm"
+                                  className="bg-red-700 hover:bg-red-800 text-white shadow-sm"
                                   data-testid={`button-saida-${item.id}`}
                                   aria-label="Registrar saída"
                                 >

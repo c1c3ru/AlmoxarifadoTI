@@ -58,3 +58,8 @@
 - Ação: contraste dos tokens primary/destructive/muted/success/warning aumentado, botões/inputs móveis de 44px e quebra de label, Card min-w-0. ErrorState sem fetch próprio é consumido por inventário/pesquisa; retry usa refetch existente e os modais mantêm estado.
 - Evidência: verify PASS (30 testes), estados vazio/erro com retry verificados em navegador. Nenhuma atualização de query key, cache, schema ou mutations.
 - Próxima ação: UI-05 remove clipping e exposição incompleta do inventário; depois repetir axe completo para encontrar cores fixas e labels restantes, sem excluir regras.
+
+## R-011 · UI-05 · inventário
+- Ação: apresentação em cards abaixo de 768px por CSS sobre a mesma tabela/árvore, com roles explícitos e scroll local no desktop; código, categoria, quantidade, unidade, estado e localização disponíveis. Callbacks/mutations inline inalterados, seleção única, checkboxes rotulados. Uma instância CSV preserva formulário aberto no resize.
+- Evidência: verify PASS (30 testes), 22/22 testes focados PASS; nomes/localizações com sequências longas não geram overflow global em 320–2560px, dados essenciais visíveis, seleção sem movimentos adicionais, callbacks de estoque/CRUD/import/export preservados.
+- Próxima ação: UI-06 nas outras telas; axe/reflow completos após corrigir grids/cores fixas e nomes restantes. Não declarar impressão física aprovada a partir do teste de seleção.

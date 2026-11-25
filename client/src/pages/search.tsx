@@ -163,13 +163,13 @@ export default function Search() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-12 pr-4 py-4 h-14 text-lg border-2 border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all duration-200"
-                  data-testid="input-search"
+                  aria-label="Pesquisar itens" data-testid="input-search"
                 />
               </div>
             </div>
             
             <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger className="h-14 border-2 border-gray-200 focus:border-blue-400" data-testid="select-category-filter">
+              <SelectTrigger className="h-14 border-2 border-gray-200 focus:border-blue-400" aria-label="Filtrar por categoria" data-testid="select-category-filter">
                 <div className="flex items-center space-x-2">
                   <i className="fa-solid fa-tags text-purple-500"></i>
                   <SelectValue placeholder="Todas as Categorias" />
@@ -189,7 +189,7 @@ export default function Search() {
             </Select>
             
             <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-              <SelectTrigger className="h-14 border-2 border-gray-200 focus:border-blue-400" data-testid="select-status-filter">
+              <SelectTrigger className="h-14 border-2 border-gray-200 focus:border-blue-400" aria-label="Filtrar por situação" data-testid="select-status-filter">
                 <div className="flex items-center space-x-2">
                   <i className="fa-solid fa-info-circle text-blue-500"></i>
                   <SelectValue placeholder="Todos os Status" />
@@ -229,7 +229,7 @@ export default function Search() {
 
       {/* Search Results */}
       {isError ? <ErrorState message="Não foi possível concluir a pesquisa." onRetry={() => { void refetch(); }} isRetrying={isFetching} /> : isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,18rem),1fr))] gap-6">
           {Array.from({ length: 6 }).map((_, i) => (
             <Card key={i} className="border-0 shadow-lg">
               <CardContent className="p-6">
@@ -285,7 +285,7 @@ export default function Search() {
             </span>
           </div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,18rem),1fr))] gap-4 md:gap-6">
             {searchResults.map((item) => (
               <Card key={item.id} className="bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 h-full flex flex-col" data-testid={`search-item-${item.id}`}>
                 <CardContent className="p-4 sm:p-6 flex flex-col h-full">
