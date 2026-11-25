@@ -16,3 +16,9 @@
 - Avaliação: adaptação local criada como skill, não framework experimental instalado.
 - Reflexão: memória factual + avaliador externo suficiente; dependências de pesquisa seriam escopo indevido. Separar Research/Spec em sessão futura para revisão independente; nesta entrega os documentos foram propostos no mesmo atendimento, não alegar /clear executado.
 - Próxima ação: reviewer valida Spec e gate de UI-00; executar UI-01 somente com checkout/runner apto.
+
+## R-004 · 2026-11-25 · UI-00 · ambiente revalidado
+- Evidência: base remota 75b8919, branch do PR #34 a7a9d30, checkout isolado sem `.env`; `npm ci` PASS (817 pacotes).
+- Avaliação: rede resolvida com execução autorizada; preservar DNS como histórico, remover bloqueio ativo. CI do PR #34 passou em quality, build e audit; conferir novamente após novo commit.
+- Reflexão: um bloqueio do sandbox deve usar o fluxo de permissão apropriado, sem abandonar os testes nem inferir sucesso a partir de CI antigo.
+- Próxima ação: verify local, commit/push e merge autorizado do PR de documentos; UI-01 com browser real e fixtures sintéticas. Evidências de hardware informadas pelo usuário aguardam localização; não declarar homologação concluída.

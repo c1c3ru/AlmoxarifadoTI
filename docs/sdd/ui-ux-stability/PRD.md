@@ -21,5 +21,8 @@ Operação institucional SGAT-TI em 320–2560 CSS px, sem regressões em estoqu
 - [Reflexion original](https://github.com/noahshinn/reflexion) / [paper](https://arxiv.org/abs/2303.11366): feedback, reflexão verbal e memória persistente entre tentativas. Adaptar sem instalar dependências experimentais.
 ## Lacunas e riscos
 Não foi possível clonar localmente: DNS de github.com indisponível; Node v22.16.0 e npm 10.9.2 existem. Acesso via conector GitHub funciona. Nenhum screenshot, axe, E2E ou hardware executado. UI-01 precisa ambiente CI isolado e banco descartável ou fixture de UI explícita, sem produção. Não converter achados estáticos em falhas de runtime comprovadas.
+
+### Revalidação em 2026-11-25
+Checkout isolado em `/tmp/almoxarifadoti-issue33`, sem `.env` ou credenciais de produção. A base remota continua `75b89194f12a537b9640aad5f1f290f75d736252`; PR #34 em `a7a9d309dcfd8f42d47fe2c5ead5707d4aded983`. Rede disponível com a permissão de execução apropriada; `npm ci --no-audit --no-fund --fetch-retries=0 --fetch-timeout=20000` instalou 817 pacotes. Node 22.19.0/npm 11.6.0. A limitação de DNS inicial é evidência histórica, não bloqueio atual. O usuário solicitou expressamente commit, push e merge; isso autoriza o merge após validação técnica e CI, sem dispensar critérios de aceite ou homologação física. Evidências físicas foram informadas como existentes; localização solicitada e ainda pendente.
 ## Aceite
 Reflow, teclado, contraste, estados de erro, seleção e ações preservadas; matriz 320x568, 360x800, 390x844, 844x390, 768x1024, 1024x768, 1366x768, 1920x1080, 2560x1440. Fluxos reais em ambiente isolado e hardware manual. Não marcar baseline visual como concluído até captura revisada. A issue #33 contém requisitos e gates completos.
