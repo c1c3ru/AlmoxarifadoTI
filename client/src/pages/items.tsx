@@ -18,6 +18,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { canDeleteItems } from "@/lib/auth";
 import { apiRequest } from "@/lib/queryClient";
 import type { ItemWithCategory } from "@shared/schema";
+import { ErrorState } from "@/components/shared/error-state";
 
 export default function Items() {
   const [showAddModal, setShowAddModal] = useState(false);
@@ -33,7 +34,7 @@ export default function Items() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: items = [], isLoading } = useQuery<ItemWithCategory[]>({
+  const { data: items = [], isLoading, isError, isFetching, refetch } = useQuery<ItemWithCategory[]>({
     queryKey: ["/api/items"],
   });
 
@@ -175,6 +176,7 @@ export default function Items() {
       addButtonIconClass="fa-solid fa-plus"
       addButtonClassName="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 shadow-lg hover:shadow-xl"
     >
+      {isError ? <ErrorState message="Não foi possível carregar o inventário." onRetry={() => { void refetch(); }} isRetrying={isFetching} /> : <>
       {/* Hero Section with CSV */}
       <Card className="bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 border-0 shadow-lg mb-8">
         <CardContent className="p-8">
@@ -600,6 +602,7 @@ export default function Items() {
         </CardContent>
       </Card>
 
+      </>}
       <AddItemModal
         open={showAddModal}
         onOpenChange={setShowAddModal}

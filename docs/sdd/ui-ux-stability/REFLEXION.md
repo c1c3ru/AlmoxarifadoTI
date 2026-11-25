@@ -53,3 +53,8 @@
 - Evidência: verify PASS (30 testes), 6/6 testes focados PASS; diálogos 320x568 e 844x390 com ações alcançáveis, submit inválido sem mutation, foco restaurado e labels apontando para INPUT.
 - Limite: redução de altura em navegador é emulação, não valida teclado virtual físico. Não declarar essa homologação.
 - Próxima ação: UI-04 tokens/contraste/estados; manter baseline e invariantes.
+
+## R-010 · UI-04 · controles e feedback
+- Ação: contraste dos tokens primary/destructive/muted/success/warning aumentado, botões/inputs móveis de 44px e quebra de label, Card min-w-0. ErrorState sem fetch próprio é consumido por inventário/pesquisa; retry usa refetch existente e os modais mantêm estado.
+- Evidência: verify PASS (30 testes), estados vazio/erro com retry verificados em navegador. Nenhuma atualização de query key, cache, schema ou mutations.
+- Próxima ação: UI-05 remove clipping e exposição incompleta do inventário; depois repetir axe completo para encontrar cores fixas e labels restantes, sem excluir regras.

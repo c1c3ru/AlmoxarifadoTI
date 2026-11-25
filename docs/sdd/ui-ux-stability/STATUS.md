@@ -7,7 +7,7 @@ Issue #33 · 2026-11-25 · base 75b89194f12a537b9640aad5f1f290f75d736252 · bran
 | UI-01 | DOING | Playwright/axe e integração PostgreSQL implementados; nove contratos integrados PASS após correção autorizada; baseline UI registra falhas reais, sem skip ou asserts relaxados |
 | UI-02 | DOING | Drawer Radix, estados separados, foco, ações recolhidas e zoom implementados. Typecheck/lint/build PASS; 12/12 testes focados Chromium PASS (foco preso/restaurado, Escape, resize, CRUD/inline/CSV/roles). Verify em execução; aceite final segue bloqueado |
 | UI-03 | DOING | Dialog/AlertDialog com vh/dvh, margem, scroll e Close traduzido; foco externo restaurado e labels reais do cadastro. Verify PASS (30 testes); 6/6 testes focados PASS. Teclado virtual físico pendente |
-| UI-04 | TODO | Depende UI-03 |
+| UI-04 | DOING | Tokens semânticos mais escuros, controles móveis 44px, Card min-w-0 e ErrorState reutilizado por inventário/pesquisa; verify PASS (30 testes), testes focados de vazio/erro PASS. Axe completo será reexecutado após UI-05/UI-06 |
 | UI-05 | TODO | Depende UI-04 |
 | UI-06 | TODO | Depende UI-05 |
 | UI-07 | TODO | Depende UI-06; hardware obrigatório |
