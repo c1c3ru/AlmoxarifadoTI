@@ -63,3 +63,8 @@
 - Ação: apresentação em cards abaixo de 768px por CSS sobre a mesma tabela/árvore, com roles explícitos e scroll local no desktop; código, categoria, quantidade, unidade, estado e localização disponíveis. Callbacks/mutations inline inalterados, seleção única, checkboxes rotulados. Uma instância CSV preserva formulário aberto no resize.
 - Evidência: verify PASS (30 testes), 22/22 testes focados PASS; nomes/localizações com sequências longas não geram overflow global em 320–2560px, dados essenciais visíveis, seleção sem movimentos adicionais, callbacks de estoque/CRUD/import/export preservados.
 - Próxima ação: UI-06 nas outras telas; axe/reflow completos após corrigir grids/cores fixas e nomes restantes. Não declarar impressão física aprovada a partir do teste de seleção.
+
+## R-012 · UI-06 · telas operacionais
+- Ação: grids auto-fit pelo espaço disponível, controles/filtros e nome do switch de conta acessíveis, ações que quebram linha, cores fixas/contraste e estados de erro/retry; métricas, ordenação e cálculos preservados. Dashboard refaz apenas queries que falharam.
+- Evidência: verify PASS (30 testes); 18/18 reflow/navegação PASS, 7/7 testes de retry/métricas PASS. Axe identificou um switch de usuário sem nome (corrigido e confirmado em nova rodada); agora oito páginas PASS, scanner ainda com contraste a tratar em UI-07. Rodada focada final 12/12 PASS.
+- Próxima ação: UI-07 scanner/impressão, depois gate global de todos browsers e integração. Não atualizar snapshots ou excluir os achados para obter verde.

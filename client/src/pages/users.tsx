@@ -1,3 +1,4 @@
+import { ErrorState } from "@/components/shared/error-state";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
@@ -45,7 +46,7 @@ export default function Users() {
   const queryClient = useQueryClient();
   const { user: currentUser } = useAuth();
 
-  const { data: users = [], isLoading } = useQuery<User[]>({
+  const { data: users = [], isLoading, isError, isFetching, refetch } = useQuery<User[]>({
     queryKey: ["/api/users"],
   });
 
@@ -246,11 +247,11 @@ export default function Users() {
       showAddButton={false}
     >
       {currentUser?.role === "admin" && pendingUsers.length > 0 && (
-        <Card className="mb-8 border-2 border-amber-300 bg-amber-50 shadow-lg" role="alert" data-testid="pending-users">
+        <Card className="mb-8 border-2 border-amber-300 bg-amber-50 shadow-sm" role="alert" data-testid="pending-users">
           <CardContent className="p-6">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 shrink-0 bg-amber-500 rounded-xl flex items-center justify-center shadow">
-                <i className="fa-solid fa-user-clock text-white"></i>
+                <i aria-hidden="true" className="fa-solid fa-user-clock text-white"></i>
               </div>
               <div>
                 <p className="text-lg font-bold text-amber-900">
@@ -272,7 +273,7 @@ export default function Users() {
                   <div className="text-sm min-w-0 break-words">
                     <p className="font-semibold text-gray-900">
                       {user.name}{" "}
-                      <span className="font-normal text-gray-500">· {getRoleLabel(user.role)}</span>
+                      <span className="font-normal text-gray-600">· {getRoleLabel(user.role)}</span>
                     </p>
                     <p className="text-gray-600 break-all">
                       {user.email} · Matrícula {user.matricula}
@@ -285,7 +286,7 @@ export default function Users() {
                     className="bg-green-600 hover:bg-green-700 text-white"
                     data-testid={`button-approve-${user.id}`}
                   >
-                    <i className="fa-solid fa-user-check mr-2"></i>
+                    <i aria-hidden="true" className="fa-solid fa-user-check mr-2"></i>
                     Liberar acesso
                   </Button>
                 </div>
@@ -295,74 +296,76 @@ export default function Users() {
         </Card>
       )}
 
+      {!isError && <>
       {/* Hero Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-0 shadow-lg">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,16rem),1fr))] gap-6 mb-8">
+        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-0 shadow-sm">
           <CardContent className="p-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-medium text-blue-600 mb-1">Total de Usuários</p>
                 <p className="text-3xl font-bold text-blue-900">
                   {users.length}
                 </p>
               </div>
-              <div className="w-14 h-14 bg-blue-500 rounded-2xl flex items-center justify-center shadow-lg">
-                <i className="fa-solid fa-users text-white text-xl"></i>
+              <div className="w-14 h-14 bg-blue-500 rounded-2xl flex items-center justify-center shadow-sm">
+                <i aria-hidden="true" className="fa-solid fa-users text-white text-xl"></i>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-0 shadow-lg">
+        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-0 shadow-sm">
           <CardContent className="p-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-medium text-purple-600 mb-1">Administradores</p>
                 <p className="text-3xl font-bold text-purple-900">
                   {users.filter(u => u.role === 'admin').length}
                 </p>
               </div>
-              <div className="w-14 h-14 bg-purple-500 rounded-2xl flex items-center justify-center shadow-lg">
-                <i className="fa-solid fa-crown text-white text-xl"></i>
+              <div className="w-14 h-14 bg-purple-500 rounded-2xl flex items-center justify-center shadow-sm">
+                <i aria-hidden="true" className="fa-solid fa-crown text-white text-xl"></i>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-green-50 to-green-100 border-0 shadow-lg">
+        <Card className="bg-gradient-to-br from-green-50 to-green-100 border-0 shadow-sm">
           <CardContent className="p-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-medium text-green-600 mb-1">Usuários Ativos</p>
                 <p className="text-3xl font-bold text-green-900">
                   {users.filter(u => u.isActive).length}
                 </p>
               </div>
-              <div className="w-14 h-14 bg-green-500 rounded-2xl flex items-center justify-center shadow-lg">
-                <i className="fa-solid fa-user-check text-white text-xl"></i>
+              <div className="w-14 h-14 bg-green-500 rounded-2xl flex items-center justify-center shadow-sm">
+                <i aria-hidden="true" className="fa-solid fa-user-check text-white text-xl"></i>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
+      </>}
       {/* Users Management */}
-      <Card className="bg-white border-0 shadow-xl">
+      <Card className="bg-white border-0 shadow-sm">
         <div className="bg-gradient-to-r from-gray-50 to-blue-50 px-6 py-4 border-b border-gray-200">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex min-w-0 flex-wrap items-center gap-3">
               <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
-                <i className="fa-solid fa-users text-white text-sm"></i>
+                <i aria-hidden="true" className="fa-solid fa-users text-white text-sm"></i>
               </div>
               <h3 className="text-xl font-bold text-gray-900">Lista de Usuários</h3>
             </div>
             <Dialog open={showAddModal} onOpenChange={handleCloseModal}>
               <DialogTrigger asChild>
                 <Button
-                  className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 shadow-lg"
+                  className="bg-primary hover:bg-primary/90 shadow-sm"
                   data-testid="button-add-user"
                 >
-                  <i className="fa-solid fa-plus mr-2"></i>
+                  <i aria-hidden="true" className="fa-solid fa-plus mr-2"></i>
                   Novo Usuário
                 </Button>
               </DialogTrigger>
@@ -490,13 +493,13 @@ export default function Users() {
                             <SelectContent>
                               <SelectItem value="tech">
                                 <div className="flex items-center space-x-2">
-                                  <i className="fa-solid fa-user-gear text-gray-600"></i>
+                                  <i aria-hidden="true" className="fa-solid fa-user-gear text-gray-600"></i>
                                   <span>Técnico</span>
                                 </div>
                               </SelectItem>
                               <SelectItem value="admin">
                                 <div className="flex items-center space-x-2">
-                                  <i className="fa-solid fa-crown text-purple-600"></i>
+                                  <i aria-hidden="true" className="fa-solid fa-crown text-purple-600"></i>
                                   <span>Administrador</span>
                                 </div>
                               </SelectItem>
@@ -514,7 +517,7 @@ export default function Users() {
                         <FormItem className="flex flex-row items-center justify-between rounded-xl border p-4 bg-gradient-to-r from-gray-50 to-blue-50">
                           <div className="space-y-0.5">
                             <FormLabel className="font-semibold text-gray-700">Usuário Ativo</FormLabel>
-                            <div className="text-sm text-gray-500">
+                            <div className="text-sm text-gray-600">
                               Permitir que o usuário acesse o sistema
                             </div>
                           </div>
@@ -537,23 +540,23 @@ export default function Users() {
                         data-testid="button-cancel"
                         className="border-2"
                       >
-                        <i className="fa-solid fa-times mr-2"></i>
+                        <i aria-hidden="true" className="fa-solid fa-times mr-2"></i>
                         Cancelar
                       </Button>
                       <Button
                         type="submit"
                         disabled={createUserMutation.isPending || updateUserMutation.isPending}
-                        className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 shadow-lg"
+                        className="bg-primary hover:bg-primary/90 shadow-sm"
                         data-testid="button-save-user"
                       >
                         {(createUserMutation.isPending || updateUserMutation.isPending) ? (
                           <>
-                            <i className="fa-solid fa-spinner fa-spin mr-2"></i>
+                            <i aria-hidden="true" className="fa-solid fa-spinner fa-spin mr-2"></i>
                             Salvando...
                           </>
                         ) : (
                           <>
-                            <i className="fa-solid fa-save mr-2"></i>
+                            <i aria-hidden="true" className="fa-solid fa-save mr-2"></i>
                             {editingUser ? "Atualizar" : "Salvar"} Usuário
                           </>
                         )}
@@ -567,7 +570,7 @@ export default function Users() {
         </div>
 
         <CardContent className="p-6">
-          {isLoading ? (
+          {isError ? <ErrorState onRetry={() => { void refetch(); }} isRetrying={isFetching} /> : isLoading ? (
             <div className="space-y-4">
               {Array.from({ length: 5 }).map((_, i) => (
                 <div key={i} className="flex items-center space-x-4 p-4 rounded-xl border border-gray-200">
@@ -584,15 +587,15 @@ export default function Users() {
           ) : users.length === 0 ? (
             <div className="text-center py-16">
               <div className="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mx-auto mb-6">
-                <i className="fa-solid fa-users text-gray-400 text-3xl"></i>
+                <i aria-hidden="true" className="fa-solid fa-users text-muted-foreground text-3xl"></i>
               </div>
               <h4 className="text-xl font-bold text-gray-900 mb-3">Nenhum usuário cadastrado</h4>
-              <p className="text-gray-500 mb-6">Adicione o primeiro usuário para começar a gerenciar o acesso ao sistema</p>
+              <p className="text-gray-600 mb-6">Adicione o primeiro usuário para começar a gerenciar o acesso ao sistema</p>
               <Button
                 onClick={() => setShowAddModal(true)}
-                className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+                className="bg-primary hover:bg-primary/90"
               >
-                <i className="fa-solid fa-plus mr-2"></i>
+                <i aria-hidden="true" className="fa-solid fa-plus mr-2"></i>
                 Adicionar Primeiro Usuário
               </Button>
             </div>
@@ -601,18 +604,18 @@ export default function Users() {
               {sortedUsers.map((user) => (
                 <div
                   key={user.id}
-                  className={`flex flex-col md:flex-row items-start md:items-center justify-between gap-4 p-6 border rounded-2xl hover:shadow-lg transition-all duration-300 group ${user.isActive
+                  className={`flex flex-col md:flex-row items-start md:items-center justify-between gap-4 p-6 border rounded-2xl hover:shadow-sm transition-all duration-300 group ${user.isActive
                     ? "border-gray-200 hover:border-blue-200 bg-gradient-to-r from-white to-gray-50"
                     : "border-2 border-amber-300 bg-amber-50"
                     }`}
                   data-testid={`user-${user.id}`}
                 >
                   <div className="flex items-start sm:items-center gap-4 w-full md:w-auto min-w-0">
-                    <div className={`w-12 h-12 sm:w-16 sm:h-16 shrink-0 rounded-2xl flex items-center justify-center shadow-lg ${user.role === 'admin'
+                    <div className={`w-12 h-12 sm:w-16 sm:h-16 shrink-0 rounded-2xl flex items-center justify-center shadow-sm ${user.role === 'admin'
                       ? 'bg-gradient-to-br from-purple-400 to-purple-600'
                       : 'bg-gradient-to-br from-blue-400 to-blue-600'
                       }`}>
-                      <i className={`${getRoleIcon(user.role)} text-white text-xl`}></i>
+                      <i aria-hidden="true" className={`${getRoleIcon(user.role)} text-white text-xl`}></i>
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2 mb-2">
@@ -623,43 +626,43 @@ export default function Users() {
                           className={`${getRoleColor(user.role)} font-medium px-3 py-1 border`}
                           data-testid={`user-role-${user.id}`}
                         >
-                          <i className={`${getRoleIcon(user.role)} mr-2 text-xs`}></i>
+                          <i aria-hidden="true" className={`${getRoleIcon(user.role)} mr-2 text-xs`}></i>
                           {getRoleLabel(user.role)}
                         </Badge>
                         {!user.isActive && (
                           <Badge className="bg-amber-100 text-amber-900 border-amber-300 font-medium">
-                            <i className="fa-solid fa-user-clock mr-1 text-xs"></i>
+                            <i aria-hidden="true" className="fa-solid fa-user-clock mr-1 text-xs"></i>
                             Aguardando liberação
                           </Badge>
                         )}
                       </div>
                       <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-gray-600">
                         <span className="flex items-center min-w-0 break-all">
-                          <i className="fa-solid fa-user mr-2 text-blue-500"></i>
+                          <i aria-hidden="true" className="fa-solid fa-user mr-2 text-blue-500"></i>
                           {user.username}
                         </span>
                         <span className="flex items-center min-w-0 break-all">
-                          <i className="fa-solid fa-envelope mr-2 text-blue-500"></i>
+                          <i aria-hidden="true" className="fa-solid fa-envelope mr-2 text-blue-500"></i>
                           {user.email}
                         </span>
                         <span className="flex items-center min-w-0 break-all">
-                          <i className="fa-solid fa-id-card mr-2 text-blue-500"></i>
+                          <i aria-hidden="true" className="fa-solid fa-id-card mr-2 text-blue-500"></i>
                           {user.matricula}
                         </span>
                         <span className="flex items-center min-w-0 break-all">
-                          <i className="fa-solid fa-calendar mr-2 text-green-500"></i>
+                          <i aria-hidden="true" className="fa-solid fa-calendar mr-2 text-green-500"></i>
                           {new Date(user.createdAt).toLocaleDateString("pt-BR")}
                         </span>
                       </div>
                     </div>
                   </div>
                   <div className="flex flex-wrap items-center gap-3 w-full md:w-auto mt-2 md:mt-0">
-                    <div className="flex items-center space-x-3 bg-gray-50 px-4 py-2 rounded-lg border border-gray-200">
+                    <div className="flex min-w-0 flex-wrap items-center gap-3 bg-gray-50 px-4 py-2 rounded-lg border border-gray-200">
                       <div className="flex items-center space-x-2">
                         {user.isActive ? (
-                          <i className="fa-solid fa-circle-check text-green-600 text-lg"></i>
+                          <i aria-hidden="true" className="fa-solid fa-circle-check text-green-600 text-lg"></i>
                         ) : (
-                          <i className="fa-solid fa-circle-xmark text-red-600 text-lg"></i>
+                          <i aria-hidden="true" className="fa-solid fa-circle-xmark text-red-600 text-lg"></i>
                         )}
                         <span className="text-sm font-semibold text-gray-700">
                           {user.isActive ? "Ativo" : "Inativo"}
@@ -670,16 +673,17 @@ export default function Users() {
                         onCheckedChange={() => handleToggleStatus(user)}
                         disabled={toggleUserStatusMutation.isPending}
                         data-testid={`switch-active-${user.id}`}
+                        aria-label={`Ativar ou desativar a conta de ${user.name}`}
                         className="data-[state=checked]:bg-green-600"
                       />
                     </div>
                     <Button
                       size="sm"
                       onClick={() => handleEdit(user)}
-                      className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white shadow-md"
+                      className="bg-primary hover:bg-primary/90 text-white shadow-md"
                       data-testid={`button-edit-${user.id}`}
                     >
-                      <i className="fa-solid fa-edit mr-2"></i>
+                      <i aria-hidden="true" className="fa-solid fa-edit mr-2"></i>
                       Editar
                     </Button>
                     {currentUser?.role === "admin" && (
@@ -691,7 +695,7 @@ export default function Users() {
                         className="shadow-md bg-red-600 hover:bg-red-700"
                         data-testid={`button-delete-${user.id}`}
                       >
-                        <i className="fa-solid fa-trash mr-2"></i>
+                        <i aria-hidden="true" className="fa-solid fa-trash mr-2"></i>
                         Deletar
                       </Button>
                     )}
@@ -721,12 +725,12 @@ export default function Users() {
                           >
                             {deleteUserMutation.isPending ? (
                               <>
-                                <i className="fa-solid fa-spinner fa-spin mr-2"></i>
+                                <i aria-hidden="true" className="fa-solid fa-spinner fa-spin mr-2"></i>
                                 Deletando...
                               </>
                             ) : (
                               <>
-                                <i className="fa-solid fa-trash mr-2"></i>
+                                <i aria-hidden="true" className="fa-solid fa-trash mr-2"></i>
                                 Deletar
                               </>
                             )}

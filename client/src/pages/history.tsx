@@ -1,3 +1,4 @@
+import { ErrorState } from "@/components/shared/error-state";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { MainLayout } from "@/components/layout/main-layout";
@@ -20,7 +21,7 @@ export default function History() {
   });
 
   const itemIdParam = selectedItemFilter === ALL ? undefined : selectedItemFilter;
-  const { data: movements = [], isLoading } = useQuery<MovementWithDetails[]>({
+  const { data: movements = [], isLoading, isError, isFetching, refetch } = useQuery<MovementWithDetails[]>({
     queryKey: ["/api/movements", { itemId: itemIdParam, limit: 100 }],
   });
 
@@ -53,27 +54,28 @@ export default function History() {
       subtitle="Log completo de todas as operações do almoxarifado"
       showAddButton={false}
     >
+      {isError ? <ErrorState onRetry={() => { void refetch(); }} isRetrying={isFetching} /> : <>
       {/* Summary Dashboard */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,14rem),1fr))] gap-6 mb-8">
+        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-0 shadow-sm hover:shadow-md transition-all duration-300">
           <CardContent className="p-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-medium text-blue-600 mb-1">Total de Movimentações</p>
                 <p className="text-3xl font-bold text-blue-900" data-testid="stat-total-movements">
                   {filteredMovements.length}
                 </p>
               </div>
-              <div className="w-14 h-14 bg-blue-500 rounded-2xl flex items-center justify-center shadow-lg">
-                <i className="fa-solid fa-arrows-rotate text-white text-xl"></i>
+              <div className="w-14 h-14 bg-blue-500 rounded-2xl flex items-center justify-center shadow-sm">
+                <i aria-hidden="true" className="fa-solid fa-arrows-rotate text-white text-xl"></i>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+        <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-0 shadow-sm hover:shadow-md transition-all duration-300">
           <CardContent className="p-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-medium text-emerald-600 mb-1">Entradas</p>
                 <p className="text-3xl font-bold text-emerald-900" data-testid="stat-entries">
@@ -81,16 +83,16 @@ export default function History() {
                 </p>
                 <p className="text-xs text-emerald-700 font-medium">{totalQuantityIn} unidades</p>
               </div>
-              <div className="w-14 h-14 bg-emerald-500 rounded-2xl flex items-center justify-center shadow-lg">
-                <i className="fa-solid fa-arrow-down text-white text-xl"></i>
+              <div className="w-14 h-14 bg-emerald-500 rounded-2xl flex items-center justify-center shadow-sm">
+                <i aria-hidden="true" className="fa-solid fa-arrow-down text-white text-xl"></i>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-red-50 to-red-100 border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+        <Card className="bg-gradient-to-br from-red-50 to-red-100 border-0 shadow-sm hover:shadow-md transition-all duration-300">
           <CardContent className="p-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-medium text-red-600 mb-1">Saídas</p>
                 <p className="text-3xl font-bold text-red-900" data-testid="stat-exits">
@@ -98,16 +100,16 @@ export default function History() {
                 </p>
                 <p className="text-xs text-red-700 font-medium">{totalQuantityOut} unidades</p>
               </div>
-              <div className="w-14 h-14 bg-red-500 rounded-2xl flex items-center justify-center shadow-lg">
-                <i className="fa-solid fa-arrow-up text-white text-xl"></i>
+              <div className="w-14 h-14 bg-red-500 rounded-2xl flex items-center justify-center shadow-sm">
+                <i aria-hidden="true" className="fa-solid fa-arrow-up text-white text-xl"></i>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-0 shadow-sm hover:shadow-md transition-all duration-300">
           <CardContent className="p-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-medium text-purple-600 mb-1">Saldo Líquido</p>
                 <p className={`text-3xl font-bold ${totalQuantityIn - totalQuantityOut >= 0
@@ -118,9 +120,9 @@ export default function History() {
                 </p>
                 <p className="text-xs text-purple-700 font-medium">unidades</p>
               </div>
-              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg ${totalQuantityIn - totalQuantityOut >= 0 ? "bg-emerald-500" : "bg-red-500"
+              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-sm ${totalQuantityIn - totalQuantityOut >= 0 ? "bg-emerald-500" : "bg-red-500"
                 }`}>
-                <i className="fa-solid fa-balance-scale text-white text-xl"></i>
+                <i aria-hidden="true" className="fa-solid fa-balance-scale text-white text-xl"></i>
               </div>
             </div>
           </CardContent>
@@ -128,12 +130,12 @@ export default function History() {
       </div>
 
       {/* History and Filters */}
-      <Card className="bg-white border-0 shadow-xl">
+      <Card className="bg-white border-0 shadow-sm">
         <div className="bg-gradient-to-r from-gray-50 to-blue-50 px-6 py-4 border-b border-gray-200">
           <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-            <div className="flex items-center space-x-3">
+            <div className="flex min-w-0 flex-wrap items-center gap-3">
               <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
-                <i className="fa-solid fa-history text-white text-sm"></i>
+                <i aria-hidden="true" className="fa-solid fa-history text-white text-sm"></i>
               </div>
               <h3 className="text-xl font-bold text-gray-900">Histórico Detalhado</h3>
             </div>
@@ -142,10 +144,10 @@ export default function History() {
             <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <i className="fa-solid fa-search text-gray-400"></i>
+                  <i aria-hidden="true" className="fa-solid fa-search text-muted-foreground"></i>
                 </div>
                 <Input
-                  placeholder="Buscar..."
+                  aria-label="Buscar no histórico" placeholder="Buscar..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10 w-full sm:w-48"
@@ -153,7 +155,7 @@ export default function History() {
               </div>
 
               <Select value={selectedItemFilter} onValueChange={setSelectedItemFilter}>
-                <SelectTrigger className="w-full sm:w-48" data-testid="select-item-filter">
+                <SelectTrigger className="w-full sm:w-48" aria-label="Filtrar por item" data-testid="select-item-filter">
                   <SelectValue placeholder="Filtrar por item" />
                 </SelectTrigger>
                 <SelectContent>
@@ -169,7 +171,7 @@ export default function History() {
               </Select>
 
               <Select value={selectedTypeFilter} onValueChange={setSelectedTypeFilter}>
-                <SelectTrigger className="w-full sm:w-32" data-testid="select-type-filter">
+                <SelectTrigger className="w-full sm:w-32" aria-label="Filtrar por tipo" data-testid="select-type-filter">
                   <SelectValue placeholder="Tipo" />
                 </SelectTrigger>
                 <SelectContent>
@@ -202,10 +204,10 @@ export default function History() {
           ) : filteredMovements.length === 0 ? (
             <div className="text-center py-16">
               <div className="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mx-auto mb-6">
-                <i className="fa-solid fa-history text-gray-400 text-3xl"></i>
+                <i aria-hidden="true" className="fa-solid fa-history text-muted-foreground text-3xl"></i>
               </div>
               <h4 className="text-xl font-bold text-gray-900 mb-3">Nenhuma movimentação encontrada</h4>
-              <p className="text-gray-500">
+              <p className="text-gray-600">
                 {selectedItemFilter !== ALL || selectedTypeFilter !== ALL || searchQuery
                   ? "Nenhuma movimentação corresponde aos filtros selecionados"
                   : "Ainda não há movimentações registradas no sistema"
@@ -217,19 +219,19 @@ export default function History() {
               {filteredMovements.map((movement) => (
                 <div
                   key={movement.id}
-                  className="flex flex-col sm:flex-row sm:items-center justify-between p-6 border border-gray-200 rounded-2xl hover:shadow-lg hover:border-blue-200 transition-all duration-300 group bg-gradient-to-r from-white to-gray-50 gap-4 sm:gap-0"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between p-6 border border-gray-200 rounded-2xl hover:shadow-sm hover:border-blue-200 transition-all duration-300 group bg-gradient-to-r from-white to-gray-50 gap-4 sm:gap-0"
                   data-testid={`history-movement-${movement.id}`}
                 >
                   <div className="flex items-center space-x-4 flex-1">
-                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg ${movement.type === "entrada"
+                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-sm ${movement.type === "entrada"
                         ? "bg-gradient-to-br from-emerald-400 to-emerald-600"
                         : "bg-gradient-to-br from-red-400 to-red-600"
                       }`}>
-                      <i className={`${getMovementIcon(movement.type)} text-white text-xl`}></i>
+                      <i aria-hidden="true" className={`${getMovementIcon(movement.type)} text-white text-xl`}></i>
                     </div>
 
                     <div className="flex-1 min-w-0 w-full sm:w-auto">
-                      <div className="flex items-center space-x-3 mb-2">
+                      <div className="flex min-w-0 flex-wrap items-center gap-3 mb-2">
                         <p className="font-bold text-gray-900 text-lg group-hover:text-blue-700 transition-colors" data-testid={`history-item-${movement.id}`}>
                           {movement.item?.name}
                         </p>
@@ -237,31 +239,31 @@ export default function History() {
                           className={`${getMovementTypeColor(movement.type)} font-medium border px-3 py-1`}
                           data-testid={`history-type-${movement.id}`}
                         >
-                          <i className={`${getMovementIcon(movement.type)} mr-2 text-xs`}></i>
+                          <i aria-hidden="true" className={`${getMovementIcon(movement.type)} mr-2 text-xs`}></i>
                           {getMovementTypeLabel(movement.type)}
                         </Badge>
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-sm text-gray-600">
                         <span className="flex items-center">
-                          <i className="fa-solid fa-barcode mr-2 text-blue-500"></i>
+                          <i aria-hidden="true" className="fa-solid fa-barcode mr-2 text-blue-500"></i>
                           {movement.item?.internalCode}
                         </span>
                         <span className="flex items-center">
-                          <i className="fa-solid fa-cubes mr-2 text-green-500"></i>
+                          <i aria-hidden="true" className="fa-solid fa-cubes mr-2 text-green-500"></i>
                           <strong>{movement.quantity}</strong> unidades
                         </span>
                         <span className="flex items-center">
-                          <i className="fa-solid fa-user mr-2 text-purple-500"></i>
+                          <i aria-hidden="true" className="fa-solid fa-user mr-2 text-purple-500"></i>
                           {movement.user?.name}
                         </span>
                         <span className="flex items-center">
-                          <i className="fa-solid fa-clock mr-2 text-orange-500"></i>
+                          <i aria-hidden="true" className="fa-solid fa-clock mr-2 text-orange-500"></i>
                           {formatTimestamp(movement.createdAt)}
                         </span>
                       </div>
 
-                      <div className="flex items-center space-x-4 text-xs text-gray-500 mt-2">
+                      <div className="flex items-center space-x-4 text-xs text-gray-600 mt-2">
                         <span className="bg-gray-100 px-2 py-1 rounded-lg font-medium">
                           Estoque: {movement.previousStock} → {movement.newStock}
                         </span>
@@ -269,13 +271,13 @@ export default function History() {
 
                       {movement.destination && (
                         <p className="text-sm text-gray-700 mt-2 flex items-center">
-                          <i className="fa-solid fa-location-dot mr-2 text-blue-500"></i>
+                          <i aria-hidden="true" className="fa-solid fa-location-dot mr-2 text-blue-500"></i>
                           <strong>Destino:</strong> {movement.destination}
                         </p>
                       )}
                       {movement.observation && (
                         <p className="text-sm text-gray-700 mt-2 flex items-center">
-                          <i className="fa-solid fa-sticky-note mr-2 text-yellow-500"></i>
+                          <i aria-hidden="true" className="fa-solid fa-sticky-note mr-2 text-yellow-500"></i>
                           <strong>Observação:</strong> {movement.observation}
                         </p>
                       )}
@@ -287,7 +289,7 @@ export default function History() {
                       }`}>
                       {movement.type === "entrada" ? "+" : "-"}{movement.quantity}
                     </div>
-                    <div className="text-xs text-gray-500 mt-1">
+                    <div className="text-xs text-gray-600 mt-1">
                       {movement.type === "entrada" ? "Adicionado" : "Removido"}
                     </div>
                   </div>
@@ -297,6 +299,7 @@ export default function History() {
           )}
         </CardContent>
       </Card>
+      </>}
     </MainLayout>
   );
 }
