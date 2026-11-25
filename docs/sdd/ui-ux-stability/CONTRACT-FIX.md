@@ -15,4 +15,4 @@ Issue #33, base `e055322`. O mantenedor autorizou expressamente duas correções
 
 ## Evidência
 
-Os testes do harness UI-01 em desenvolvimento preservam os dois asserts que reproduziram as falhas. Registrar seu resultado depois da correção no STATUS/REFLEXION do próximo ciclo. Este PR resolve apenas os dois contratos; não encerra #33.
+Os testes do harness UI-01 em desenvolvimento preservam os dois asserts que reproduziram as falhas. Após a correção: **9/9 contratos integrados PASS**, incluindo unidade e scanner antes reprovados, SQL real em PostgreSQL 17, cookies httpOnly, RBAC, CRUD, saldo, CSV/XLSX e navegador → API → banco. `npm run verify` isolado neste PR: **PASS**, TypeScript, lint sem erros (36 avisos existentes), 29 testes Vitest e build. `git diff --check`: PASS. Registrar o checkpoint também no STATUS/REFLEXION do próximo ciclo. Este PR resolve apenas os dois contratos; não encerra #33.
