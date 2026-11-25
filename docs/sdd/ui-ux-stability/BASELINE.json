@@ -1,0 +1,656 @@
+{
+  "base": "e8b817596c47fb31b2f9ec747f5bbeacda901df2",
+  "ui": "41 passed, 11 failed; Chromium + Firefox",
+  "viewports": [
+    [
+      320,
+      568
+    ],
+    [
+      360,
+      800
+    ],
+    [
+      390,
+      844
+    ],
+    [
+      844,
+      390
+    ],
+    [
+      768,
+      1024
+    ],
+    [
+      1024,
+      768
+    ],
+    [
+      1366,
+      768
+    ],
+    [
+      1920,
+      1080
+    ],
+    [
+      2560,
+      1440
+    ]
+  ],
+  "axe": [
+    {
+      "route": "/",
+      "violations": [
+        {
+          "id": "button-name",
+          "impact": "critical",
+          "nodes": [
+            [
+              ".hover\\:bg-accent"
+            ]
+          ]
+        },
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            [
+              ".text-sidebar-foreground\\/60.font-medium.text-xs"
+            ],
+            [
+              "div[data-testid=\"nav-items\"] > .transition-opacity"
+            ],
+            [
+              "div[data-testid=\"nav-search\"] > .transition-opacity"
+            ],
+            [
+              "div[data-testid=\"nav-movements\"] > .transition-opacity"
+            ],
+            [
+              "div[data-testid=\"nav-scanner\"] > .transition-opacity"
+            ],
+            [
+              "div[data-testid=\"nav-history\"] > .transition-opacity"
+            ],
+            [
+              "div[data-testid=\"nav-consumption\"] > .transition-opacity"
+            ],
+            [
+              ".text-sidebar-foreground\\/40"
+            ],
+            [
+              "div[data-testid=\"nav-users\"] > .transition-opacity"
+            ],
+            [
+              "div[data-testid=\"nav-categories\"] > .transition-opacity"
+            ],
+            [
+              "p[data-testid=\"user-role\"]"
+            ],
+            [
+              ".flex-shrink-0.bg-primary\\/10.text-primary"
+            ],
+            [
+              ".text-muted-foreground\\/60"
+            ]
+          ]
+        },
+        {
+          "id": "meta-viewport",
+          "impact": "critical",
+          "nodes": [
+            [
+              "meta[name=\"viewport\"]"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "route": "/categories",
+      "violations": [
+        {
+          "id": "button-name",
+          "impact": "critical",
+          "nodes": [
+            [
+              ".p-2"
+            ]
+          ]
+        },
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            [
+              ".animate-fade-in.transition-opacity.duration-300 > .text-sidebar-foreground\\/60.text-xs"
+            ],
+            [
+              "div[data-testid=\"nav-dashboard\"] > .transition-opacity"
+            ],
+            [
+              "div[data-testid=\"nav-items\"] > .transition-opacity"
+            ],
+            [
+              "div[data-testid=\"nav-search\"] > .transition-opacity"
+            ],
+            [
+              "div[data-testid=\"nav-movements\"] > .transition-opacity"
+            ],
+            [
+              "div[data-testid=\"nav-scanner\"] > .transition-opacity"
+            ],
+            [
+              "div[data-testid=\"nav-history\"] > .transition-opacity"
+            ],
+            [
+              "div[data-testid=\"nav-consumption\"] > .transition-opacity"
+            ],
+            [
+              ".text-sidebar-foreground\\/40"
+            ],
+            [
+              "div[data-testid=\"nav-users\"] > .transition-opacity"
+            ],
+            [
+              "p[data-testid=\"user-role\"]"
+            ],
+            [
+              ".text-gray-400"
+            ],
+            [
+              ".bg-destructive > .ml-1.hidden.sm\\:inline"
+            ]
+          ]
+        },
+        {
+          "id": "meta-viewport",
+          "impact": "critical",
+          "nodes": [
+            [
+              "meta[name=\"viewport\"]"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "route": "/consumption",
+      "violations": [
+        {
+          "id": "button-name",
+          "impact": "critical",
+          "nodes": [
+            [
+              ".p-2"
+            ]
+          ]
+        },
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            [
+              ".text-sidebar-foreground\\/60.font-medium.text-xs"
+            ],
+            [
+              "div[data-testid=\"nav-dashboard\"] > span"
+            ],
+            [
+              "div[data-testid=\"nav-items\"] > span"
+            ],
+            [
+              "div[data-testid=\"nav-search\"] > span"
+            ],
+            [
+              "div[data-testid=\"nav-movements\"] > span"
+            ],
+            [
+              "div[data-testid=\"nav-scanner\"] > span"
+            ],
+            [
+              "div[data-testid=\"nav-history\"] > span"
+            ],
+            [
+              ".text-sidebar-foreground\\/40"
+            ],
+            [
+              "div[data-testid=\"nav-users\"] > span"
+            ],
+            [
+              "div[data-testid=\"nav-categories\"] > span"
+            ],
+            [
+              "p[data-testid=\"user-role\"]"
+            ]
+          ]
+        },
+        {
+          "id": "meta-viewport",
+          "impact": "critical",
+          "nodes": [
+            [
+              "meta[name=\"viewport\"]"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "route": "/history",
+      "violations": [
+        {
+          "id": "button-name",
+          "impact": "critical",
+          "nodes": [
+            [
+              ".p-2"
+            ],
+            [
+              "button[aria-controls=\"radix-:r3:\"]"
+            ],
+            [
+              ".sm\\:w-32"
+            ]
+          ]
+        },
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            [
+              ".text-sidebar-foreground\\/60.text-xs.font-medium"
+            ],
+            [
+              "div[data-testid=\"nav-dashboard\"] > .transition-opacity"
+            ],
+            [
+              "div[data-testid=\"nav-items\"] > .transition-opacity"
+            ],
+            [
+              "div[data-testid=\"nav-search\"] > .transition-opacity"
+            ],
+            [
+              "div[data-testid=\"nav-movements\"] > .transition-opacity"
+            ],
+            [
+              "div[data-testid=\"nav-scanner\"] > .transition-opacity"
+            ],
+            [
+              "div[data-testid=\"nav-consumption\"] > .transition-opacity"
+            ],
+            [
+              ".text-sidebar-foreground\\/40"
+            ],
+            [
+              "div[data-testid=\"nav-users\"] > .transition-opacity"
+            ],
+            [
+              "div[data-testid=\"nav-categories\"] > .transition-opacity"
+            ],
+            [
+              "p[data-testid=\"user-role\"]"
+            ]
+          ]
+        },
+        {
+          "id": "meta-viewport",
+          "impact": "critical",
+          "nodes": [
+            [
+              "meta[name=\"viewport\"]"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "route": "/items",
+      "violations": [
+        {
+          "id": "button-name",
+          "impact": "critical",
+          "nodes": [
+            [
+              ".p-2"
+            ]
+          ]
+        },
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            [
+              ".animate-fade-in.transition-opacity.duration-300 > .text-sidebar-foreground\\/60"
+            ],
+            [
+              "div[data-testid=\"nav-dashboard\"] > .transition-opacity"
+            ],
+            [
+              "div[data-testid=\"nav-search\"] > .transition-opacity"
+            ],
+            [
+              "div[data-testid=\"nav-movements\"] > .transition-opacity"
+            ],
+            [
+              "div[data-testid=\"nav-scanner\"] > .transition-opacity"
+            ],
+            [
+              "div[data-testid=\"nav-history\"] > .transition-opacity"
+            ],
+            [
+              "div[data-testid=\"nav-consumption\"] > .transition-opacity"
+            ],
+            [
+              ".text-sidebar-foreground\\/40"
+            ],
+            [
+              "div[data-testid=\"nav-users\"] > .transition-opacity"
+            ],
+            [
+              "div[data-testid=\"nav-categories\"] > .transition-opacity"
+            ],
+            [
+              "p[data-testid=\"user-role\"]"
+            ],
+            [
+              ".text-gray-400"
+            ]
+          ]
+        },
+        {
+          "id": "label",
+          "impact": "critical",
+          "nodes": [
+            [
+              ".space-x-2.flex.items-center > .border-gray-300.text-blue-600[type=\"checkbox\"]"
+            ],
+            [
+              ".space-x-4.flex.items-center > .border-gray-300.text-blue-600[type=\"checkbox\"]"
+            ]
+          ]
+        },
+        {
+          "id": "meta-viewport",
+          "impact": "critical",
+          "nodes": [
+            [
+              "meta[name=\"viewport\"]"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "route": "/movements",
+      "violations": [
+        {
+          "id": "button-name",
+          "impact": "critical",
+          "nodes": [
+            [
+              ".p-2"
+            ],
+            [
+              ".border"
+            ]
+          ]
+        },
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            [
+              ".text-sidebar-foreground\\/60.text-xs.font-medium"
+            ],
+            [
+              "div[data-testid=\"nav-dashboard\"] > .transition-opacity"
+            ],
+            [
+              "div[data-testid=\"nav-items\"] > .transition-opacity"
+            ],
+            [
+              "div[data-testid=\"nav-search\"] > .transition-opacity"
+            ],
+            [
+              "div[data-testid=\"nav-scanner\"] > .transition-opacity"
+            ],
+            [
+              "div[data-testid=\"nav-history\"] > .transition-opacity"
+            ],
+            [
+              "div[data-testid=\"nav-consumption\"] > .transition-opacity"
+            ],
+            [
+              ".text-sidebar-foreground\\/40"
+            ],
+            [
+              "div[data-testid=\"nav-users\"] > .transition-opacity"
+            ],
+            [
+              "div[data-testid=\"nav-categories\"] > .transition-opacity"
+            ],
+            [
+              "p[data-testid=\"user-role\"]"
+            ],
+            [
+              "button[data-testid=\"button-register-entry\"]"
+            ],
+            [
+              "button[data-testid=\"button-first-entry\"]"
+            ]
+          ]
+        },
+        {
+          "id": "meta-viewport",
+          "impact": "critical",
+          "nodes": [
+            [
+              "meta[name=\"viewport\"]"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "route": "/scanner",
+      "violations": [
+        {
+          "id": "button-name",
+          "impact": "critical",
+          "nodes": [
+            [
+              ".p-2"
+            ]
+          ]
+        },
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            [
+              ".text-sidebar-foreground\\/60.text-xs.font-medium"
+            ],
+            [
+              "div[data-testid=\"nav-dashboard\"] > span"
+            ],
+            [
+              "div[data-testid=\"nav-items\"] > span"
+            ],
+            [
+              "div[data-testid=\"nav-search\"] > span"
+            ],
+            [
+              "div[data-testid=\"nav-movements\"] > span"
+            ],
+            [
+              "div[data-testid=\"nav-history\"] > span"
+            ],
+            [
+              "div[data-testid=\"nav-consumption\"] > span"
+            ],
+            [
+              ".text-sidebar-foreground\\/40"
+            ],
+            [
+              "div[data-testid=\"nav-users\"] > span"
+            ],
+            [
+              "div[data-testid=\"nav-categories\"] > span"
+            ],
+            [
+              "p[data-testid=\"user-role\"]"
+            ],
+            [
+              ".text-gray-500"
+            ]
+          ]
+        },
+        {
+          "id": "meta-viewport",
+          "impact": "critical",
+          "nodes": [
+            [
+              "meta[name=\"viewport\"]"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "route": "/search",
+      "violations": [
+        {
+          "id": "button-name",
+          "impact": "critical",
+          "nodes": [
+            [
+              ".p-2"
+            ],
+            [
+              "button[aria-controls=\"radix-:r3:\"]"
+            ],
+            [
+              "button[aria-controls=\"radix-:r4:\"]"
+            ]
+          ]
+        },
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            [
+              ".text-sidebar-foreground\\/60.text-xs.font-medium"
+            ],
+            [
+              "div[data-testid=\"nav-dashboard\"] > .transition-opacity"
+            ],
+            [
+              "div[data-testid=\"nav-items\"] > .transition-opacity"
+            ],
+            [
+              "div[data-testid=\"nav-movements\"] > .transition-opacity"
+            ],
+            [
+              "div[data-testid=\"nav-scanner\"] > .transition-opacity"
+            ],
+            [
+              "div[data-testid=\"nav-history\"] > .transition-opacity"
+            ],
+            [
+              "div[data-testid=\"nav-consumption\"] > .transition-opacity"
+            ],
+            [
+              ".text-sidebar-foreground\\/40"
+            ],
+            [
+              "div[data-testid=\"nav-users\"] > .transition-opacity"
+            ],
+            [
+              "div[data-testid=\"nav-categories\"] > .transition-opacity"
+            ],
+            [
+              "p[data-testid=\"user-role\"]"
+            ]
+          ]
+        },
+        {
+          "id": "meta-viewport",
+          "impact": "critical",
+          "nodes": [
+            [
+              "meta[name=\"viewport\"]"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "route": "/users",
+      "violations": [
+        {
+          "id": "button-name",
+          "impact": "critical",
+          "nodes": [
+            [
+              ".p-2"
+            ],
+            [
+              ".peer"
+            ]
+          ]
+        },
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            [
+              ".text-sidebar-foreground\\/60.text-xs.font-medium"
+            ],
+            [
+              "div[data-testid=\"nav-dashboard\"] > .transition-opacity"
+            ],
+            [
+              "div[data-testid=\"nav-items\"] > .transition-opacity"
+            ],
+            [
+              "div[data-testid=\"nav-search\"] > .transition-opacity"
+            ],
+            [
+              "div[data-testid=\"nav-movements\"] > .transition-opacity"
+            ],
+            [
+              "div[data-testid=\"nav-scanner\"] > .transition-opacity"
+            ],
+            [
+              "div[data-testid=\"nav-history\"] > .transition-opacity"
+            ],
+            [
+              "div[data-testid=\"nav-consumption\"] > .transition-opacity"
+            ],
+            [
+              ".text-sidebar-foreground\\/40"
+            ],
+            [
+              "div[data-testid=\"nav-categories\"] > .transition-opacity"
+            ],
+            [
+              "p[data-testid=\"user-role\"]"
+            ]
+          ]
+        },
+        {
+          "id": "meta-viewport",
+          "impact": "critical",
+          "nodes": [
+            [
+              "meta[name=\"viewport\"]"
+            ]
+          ]
+        }
+      ]
+    }
+  ]
+}
