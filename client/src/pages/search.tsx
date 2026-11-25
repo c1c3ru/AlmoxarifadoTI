@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { apiRequest } from "@/lib/queryClient";
+import { ErrorState } from "@/components/shared/error-state";
 import type { ItemWithCategory, Category } from "@shared/schema";
 
 export default function Search() {
@@ -44,7 +45,7 @@ export default function Search() {
   const statusParam = selectedStatus === ALL ? undefined : selectedStatus;
   const hasFilters = Boolean(debouncedQuery || categoryParam || statusParam);
   
-  const { data: searchResults = [], isLoading } = useQuery<ItemWithCategory[]>({
+  const { data: searchResults = [], isLoading, isError, isFetching, refetch } = useQuery<ItemWithCategory[]>({
     queryKey: ["/api/items/search", debouncedQuery, categoryParam, statusParam],
     queryFn: async () => {
       if (!hasFilters) return [];
@@ -227,7 +228,7 @@ export default function Search() {
       </Card>
 
       {/* Search Results */}
-      {isLoading ? (
+      {isError ? <ErrorState message="Não foi possível concluir a pesquisa." onRetry={() => { void refetch(); }} isRetrying={isFetching} /> : isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {Array.from({ length: 6 }).map((_, i) => (
             <Card key={i} className="border-0 shadow-lg">

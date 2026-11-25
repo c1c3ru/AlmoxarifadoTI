@@ -37,6 +37,7 @@ Sem alterar server/, shared/, API, rotas, autenticação, RBAC, heartbeat, query
 - MODIFY client/src/components/modals/{add-item-modal,edit-item-modal,movement-modal,qr-code-modal}.tsx e client/src/pages/{users,categories,login,register,reset-password}.tsx somente nos pontos afetados: empilhar ações, labels, autoComplete e foco; preservar submit/validação.
 - Gate: Escape, Tab, restauração, cancelamento, erros, mobile teclado virtual manual; sem mutação adicional.
 ## UI-04 — design e estados
+- Reutilização concreta: CREATE `components/shared/error-state.tsx` consumido por items/search, com `message`, callback `onRetry` e estado `isRetrying`, sem fetch próprio. Preservar modais e estado enquanto a consulta falha; mostrar erro antes de vazio, retry chama refetch existente. Tokens primary/destructive/muted/success/warning terão contraste aumentado; botões/inputs com alvo móvel 44px, botão com label que pode quebrar linha. Card min-w-0; fontes e modo claro preservados.
 - MODIFY client/src/index.css e tailwind.config.ts: tokens semânticos, contraste, movimento reduzido; não ativar dark mode; manter fontes.
 - MODIFY client/src/components/ui/{card,badge,button,input,skeleton}.tsx somente se necessário. Adotar 44px preferencial mobile, WCAG mínimo 24px/exceções.
 - CREATE client/src/components/shared/{stat-card,status-badge,empty-state,error-state,responsive-toolbar}.tsx somente após confirmar dois consumidores reais; props tipadas, sem fetch/mutation interna. Reutilizar padrão de movements.tsx isError/refetch em listas. Não confundir zero com erro.
