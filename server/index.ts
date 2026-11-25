@@ -3,7 +3,8 @@
 (async () => {
   if (process.env.NODE_ENV !== "production") {
     // Dynamic import to avoid ESM top-level await/require issues and ensure env vars are loaded BEFORE app imports
-    await import("dotenv/config");
+    const { config } = await import("dotenv");
+    config();
   }
 
   // Import after env vars are loaded
