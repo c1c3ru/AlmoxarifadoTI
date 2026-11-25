@@ -1,3 +1,4 @@
+import { ErrorState } from "@/components/shared/error-state";
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { MainLayout } from "@/components/layout/main-layout";
@@ -50,7 +51,7 @@ function RankBadge({ rank }: { rank: number }) {
         className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
         style={{ background: m.bg }}
       >
-        <i className={`${m.icon} text-white`} style={{ fontSize: "0.55rem" }} />
+        <i aria-hidden="true" className={`${m.icon} text-white`} style={{ fontSize: "0.55rem" }} />
       </div>
     );
   }
@@ -73,7 +74,7 @@ export default function ConsumptionDashboard() {
   const [sortBy, setSortBy] = useState<"consumed" | "stock" | "name">("consumed");
   const [category, setCategory] = useState<string>("all");
 
-  const { data: raw = [], isLoading } = useQuery<ConsumptionItem[]>({
+  const { data: raw = [], isLoading, isError, isFetching, refetch } = useQuery<ConsumptionItem[]>({
     queryKey: ["/api/dashboard/consumption"],
     refetchInterval: 120000,
   });
@@ -163,13 +164,14 @@ export default function ConsumptionDashboard() {
       subtitle="Saídas acumuladas desde o início do sistema"
       showAddButton={false}
     >
+      {isError ? <ErrorState onRetry={() => { void refetch(); }} isRetrying={isFetching} /> : <>
       {/* ── KPIs ─────────────────────────────────────────── */}
       {/*
         Mobile  : 1 coluna (cada card ocupa 100 %)
         ≥ 480px : 2 colunas
         ≥ 768px : 4 colunas
       */}
-      <div className="grid grid-cols-1 min-[480px]:grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,14rem),1fr))] gap-3 mb-6">
         {kpis.map((kpi) => (
           <div
             key={kpi.label}
@@ -180,7 +182,7 @@ export default function ConsumptionDashboard() {
               className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
               style={{ background: kpi.colorBg }}
             >
-              <i className={kpi.icon} style={{ color: kpi.color }} />
+              <i aria-hidden="true" className={kpi.icon} style={{ color: kpi.color }} />
             </div>
 
             {/* Texto */}
@@ -203,7 +205,7 @@ export default function ConsumptionDashboard() {
                     {kpi.value}
                   </p>
                   {kpi.sub && (
-                    <p className="text-[0.7rem] text-muted-foreground mt-0.5 truncate">
+                    <p className="text-[0.7rem] text-muted-foreground mt-0.5 break-words">
                       {kpi.sub}
                     </p>
                   )}
@@ -215,14 +217,14 @@ export default function ConsumptionDashboard() {
       </div>
 
       {/* ── SEARCH + SORT ─────────────────────────────────── */}
-      <div className="flex gap-2 mb-3">
+      <div className="flex flex-wrap gap-2 mb-3">
         <div className="relative flex-1 min-w-0">
-          <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-xs pointer-events-none" />
+          <i aria-hidden="true" className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-xs pointer-events-none" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar item, código ou categoria…"
+            aria-label="Buscar no consumo" placeholder="Buscar item, código ou categoria…"
             className="w-full pl-8 pr-3 py-2 text-sm rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/40"
           />
         </div>
@@ -321,7 +323,7 @@ export default function ConsumptionDashboard() {
       ) : items.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
           <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-3">
-            <i className="fas fa-chart-bar" />
+            <i aria-hidden="true" className="fas fa-chart-bar" />
           </div>
           <p className="font-semibold text-sm">Nenhum item encontrado</p>
           <p className="text-xs mt-1">Ajuste os filtros ou a busca</p>
@@ -361,7 +363,7 @@ export default function ConsumptionDashboard() {
                   <div className="flex-1 min-w-0">
                     {/* nome + código */}
                     <div className="flex items-center gap-1.5 min-w-0">
-                      <p className="font-semibold text-foreground text-sm truncate leading-snug">
+                      <p className="font-semibold text-foreground text-sm break-words leading-snug">
                         {item.itemName}
                       </p>
                       {/* código visível só em telas maiores */}
@@ -379,7 +381,7 @@ export default function ConsumptionDashboard() {
                         {item.categoryName}
                       </span>
                       <span className="text-[0.65rem] text-muted-foreground leading-none">
-                        <i className="far fa-clock mr-0.5 opacity-50" />
+                        <i aria-hidden="true" className="far fa-clock mr-0.5 opacity-50" />
                         {relativeDate(item.lastMovement)}
                       </span>
                       {noMovement && (
@@ -419,12 +421,12 @@ export default function ConsumptionDashboard() {
                   <div className="mt-1.5 flex items-center gap-3 text-[0.65rem] text-muted-foreground">
                     {item.totalEntradas > 0 && (
                       <span>
-                        <i className="fas fa-arrow-down mr-0.5 text-emerald-500" />
+                        <i aria-hidden="true" className="fas fa-arrow-down mr-0.5 text-emerald-500" />
                         {item.totalEntradas.toLocaleString("pt-BR")} ent.
                       </span>
                     )}
                     <span>
-                      <i className="fas fa-warehouse mr-0.5 text-sky-400" />
+                      <i aria-hidden="true" className="fas fa-warehouse mr-0.5 text-sky-400" />
                       {item.currentStock.toLocaleString("pt-BR")} estoque
                     </span>
                   </div>
@@ -437,10 +439,11 @@ export default function ConsumptionDashboard() {
 
       {!isLoading && items.length > 0 && (
         <p className="text-[0.65rem] text-center text-muted-foreground mt-6">
-          <i className="fas fa-circle-info mr-1" />
+          <i aria-hidden="true" className="fas fa-circle-info mr-1" />
           Dados acumulados desde o início · atualizado a cada 2 min
         </p>
       )}
+      </>}
     </MainLayout>
   );
 }

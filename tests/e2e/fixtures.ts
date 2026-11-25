@@ -40,6 +40,7 @@ interface Mutation { method: string; path: string; body: Record<string, unknown>
 export interface MockApi {
   items: ItemWithCategory[];
   mutations: Mutation[];
+  requests: Array<{ method: string; path: string }>;
   failedPaths: Set<string>;
   empty: boolean;
   role: "admin" | "tech";
@@ -51,7 +52,7 @@ export const test = base.extend<{ api: MockApi; role: "admin" | "tech"; signedIn
   signedIn: [true, { option: true }],
   api: [async ({ page, baseURL, role, signedIn }, use) => {
     const api: MockApi = {
-      items: [structuredClone(item)], mutations: [], failedPaths: new Set(),
+      items: [structuredClone(item)], mutations: [], requests: [], failedPaths: new Set(),
       empty: false, role, signedIn,
     };
     const unexpected: string[] = [];
@@ -75,6 +76,7 @@ export const test = base.extend<{ api: MockApi; role: "admin" | "tech"; signedIn
       if (!url.pathname.startsWith("/api/")) return route.continue();
       const method = request.method();
       const pathname = url.pathname;
+      api.requests.push({ method, path: pathname });
       const send = (data: unknown, status = 200) => route.fulfill({ status, json: data });
       if (api.failedPaths.has(pathname)) return send({ message: "Falha sintética" }, 500);
       const body = request.postData() ? request.postDataJSON() as Record<string, unknown> : {};

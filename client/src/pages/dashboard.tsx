@@ -1,3 +1,4 @@
+import { ErrorState } from "@/components/shared/error-state";
 import { useQuery } from "@tanstack/react-query";
 import { MainLayout } from "@/components/layout/main-layout";
 import { Card, CardContent } from "@/components/ui/card";
@@ -26,31 +27,40 @@ export default function Dashboard() {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
 
-  const { data: stats, isLoading: statsLoading } = useQuery<DashboardStats>({
+  const statsQuery = useQuery<DashboardStats>({
     queryKey: ["/api/dashboard/stats"],
     // Atualiza periodicamente para refletir usuários online
     refetchInterval: 60000,
     refetchOnWindowFocus: true,
   });
 
-  const { data: lowStockItems = [], isLoading: lowStockLoading } = useQuery<ItemWithCategory[]>({
+  const lowStockQuery = useQuery<ItemWithCategory[]>({
     queryKey: ["/api/dashboard/low-stock"],
   });
 
-  const { data: recentMovements = [], isLoading: movementsLoading } = useQuery<MovementWithDetails[]>({
+  const movementsQuery = useQuery<MovementWithDetails[]>({
     queryKey: ["/api/dashboard/recent-movements"],
     enabled: isAdmin, // Only load movements for admins
   });
 
-  const { data: categories = [] } = useQuery<(any & { itemCount: number })[]>({
+  const categoriesQuery = useQuery<(any & { itemCount: number })[]>({
     queryKey: ["/api/categories/with-counts"],
   });
 
-  const { data: onlineUsers = [], isLoading: onlineLoading } = useQuery<OnlineUser[]>({
+  const onlineQuery = useQuery<OnlineUser[]>({
     queryKey: ["/api/users/online"],
     refetchInterval: 60000,
     refetchOnWindowFocus: true,
   });
+
+  const { data: stats, isLoading: statsLoading } = statsQuery;
+  const { data: lowStockItems = [], isLoading: lowStockLoading } = lowStockQuery;
+  const { data: recentMovements = [], isLoading: movementsLoading } = movementsQuery;
+  const { data: categories = [] } = categoriesQuery;
+  const { data: onlineUsers = [], isLoading: onlineLoading } = onlineQuery;
+  const queries = [statsQuery, lowStockQuery, movementsQuery, categoriesQuery, onlineQuery];
+  const hasQueryError = queries.some((query) => query.isError);
+  const retryFailed = () => { queries.filter((query) => query.isError).forEach((query) => { void query.refetch(); }); };
 
   return (
     <MainLayout
@@ -58,12 +68,13 @@ export default function Dashboard() {
       subtitle="Visão geral completa do almoxarifado"
       showAddButton={false}
     >
+      {hasQueryError ? <ErrorState message="Não foi possível carregar o dashboard." onRetry={retryFailed} isRetrying={queries.some((query) => query.isFetching)} /> : <>
       {/* Hero Stats Section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <Card className="relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 group bg-card hover:-translate-y-1">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,14rem),1fr))] gap-6 mb-8">
+        <Card className="relative overflow-hidden border-0 shadow-sm hover:shadow-md transition-all duration-300 group bg-card hover:-translate-y-1">
           <div className="absolute inset-0 bg-gradient-to-br from-chart-1/10 to-transparent opacity-50" />
           <CardContent className="p-6 relative z-10">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-medium text-muted-foreground mb-1">Total de Itens</p>
                 {statsLoading ? (
@@ -75,16 +86,16 @@ export default function Dashboard() {
                 )}
               </div>
               <div className="w-12 h-12 bg-chart-1/20 text-chart-1 rounded-2xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform duration-300">
-                <i className="fa-solid fa-boxes-stacked text-xl"></i>
+                <i aria-hidden="true" className="fa-solid fa-boxes-stacked text-xl"></i>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 group bg-card hover:-translate-y-1">
+        <Card className="relative overflow-hidden border-0 shadow-sm hover:shadow-md transition-all duration-300 group bg-card hover:-translate-y-1">
           <div className="absolute inset-0 bg-gradient-to-br from-chart-2/10 to-transparent opacity-50" />
           <CardContent className="p-6 relative z-10">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-medium text-muted-foreground mb-1">Estoque Baixo</p>
                 {statsLoading ? (
@@ -100,16 +111,16 @@ export default function Dashboard() {
                 </div>
               </div>
               <div className="w-12 h-12 bg-chart-2/20 text-chart-2 rounded-2xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform duration-300">
-                <i className="fa-solid fa-triangle-exclamation text-xl"></i>
+                <i aria-hidden="true" className="fa-solid fa-triangle-exclamation text-xl"></i>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 group bg-card hover:-translate-y-1">
+        <Card className="relative overflow-hidden border-0 shadow-sm hover:shadow-md transition-all duration-300 group bg-card hover:-translate-y-1">
           <div className="absolute inset-0 bg-gradient-to-br from-chart-3/10 to-transparent opacity-50" />
           <CardContent className="p-6 relative z-10">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-medium text-muted-foreground mb-1">Movimentações Hoje</p>
                 {statsLoading ? (
@@ -125,16 +136,16 @@ export default function Dashboard() {
                 </div>
               </div>
               <div className="w-12 h-12 bg-chart-3/20 text-chart-3 rounded-2xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform duration-300">
-                <i className="fa-solid fa-arrows-rotate text-xl"></i>
+                <i aria-hidden="true" className="fa-solid fa-arrows-rotate text-xl"></i>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 group bg-card hover:-translate-y-1">
+        <Card className="relative overflow-hidden border-0 shadow-sm hover:shadow-md transition-all duration-300 group bg-card hover:-translate-y-1">
           <div className="absolute inset-0 bg-gradient-to-br from-chart-4/10 to-transparent opacity-50" />
           <CardContent className="p-6 relative z-10">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-medium text-muted-foreground mb-1">Usuários Ativos</p>
                 {statsLoading ? (
@@ -150,18 +161,18 @@ export default function Dashboard() {
                 </div>
               </div>
               <div className="w-12 h-12 bg-chart-4/20 text-chart-4 rounded-2xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform duration-300">
-                <i className="fa-solid fa-users text-xl"></i>
+                <i aria-hidden="true" className="fa-solid fa-users text-xl"></i>
               </div>
             </div>
           </CardContent>
         </Card>
 
         {/* Online Users */}
-        <Card className="bg-card border-border shadow-md hover:shadow-lg transition-all duration-300">
+        <Card className="bg-card border-border shadow-md hover:shadow-sm transition-all duration-300">
           <CardContent className="p-6">
-            <div className="flex items-center space-x-3 mb-6">
+            <div className="flex min-w-0 flex-wrap items-center gap-3 mb-6">
               <div className="w-10 h-10 bg-primary/10 text-primary rounded-lg flex items-center justify-center">
-                <i className="fa-solid fa-signal text-sm"></i>
+                <i aria-hidden="true" className="fa-solid fa-signal text-sm"></i>
               </div>
               <h3 className="text-xl font-bold text-foreground">Usuários Online</h3>
             </div>
@@ -182,18 +193,18 @@ export default function Dashboard() {
                 </div>
               ) : (
                 onlineUsers.slice(0, 8).map((u) => (
-                  <div key={u.id} className="flex items-center justify-between p-2 rounded-xl hover:bg-muted/50 transition-all duration-200 gap-3">
-                    <div className="flex items-center space-x-3 min-w-0">
+                  <div key={u.id} className="flex flex-wrap items-center justify-between gap-3 p-2 rounded-xl hover:bg-muted/50 transition-all duration-200 gap-3">
+                    <div className="flex min-w-0 flex-wrap items-center gap-3 min-w-0">
                       <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm flex-shrink-0">
                         {u.username.slice(0, 2).toUpperCase()}
                       </div>
                       <div className="min-w-0">
-                        <p className="font-medium text-foreground truncate">{u.username}</p>
+                        <p className="font-medium text-foreground break-words">{u.username}</p>
                         <p className="text-xs text-muted-foreground">{u.role}</p>
                       </div>
                     </div>
                     <div className="text-right text-xs text-muted-foreground flex-shrink-0 max-w-xs">
-                      <p className="truncate">{formatRelativeTime(u.lastSeenAt)}</p>
+                      <p className="break-words">{formatRelativeTime(u.lastSeenAt)}</p>
                     </div>
                   </div>
                 ))
@@ -206,11 +217,11 @@ export default function Dashboard() {
 
       {/* Critical Alerts Section */}
       {lowStockItems.length > 0 && (
-        <Card className="bg-destructive/5 border-l-4 border-destructive shadow-lg mb-8">
+        <Card className="bg-destructive/5 border-l-4 border-destructive shadow-sm mb-8">
           <CardContent className="p-6">
-            <div className="flex items-center space-x-3 mb-6">
+            <div className="flex min-w-0 flex-wrap items-center gap-3 mb-6">
               <div className="w-12 h-12 bg-destructive/10 text-destructive rounded-full flex items-center justify-center animate-pulse">
-                <i className="fa-solid fa-bell text-lg"></i>
+                <i aria-hidden="true" className="fa-solid fa-bell text-lg"></i>
               </div>
               <div>
                 <h3 className="text-xl font-bold text-foreground">Alertas Críticos de Estoque</h3>
@@ -231,10 +242,10 @@ export default function Dashboard() {
                   >
                     <div className="flex items-center space-x-4">
                       <div className="w-12 h-12 bg-destructive/10 rounded-xl flex items-center justify-center shrink-0">
-                        <i className={`${item.category?.icon || 'fa-solid fa-box'} text-destructive text-lg`}></i>
+                        <i aria-hidden="true" className={`${item.category?.icon || 'fa-solid fa-box'} text-destructive text-lg`}></i>
                       </div>
                       <div className="min-w-0">
-                        <p className="font-semibold text-foreground truncate">{item.name}</p>
+                        <p className="font-semibold text-foreground break-words">{item.name}</p>
                         <p className="text-sm text-muted-foreground">Código: {item.internalCode}</p>
                       </div>
                     </div>
@@ -259,14 +270,14 @@ export default function Dashboard() {
       )}
 
       {/* Content Grid */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,24rem),1fr))] gap-8">
         {/* Recent Activities - Only for Admins */}
         {isAdmin && (
-          <Card className="bg-card border-border shadow-md hover:shadow-lg transition-all duration-300">
+          <Card className="bg-card border-border shadow-md hover:shadow-sm transition-all duration-300">
             <CardContent className="p-6">
-              <div className="flex items-center space-x-3 mb-6">
+              <div className="flex min-w-0 flex-wrap items-center gap-3 mb-6">
                 <div className="w-10 h-10 bg-primary/10 text-primary rounded-lg flex items-center justify-center">
-                  <i className="fa-solid fa-clock-rotate-left text-sm"></i>
+                  <i aria-hidden="true" className="fa-solid fa-clock-rotate-left text-sm"></i>
                 </div>
                 <h3 className="text-xl font-bold text-foreground">Atividades Recentes - Todos os Usuários</h3>
               </div>
@@ -285,10 +296,10 @@ export default function Dashboard() {
                 ) : recentMovements.length === 0 ? (
                   <div className="text-center py-12">
                     <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-                      <i className="fa-solid fa-inbox text-muted-foreground text-xl"></i>
+                      <i aria-hidden="true" className="fa-solid fa-inbox text-muted-foreground text-xl"></i>
                     </div>
                     <p className="text-muted-foreground font-medium">Nenhuma movimentação recente</p>
-                    <p className="text-sm text-muted-foreground/60">As atividades aparecerão aqui</p>
+                    <p className="text-sm text-muted-foreground">As atividades aparecerão aqui</p>
                   </div>
                 ) : (
                   recentMovements.map((movement) => (
@@ -301,13 +312,13 @@ export default function Dashboard() {
                         ? "bg-success-100 text-success-700"
                         : "bg-error-100 text-error-700"
                         }`}>
-                        <i className={`fa-solid ${movement.type === "entrada"
+                        <i aria-hidden="true" className={`fa-solid ${movement.type === "entrada"
                           ? "fa-arrow-down"
                           : "fa-arrow-up"
                           }`}></i>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-foreground truncate">{movement.item?.name}</p>
+                        <p className="font-semibold text-foreground break-words">{movement.item?.name}</p>
                         <div className="flex items-center space-x-2 text-sm text-muted-foreground flex-wrap">
                           <span className={movement.type === "entrada" ? "text-success-700 font-bold" : "text-error-700 font-bold"}>
                             {movement.type === "entrada" ? "+" : "-"}{movement.quantity}
@@ -315,11 +326,11 @@ export default function Dashboard() {
                           {movement.destination && (
                             <>
                               <span>•</span>
-                              <span className="truncate max-w-[150px]">{movement.destination}</span>
+                              <span className="break-words max-w-[150px]">{movement.destination}</span>
                             </>
                           )}
                         </div>
-                        <p className="text-xs text-muted-foreground/80 mt-1 truncate">
+                        <p className="text-xs text-muted-foreground mt-1 break-words">
                           {formatRelativeTime(movement.createdAt)} • {movement.user?.name || movement.user?.username}
                         </p>
                       </div>
@@ -332,11 +343,11 @@ export default function Dashboard() {
         )}
 
         {/* Categories Overview */}
-        <Card className="bg-card border-border shadow-md hover:shadow-lg transition-all duration-300">
+        <Card className="bg-card border-border shadow-md hover:shadow-sm transition-all duration-300">
           <CardContent className="p-6">
-            <div className="flex items-center space-x-3 mb-6">
+            <div className="flex min-w-0 flex-wrap items-center gap-3 mb-6">
               <div className="w-10 h-10 bg-accent text-accent-foreground rounded-lg flex items-center justify-center">
-                <i className="fa-solid fa-tags text-sm"></i>
+                <i aria-hidden="true" className="fa-solid fa-tags text-sm"></i>
               </div>
               <h3 className="text-xl font-bold text-foreground">Categorias</h3>
             </div>
@@ -345,10 +356,10 @@ export default function Dashboard() {
               {categories.length === 0 ? (
                 <div className="text-center py-12">
                   <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-                    <i className="fa-solid fa-tags text-muted-foreground text-xl"></i>
+                    <i aria-hidden="true" className="fa-solid fa-tags text-muted-foreground text-xl"></i>
                   </div>
                   <p className="text-muted-foreground font-medium">Nenhuma categoria cadastrada</p>
-                  <p className="text-sm text-muted-foreground/60">Organize seus itens em categorias</p>
+                  <p className="text-sm text-muted-foreground">Organize seus itens em categorias</p>
                 </div>
               ) : (
                 categories.map((category, index) => (
@@ -357,15 +368,15 @@ export default function Dashboard() {
                     className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl hover:bg-muted/50 transition-all duration-200 group border border-dashed border-border hover:border-solid hover:border-primary/20 gap-3 sm:gap-0"
                     data-testid={`category-${category.id}`}
                   >
-                    <div className="flex items-center space-x-3">
+                    <div className="flex min-w-0 flex-wrap items-center gap-3">
                       <div className={`w-10 h-10 rounded-lg flex items-center justify-center shadow-sm text-white shrink-0 ${['bg-chart-1', 'bg-chart-2', 'bg-chart-3', 'bg-chart-4', 'bg-chart-5'][index % 5]
                         }`}>
-                        <i className={`${category.icon} text-sm`}></i>
+                        <i aria-hidden="true" className={`${category.icon} text-sm`}></i>
                       </div>
                       <div className="min-w-0">
-                        <p className="font-semibold text-foreground truncate">{category.name}</p>
+                        <p className="font-semibold text-foreground break-words">{category.name}</p>
                         {category.description && (
-                          <p className="text-xs text-muted-foreground truncate max-w-48">{category.description}</p>
+                          <p className="text-xs text-muted-foreground break-words max-w-48">{category.description}</p>
                         )}
                       </div>
                     </div>
@@ -384,6 +395,7 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+      </>}
     </MainLayout>
   );
 }

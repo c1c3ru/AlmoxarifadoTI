@@ -1,3 +1,4 @@
+import { ErrorState } from "@/components/shared/error-state";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { MainLayout } from "@/components/layout/main-layout";
@@ -22,7 +23,7 @@ export default function Movements() {
   });
 
   const itemIdParam = selectedItemFilter === ALL ? undefined : selectedItemFilter;
-  const { data: movements = [], isLoading, isError, error } = useQuery<MovementWithDetails[]>({
+  const { data: movements = [], isLoading, isError, isFetching, refetch } = useQuery<MovementWithDetails[]>({
     queryKey: ["/api/movements", { itemId: itemIdParam, limit: 100 }],
     // Garante atualização ao entrar na página mesmo com staleTime global infinito
     refetchOnMount: "always",
@@ -71,58 +72,58 @@ export default function Movements() {
       showAddButton={false}
     >
       {/* Quick Actions Hero */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-0 shadow-lg hover:shadow-xl transition-all duration-300 group cursor-pointer"
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,16rem),1fr))] gap-6 mb-8">
+        <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-0 shadow-sm hover:shadow-md transition-all duration-300 group cursor-pointer"
           onClick={() => handleNewMovement("entrada")}>
           <CardContent className="p-8 text-center">
-            <div className="w-16 h-16 bg-emerald-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300">
-              <i className="fa-solid fa-arrow-down text-white text-2xl"></i>
+            <div className="w-16 h-16 bg-emerald-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm group-hover:scale-110 transition-transform duration-300">
+              <i aria-hidden="true" className="fa-solid fa-arrow-down text-white text-2xl"></i>
             </div>
             <h3 className="text-xl font-bold text-emerald-900 mb-2">Registrar Entrada</h3>
             <p className="text-emerald-700 mb-6">Adicionar itens ao estoque do almoxarifado</p>
             <Button
-              className="w-full bg-emerald-600 hover:bg-emerald-700 shadow-lg h-12 text-base font-semibold"
+              className="w-full bg-emerald-700 hover:bg-emerald-800 shadow-sm h-12 text-base font-semibold"
               data-testid="button-register-entry"
               onClick={(e) => { e.stopPropagation(); handleNewMovement("entrada"); }}
             >
-              <i className="fa-solid fa-plus mr-2"></i>
+              <i aria-hidden="true" className="fa-solid fa-plus mr-2"></i>
               Nova Entrada
             </Button>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-red-50 to-red-100 border-0 shadow-lg hover:shadow-xl transition-all duration-300 group cursor-pointer"
+        <Card className="bg-gradient-to-br from-red-50 to-red-100 border-0 shadow-sm hover:shadow-md transition-all duration-300 group cursor-pointer"
           onClick={() => handleNewMovement("saida")}>
           <CardContent className="p-8 text-center">
-            <div className="w-16 h-16 bg-red-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300">
-              <i className="fa-solid fa-arrow-up text-white text-2xl"></i>
+            <div className="w-16 h-16 bg-red-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm group-hover:scale-110 transition-transform duration-300">
+              <i aria-hidden="true" className="fa-solid fa-arrow-up text-white text-2xl"></i>
             </div>
             <h3 className="text-xl font-bold text-red-900 mb-2">Registrar Saída</h3>
             <p className="text-red-700 mb-6">Retirar itens do estoque para uso</p>
             <Button
-              className="w-full bg-red-600 hover:bg-red-700 shadow-lg h-12 text-base font-semibold"
+              className="w-full bg-red-600 hover:bg-red-700 shadow-sm h-12 text-base font-semibold"
               data-testid="button-register-exit"
               onClick={(e) => { e.stopPropagation(); handleNewMovement("saida"); }}
             >
-              <i className="fa-solid fa-minus mr-2"></i>
+              <i aria-hidden="true" className="fa-solid fa-minus mr-2"></i>
               Nova Saída
             </Button>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-0 shadow-lg hover:shadow-xl transition-all duration-300 group cursor-pointer"
+        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-0 shadow-sm hover:shadow-md transition-all duration-300 group cursor-pointer"
           onClick={() => window.location.href = '/scanner'}>
           <CardContent className="p-8 text-center">
-            <div className="w-16 h-16 bg-blue-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300">
-              <i className="fa-solid fa-qrcode text-white text-2xl"></i>
+            <div className="w-16 h-16 bg-blue-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm group-hover:scale-110 transition-transform duration-300">
+              <i aria-hidden="true" className="fa-solid fa-qrcode text-white text-2xl"></i>
             </div>
             <h3 className="text-xl font-bold text-blue-900 mb-2">Scanner QR</h3>
             <p className="text-blue-700 mb-6">Dar baixa rápida via QR Code</p>
             <Button
-              className="w-full bg-blue-600 hover:bg-blue-700 shadow-lg h-12 text-base font-semibold"
+              className="w-full bg-blue-600 hover:bg-blue-700 shadow-sm h-12 text-base font-semibold"
               data-testid="button-go-scanner"
             >
-              <i className="fa-solid fa-camera mr-2"></i>
+              <i aria-hidden="true" className="fa-solid fa-camera mr-2"></i>
               Abrir Scanner
             </Button>
           </CardContent>
@@ -130,55 +131,55 @@ export default function Movements() {
       </div>
 
       {/* Recent Movements */}
-      <Card className="bg-white border-0 shadow-xl">
+      <Card className="bg-white border-0 shadow-sm">
         <div className="bg-gradient-to-r from-gray-50 to-blue-50 px-6 py-4 border-b border-gray-200">
           <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-            <div className="flex items-center space-x-3">
+            <div className="flex min-w-0 flex-wrap items-center gap-3">
               <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
-                <i className="fa-solid fa-clock-rotate-left text-white text-sm"></i>
+                <i aria-hidden="true" className="fa-solid fa-clock-rotate-left text-white text-sm"></i>
               </div>
               <h3 className="text-xl font-bold text-gray-900">Movimentações Recentes</h3>
             </div>
             <div className="w-full lg:w-64">
               <Select value={selectedItemFilter} onValueChange={setSelectedItemFilter}>
-                <SelectTrigger data-testid="select-item-filter">
+                <SelectTrigger aria-label="Filtrar por item" data-testid="select-item-filter">
                   <SelectValue placeholder="Filtrar por item" />
                 </SelectTrigger>
                 <SelectContent>
-                  <div className="px-2 py-1 text-xs text-gray-500">Filtro</div>
+                  <div className="px-2 py-1 text-xs text-gray-600">Filtro</div>
                   <SelectItem value={ALL}>
                     <div className="flex items-center gap-2">
                       <div className="w-6 h-6 rounded bg-gray-200 flex items-center justify-center">
-                        <i className="fa-solid fa-list text-gray-600 text-xs"></i>
+                        <i aria-hidden="true" className="fa-solid fa-list text-gray-600 text-xs"></i>
                       </div>
                       <span>Todos os itens</span>
                     </div>
                   </SelectItem>
 
                   {recentItems.length > 0 && (
-                    <div className="px-2 py-1 text-xs text-gray-500 mt-2">Recentes</div>
+                    <div className="px-2 py-1 text-xs text-gray-600 mt-2">Recentes</div>
                   )}
                   {recentItems.map((it) => (
                     <SelectItem key={`recent-${it.id}`} value={it.id}>
                       <div className="flex items-center gap-2">
                         <div className="w-6 h-6 rounded bg-blue-100 flex items-center justify-center">
-                          <i className={`${normalizeIcon(it.icon)} text-blue-600 text-xs`}></i>
+                          <i aria-hidden="true" className={`${normalizeIcon(it.icon)} text-blue-600 text-xs`}></i>
                         </div>
-                        <span className="truncate">{it.name} ({it.internalCode})</span>
+                        <span className="break-words">{it.name} ({it.internalCode})</span>
                       </div>
                     </SelectItem>
                   ))}
 
-                  <div className="px-2 py-1 text-xs text-gray-500 mt-2">Todos</div>
+                  <div className="px-2 py-1 text-xs text-gray-600 mt-2">Todos</div>
                   {items
                     .filter((item) => typeof item.id === 'string' && item.id.trim().length > 0)
                     .map((item) => (
                       <SelectItem key={item.id} value={item.id}>
                         <div className="flex items-center gap-2">
                           <div className="w-6 h-6 rounded bg-gray-100 flex items-center justify-center">
-                            <i className={`${normalizeIcon(item.category?.icon)} text-gray-600 text-xs`}></i>
+                            <i aria-hidden="true" className={`${normalizeIcon(item.category?.icon)} text-gray-600 text-xs`}></i>
                           </div>
-                          <span className="truncate">{item.name} ({item.internalCode})</span>
+                          <span className="break-words">{item.name} ({item.internalCode})</span>
                         </div>
                       </SelectItem>
                     ))}
@@ -203,26 +204,23 @@ export default function Movements() {
               ))}
             </div>
           ) : isError ? (
-            <div className="text-center py-8">
-              <p className="text-red-600 font-medium">Erro ao carregar movimentações.</p>
-              <p className="text-sm text-gray-500 mt-1">{error instanceof Error ? error.message : "Tente novamente mais tarde."}</p>
-            </div>
+            <ErrorState message="Não foi possível carregar as movimentações." onRetry={() => { void refetch(); }} isRetrying={isFetching} />
           ) : movements.length === 0 ? (
             <div className="text-center py-16">
               <div className="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mx-auto mb-6">
-                <i className="fa-solid fa-arrows-rotate text-gray-400 text-3xl"></i>
+                <i aria-hidden="true" className="fa-solid fa-arrows-rotate text-muted-foreground text-3xl"></i>
               </div>
               <h4 className="text-xl font-bold text-gray-900 mb-3">Nenhuma movimentação encontrada</h4>
-              <p className="text-gray-500 mb-6">
+              <p className="text-gray-600 mb-6">
                 {selectedItemFilter !== ALL ? "Nenhuma movimentação para o item selecionado" : "Registre a primeira movimentação do almoxarifado"}
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <Button
                   onClick={() => handleNewMovement("entrada")}
-                  className="bg-emerald-600 hover:bg-emerald-700"
+                  className="bg-emerald-700 hover:bg-emerald-800"
                   data-testid="button-first-entry"
                 >
-                  <i className="fa-solid fa-arrow-down mr-2"></i>
+                  <i aria-hidden="true" className="fa-solid fa-arrow-down mr-2"></i>
                   Nova Entrada
                 </Button>
                 <Button
@@ -230,7 +228,7 @@ export default function Movements() {
                   className="bg-red-600 hover:bg-red-700"
                   data-testid="button-first-exit"
                 >
-                  <i className="fa-solid fa-arrow-up mr-2"></i>
+                  <i aria-hidden="true" className="fa-solid fa-arrow-up mr-2"></i>
                   Nova Saída
                 </Button>
               </div>
@@ -240,21 +238,21 @@ export default function Movements() {
               {movements.map((movement) => (
                 <div
                   key={movement.id}
-                  className="flex flex-col sm:flex-row sm:items-center justify-between p-6 border border-gray-200 rounded-2xl hover:shadow-lg hover:border-blue-200 transition-all duration-300 group bg-gradient-to-r from-white to-gray-50 gap-4 sm:gap-0"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between p-6 border border-gray-200 rounded-2xl hover:shadow-sm hover:border-blue-200 transition-all duration-300 group bg-gradient-to-r from-white to-gray-50 gap-4 sm:gap-0"
                   data-testid={`movement-${movement.id}`}
                 >
                   <div className="flex items-center space-x-4 flex-1">
-                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg ${movement.type === "entrada"
+                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-sm ${movement.type === "entrada"
                         ? "bg-gradient-to-br from-emerald-400 to-emerald-600"
                         : "bg-gradient-to-br from-red-400 to-red-600"
                       }`}>
-                      <i className={`${getMovementIcon(movement.type)} text-white text-xl`}></i>
+                      <i aria-hidden="true" className={`${getMovementIcon(movement.type)} text-white text-xl`}></i>
                     </div>
 
                     <div className="flex-1 min-w-0 w-full sm:w-auto">
-                      <div className="flex items-center space-x-3 mb-2">
+                      <div className="flex min-w-0 flex-wrap items-center gap-3 mb-2">
                         <div className="w-6 h-6 rounded bg-blue-100 flex items-center justify-center shrink-0">
-                          <i className={`${normalizeIcon(movement.category?.icon)} text-blue-600 text-xs`}></i>
+                          <i aria-hidden="true" className={`${normalizeIcon(movement.category?.icon)} text-blue-600 text-xs`}></i>
                         </div>
                         <p className="font-bold text-gray-900 text-lg group-hover:text-blue-700 transition-colors" data-testid={`movement-item-${movement.id}`}>
                           {movement.item?.name}
@@ -263,27 +261,27 @@ export default function Movements() {
                           className={`${getMovementTypeColor(movement.type)} font-medium border px-3 py-1`}
                           data-testid={`movement-type-${movement.id}`}
                         >
-                          <i className={`${getMovementIcon(movement.type)} mr-2 text-xs`}></i>
+                          <i aria-hidden="true" className={`${getMovementIcon(movement.type)} mr-2 text-xs`}></i>
                           {getMovementTypeLabel(movement.type)}
                         </Badge>
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm text-gray-600">
                         <span className="flex items-center">
-                          <i className="fa-solid fa-barcode mr-2 text-blue-500"></i>
+                          <i aria-hidden="true" className="fa-solid fa-barcode mr-2 text-blue-500"></i>
                           {movement.item?.internalCode}
                         </span>
                         <span className="flex items-center">
-                          <i className="fa-solid fa-user mr-2 text-purple-500"></i>
+                          <i aria-hidden="true" className="fa-solid fa-user mr-2 text-purple-500"></i>
                           {movement.user?.name}
                         </span>
                         <span className="flex items-center">
-                          <i className="fa-solid fa-clock mr-2 text-orange-500"></i>
+                          <i aria-hidden="true" className="fa-solid fa-clock mr-2 text-orange-500"></i>
                           {formatRelativeTime(movement.createdAt)}
                         </span>
                       </div>
 
-                      <div className="flex items-center space-x-4 text-xs text-gray-500 mt-2">
+                      <div className="flex items-center space-x-4 text-xs text-gray-600 mt-2">
                         <span className="bg-gray-100 px-2 py-1 rounded-lg font-medium">
                           {movement.previousStock} → {movement.newStock}
                         </span>
@@ -291,13 +289,13 @@ export default function Movements() {
 
                       {movement.destination && (
                         <p className="text-sm text-gray-700 mt-2 flex items-center">
-                          <i className="fa-solid fa-location-dot mr-2 text-blue-500"></i>
+                          <i aria-hidden="true" className="fa-solid fa-location-dot mr-2 text-blue-500"></i>
                           <strong>Destino:</strong> {movement.destination}
                         </p>
                       )}
                       {movement.observation && (
                         <p className="text-sm text-gray-700 mt-2 flex items-center">
-                          <i className="fa-solid fa-sticky-note mr-2 text-yellow-500"></i>
+                          <i aria-hidden="true" className="fa-solid fa-sticky-note mr-2 text-yellow-500"></i>
                           <strong>Obs:</strong> {movement.observation}
                         </p>
                       )}
@@ -309,7 +307,7 @@ export default function Movements() {
                       }`}>
                       {movement.type === "entrada" ? "+" : "-"}{movement.quantity}
                     </div>
-                    <div className="text-sm text-gray-500">unidade(s)</div>
+                    <div className="text-sm text-gray-600">unidade(s)</div>
                   </div>
                 </div>
               ))}

@@ -1,3 +1,4 @@
+import { ErrorState } from "@/components/shared/error-state";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
@@ -83,7 +84,7 @@ export default function Categories() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: categories = [], isLoading } = useQuery<Category[]>({
+  const { data: categories = [], isLoading, isError, isFetching, refetch } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
   });
 
@@ -209,17 +210,17 @@ export default function Categories() {
     >
       <Card className="border border-gray-200 shadow-sm">
         <CardContent className="p-6">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
             <div>
               <h3 className="text-xl font-semibold text-gray-900 mb-1">Categorias Cadastradas</h3>
-              <p className="text-sm text-gray-500">Visualize e gerencie todas as categorias do sistema</p>
+              <p className="text-sm text-gray-600">Visualize e gerencie todas as categorias do sistema</p>
             </div>
             <Button 
-              className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 shadow-lg hover:shadow-xl rounded-full px-4"
+              className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 shadow-sm hover:shadow-md rounded-full px-4"
               data-testid="button-add-category"
               onClick={handleOpenModal}
             >
-              <i className={mapIconClass("fas fa-tags")}></i>
+              <i aria-hidden="true" className={mapIconClass("fas fa-tags")}></i>
               <span className="ml-2">Nova Categoria</span>
             </Button>
 
@@ -288,7 +289,7 @@ export default function Categories() {
                                 {iconOptions.map((option) => (
                                   <SelectItem key={option.value} value={option.value}>
                                     <div className="flex items-center space-x-2">
-                                      <i className={mapIconClass(option.value)}></i>
+                                      <i aria-hidden="true" className={mapIconClass(option.value)}></i>
                                       <span>{option.label}</span>
                                     </div>
                                   </SelectItem>
@@ -317,12 +318,12 @@ export default function Categories() {
                         >
                           {(createCategoryMutation.isPending || updateCategoryMutation.isPending) ? (
                             <>
-                              <i className={`${mapIconClass("fas fa-spinner")} fa-spin mr-2`}></i>
+                              <i aria-hidden="true" className={`${mapIconClass("fas fa-spinner")} fa-spin mr-2`}></i>
                               Salvando...
                             </>
                           ) : (
                             <>
-                              <i className={mapIconClass("fas fa-save")}></i>
+                              <i aria-hidden="true" className={mapIconClass("fas fa-save")}></i>
                               <span className="ml-2">{editingCategory ? "Atualizar" : "Salvar"} Categoria</span>
                             </>
                           )}
@@ -335,8 +336,8 @@ export default function Categories() {
             )}
           </div>
 
-          {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {isError ? <ErrorState onRetry={() => { void refetch(); }} isRetrying={isFetching} /> : isLoading ? (
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,18rem),1fr))] gap-4">
               {Array.from({ length: 6 }).map((_, i) => (
                 <Card key={i} className="border border-gray-200">
                   <CardContent className="p-4">
@@ -347,34 +348,34 @@ export default function Categories() {
             </div>
           ) : categories.length === 0 ? (
             <div className="text-center py-16">
-              <i className={`${mapIconClass("fas fa-tags")} text-5xl text-gray-400 mb-4`}></i>
+              <i aria-hidden="true" className={`${mapIconClass("fas fa-tags")} text-5xl text-muted-foreground mb-4`}></i>
               <h4 className="text-lg font-semibold text-gray-900 mb-2">Nenhuma categoria cadastrada</h4>
-              <p className="text-gray-500 mb-6">Adicione a primeira categoria para organizar seu almoxarifado</p>
+              <p className="text-gray-600 mb-6">Adicione a primeira categoria para organizar seu almoxarifado</p>
               <Button onClick={() => setShowAddModal(true)} className="bg-primary-600 hover:bg-primary-700">
-                <i className={mapIconClass("fas fa-plus")}></i>
+                <i aria-hidden="true" className={mapIconClass("fas fa-plus")}></i>
                 <span className="ml-2">Nova Categoria</span>
               </Button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,18rem),1fr))] gap-6">
               {categories.map((category) => (
                 <Card
                   key={category.id}
-                  className="border border-gray-200 hover:shadow-lg hover:-translate-y-1 transition-all duration-200 bg-white"
+                  className="border border-gray-200 hover:shadow-sm hover:-translate-y-1 transition-all duration-200 bg-white"
                   data-testid={`category-${category.id}`}
                 >
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-center space-x-3">
+                      <div className="flex min-w-0 flex-wrap items-center gap-3">
                         <div className="w-14 h-14 bg-gradient-to-br from-primary-100 to-primary-200 rounded-xl flex items-center justify-center border border-primary-200/50 shadow-sm">
-                          <i className={`${mapIconClass(category.icon)} text-primary-600 text-xl`}></i>
+                          <i aria-hidden="true" className={`${mapIconClass(category.icon)} text-primary-600 text-xl`}></i>
                         </div>
                         <div>
                           <h4 className="font-semibold text-gray-900 text-lg" data-testid={`category-name-${category.id}`}>
                             {category.name}
                           </h4>
                           {category.description && (
-                            <p className="text-sm text-gray-500 mt-1 leading-relaxed">
+                            <p className="text-sm text-gray-600 mt-1 leading-relaxed">
                               {category.description}
                             </p>
                           )}
@@ -382,7 +383,7 @@ export default function Categories() {
                       </div>
                     </div>
                     
-                    <div className="text-xs text-gray-400 mb-4 border-t border-gray-100 pt-3">
+                    <div className="text-xs text-muted-foreground mb-4 border-t border-gray-100 pt-3">
                       Criado em: {new Date(category.createdAt).toLocaleDateString("pt-BR")}
                     </div>
                     
@@ -396,7 +397,7 @@ export default function Categories() {
                         title="Editar categoria"
                         aria-label={`Editar categoria ${category.name}`}
                       >
-                        <i className={mapIconClass("fas fa-edit")}></i>
+                        <i aria-hidden="true" className={mapIconClass("fas fa-edit")}></i>
                         <span className="ml-1 hidden sm:inline">Editar</span>
                       </Button>
                       <Button
@@ -409,7 +410,7 @@ export default function Categories() {
                         title="Excluir categoria"
                         aria-label={`Excluir categoria ${category.name}`}
                       >
-                        <i className={mapIconClass("fas fa-trash")}></i>
+                        <i aria-hidden="true" className={mapIconClass("fas fa-trash")}></i>
                         <span className="ml-1 hidden sm:inline">Excluir</span>
                       </Button>
                     </div>

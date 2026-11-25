@@ -48,6 +48,7 @@ Sem alterar server/, shared/, API, rotas, autenticação, RBAC, heartbeat, query
 - CREATE client/src/components/inventory/{item-card,item-actions}.tsx se extração reduzir duplicação; componente recebe dados e callbacks existentes; não criar mutation. Tabela mantém semântica, scroll local com nome acessível. Skeleton acompanha colunas.
 - Gate: seleção, filtros, estados, CRUD, entrada/saída, QR, exportações e permissões com payloads do baseline.
 ## UI-06 — telas
+- Grids por largura útil via auto-fit/minmax nas telas operacionais; não alterar cálculos, ranking ou ordenação. Erro/retry explícitos em dashboard, histórico, consumo, usuários e categorias; no dashboard só refazer consultas com falha, respeitando enabled/RBAC existentes. Estados de formulário e callbacks continuam nos mesmos componentes. Cores fixas dos textos/CTAs serão ajustadas após os achados axe; filtros ganham nomes acessíveis. Medir nove rotas/resoluções e todos os asserts, sem exclusões.
 - MODIFY client/src/pages/{dashboard,movements,history,consumption,users,categories}.tsx: grid ajustado ao espaço útil, ações wrap, labels/estados, organização visual; não recalcular KPIs, ranking ou filtros. Priorizar estoque crítico, informação e navegação.
 - Gate: mesmos valores e resultados; telas curtas/longas, filtros, roles, erros.
 ## UI-07 — QR
