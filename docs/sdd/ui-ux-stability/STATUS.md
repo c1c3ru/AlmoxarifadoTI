@@ -8,7 +8,7 @@ Issue #33 · 2026-11-25 · base 75b89194f12a537b9640aad5f1f290f75d736252 · bran
 | UI-02 | DOING | Drawer Radix, estados separados, foco, ações recolhidas e zoom implementados. Typecheck/lint/build PASS; 12/12 testes focados Chromium PASS (foco preso/restaurado, Escape, resize, CRUD/inline/CSV/roles). Verify em execução; aceite final segue bloqueado |
 | UI-03 | DOING | Dialog/AlertDialog com vh/dvh, margem, scroll e Close traduzido; foco externo restaurado e labels reais do cadastro. Verify PASS (30 testes); 6/6 testes focados PASS. Teclado virtual físico pendente |
 | UI-04 | DOING | Tokens semânticos mais escuros, controles móveis 44px, Card min-w-0 e ErrorState reutilizado por inventário/pesquisa; verify PASS (30 testes), testes focados de vazio/erro PASS. Axe completo será reexecutado após UI-05/UI-06 |
-| UI-05 | TODO | Depende UI-04 |
+| UI-05 | DOING | Inventário de uma única árvore com cards móveis/tabela desktop, campos/ações completos, seleção rotulada e CSV único. Verify PASS (30 testes); 22/22 testes focados PASS (textos longos, viewports, CSV/resize, CRUD/inline e retry) |
 | UI-06 | TODO | Depende UI-05 |
 | UI-07 | TODO | Depende UI-06; hardware obrigatório |
 | UI-08 | TODO | Depende UI-07 e todos gates |

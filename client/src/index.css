@@ -2,6 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
+.inventory-table td { overflow-wrap: anywhere; }
+@media (max-width: 767px) {
+  .inventory-table, .inventory-table tbody { display: block; }
+  .inventory-table tbody { padding: 12px; }
+  .inventory-table tbody tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    margin-bottom: 12px;
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--radius);
+    background: hsl(var(--card));
+  }
+  .inventory-table tbody tr:last-child { margin-bottom: 0; }
+  .inventory-table tbody td { display: block; min-width: 0; padding: 8px 12px; }
+}
+
 /* Bound modal geometry independently of consumer width/height utility overrides. */
 .sgat-dialog {
   width: calc(100% - 2rem);
