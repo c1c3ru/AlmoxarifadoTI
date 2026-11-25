@@ -87,7 +87,7 @@ export function QRScanner({ onScan, isActive, onActivate }: QRScannerProps) {
       <Card className="w-full max-w-xl mx-auto h-[70vh] min-h-[360px] bg-gray-100 border-2 border-dashed border-gray-300 rounded-none sm:rounded-lg flex items-center justify-center overflow-visible">
         <CardContent className="text-center p-6">
           <i className="fas fa-camera text-4xl text-gray-400 mb-4"></i>
-          <p className="text-gray-500 mb-4">Clique para ativar a câmera</p>
+          <p className="text-muted-foreground mb-4">Clique para ativar a câmera</p>
           <Button
             onClick={onActivate}
             className="bg-primary-600 text-white hover:bg-primary-700"
