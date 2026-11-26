@@ -32,7 +32,7 @@ export function AddItemModal({ open, onOpenChange }: AddItemModalProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const form = useForm<AddItemFormData>({
+  const form = useForm<z.input<typeof addItemSchema>, unknown, AddItemFormData>({
     resolver: zodResolver(addItemSchema),
     defaultValues: {
       name: "",
@@ -161,6 +161,7 @@ export function AddItemModal({ open, onOpenChange }: AddItemModalProps) {
                         type="number"
                         min="0"
                         {...field}
+                        value={field.value as number}
                         data-testid="input-current-stock"
                       />
                     </FormControl>
@@ -180,6 +181,7 @@ export function AddItemModal({ open, onOpenChange }: AddItemModalProps) {
                         type="number"
                         min="0"
                         {...field}
+                        value={field.value as number}
                         data-testid="input-min-stock"
                       />
                     </FormControl>
