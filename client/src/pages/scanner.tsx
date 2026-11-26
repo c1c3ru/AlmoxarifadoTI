@@ -192,23 +192,23 @@ export default function Scanner() {
       subtitle="Escaneie QR Codes para dar baixa rápida no estoque"
       showAddButton={false}
     >
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-4xl min-w-0 mx-auto">
         {/* Hero Section */}
         <Card className="bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 border-0 shadow-lg mb-8">
-          <CardContent className="p-8 text-center">
-            <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
-              <i className="fa-solid fa-qrcode text-white text-3xl"></i>
+          <CardContent className="p-4 sm:p-8 text-center">
+            <div className="w-14 h-14 sm:w-20 sm:h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 sm:mb-6 shadow-lg">
+              <i className="fa-solid fa-qrcode text-white text-2xl sm:text-3xl" aria-hidden="true"></i>
             </div>
             <h3 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-3">
               Scanner QR Code
             </h3>
-            <p className="text-gray-600 font-medium mb-6">
+            <p className="text-gray-600 font-medium mb-5 sm:mb-6 max-w-2xl mx-auto">
               Aponte a câmera para o QR Code do item para dar baixa instantânea no estoque
             </p>
             {!isScanning && !scannedCode && (
               <Button
                 onClick={() => setIsScanning(true)}
-                className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 px-8 py-3 text-lg font-semibold shadow-lg"
+                className="w-full sm:w-auto bg-blue-800 hover:bg-blue-900 text-white px-5 sm:px-8 py-3 text-base sm:text-lg font-semibold shadow-lg"
               >
                 <i className="fa-solid fa-camera mr-3"></i>
                 Iniciar Scanner
@@ -219,8 +219,8 @@ export default function Scanner() {
 
         {/* Scanner Interface */}
         <Card className="bg-white border-0 shadow-xl">
-          <CardContent className="p-8">
-            <div className="mb-8">
+          <CardContent className="p-3 sm:p-8">
+            <div className="mb-4 sm:mb-8">
               <QRScanner
                 onScan={handleScan}
                 isActive={isScanning}
@@ -230,8 +230,8 @@ export default function Scanner() {
             
             {/* Success State - Item Found */}
             {scannedCode && scannedItem && !itemLoading && (
-              <div className="bg-gradient-to-r from-emerald-50 to-green-50 border-2 border-emerald-200 rounded-2xl p-6 mb-6 shadow-lg">
-                <div className="flex items-center space-x-4 mb-6">
+                <div className="bg-gradient-to-r from-emerald-50 to-green-50 border-2 border-emerald-200 rounded-2xl p-4 sm:p-6 mb-6 shadow-lg">
+                <div className="flex items-center gap-3 sm:gap-4 mb-6 min-w-0">
                   <div className="w-16 h-16 bg-emerald-500 rounded-2xl flex items-center justify-center shadow-lg">
                     <i className="fa-solid fa-check text-white text-2xl"></i>
                   </div>
@@ -250,7 +250,7 @@ export default function Scanner() {
                       <h4 className="text-2xl font-bold text-gray-900 mb-2" data-testid="scanned-item-name">
                         {scannedItem.name}
                       </h4>
-                      <div className="flex items-center space-x-3">
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                         <div className="bg-gray-100 px-3 py-1 rounded-lg font-mono text-sm" data-testid="scanned-item-code">
                           {scannedItem.internalCode}
                         </div>
@@ -342,7 +342,7 @@ export default function Scanner() {
                       />
                     </div>
                     
-                    <div className="flex space-x-4 pt-4">
+                    <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-4">
                       <Button
                         onClick={handleConfirmWithdrawal}
                         disabled={createMovementMutation.isPending}

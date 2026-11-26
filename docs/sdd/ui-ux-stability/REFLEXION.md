@@ -47,3 +47,11 @@
 - Ação: drawer Radix <1024, compacto 1024–1279, expandido >=1280, preferência desktop separada de abertura mobile; mudanças de altura não fecham o drawer. Uma única árvore de navegação, foco preso e restaurado, links com aria-current, senha/logout acessíveis recolhido; removido maximum-scale e clipping global. Heartbeat inalterado.
 - Evidência: 12/12 testes focados Chromium PASS; TypeScript, lint e build PASS. Vídeo/QR e banco seguem nos respectivos gates.
 - Próxima ação: concluir verify, PR pequeno para a base explícita UI-01; UI-03 modais. Não atribuir ao layout a correção de defeitos de inventário/contraste ainda pendentes.
+
+## R-009 · 2026-11-26 · UI-07 · retomar da base remota e validar impressão
+- Evidência: `main` avançou para `0eda4b6`; PRs #37/#39/#40/#42/#43/#44 e hotfixes #36/#38 já estão mergeados. STATUS anterior não refletia esses merges e foi reconciliado em 7/9 aceitas.
+- Ação: altura do frame QR agora usa `clamp()` com `dvh`/fallback; QR canvas tem nome acessível; CSS de impressão imprime o diálogo QR isolado; scanner reduz padding e empilha ações em celular; preview de térmica limitado ao viewport. Nenhuma regra de câmera/decode, payload, mutation ou dimensão térmica foi modificada.
+- Evidência de regressão: Playwright encontrou contraste sério 3.14:1 no botão térmico; cor escurecida para green-700. Auditorias Axe para o modal QR e para a impressora térmica agora passam sem violação séria/crítica. Suíte completa Chromium/Firefox: 56/56 PASS, incluindo scanner simulado em landscape.
+- Performance: React 19.3.1 foi mergeado pelo Dependabot #45 e o mantenedor pediu mantê-lo. Bundle monolítico excedia baseline em 18.8%; lazy loading por rota reduziu a estimativa de entry + shared + browser + rota gzip para ~146.59 KB no dashboard e ~154.06 KB em itens, abaixo do baseline 181.50 KB. Confirmar bytes finais no CI; lockfile mantido idêntico ao remoto após `npm ci` e nunca editado à mão.
+- Ambiente: Playwright local só pode abrir servidor fora do sandbox; WebKit não inicia neste host por `libmanette-0.2-0`. Não mascarar falha: workflow Linux com `install --with-deps` precisa comprovar WebKit.
+- Gate final: mantenedor confirmou que ainda precisa fazer câmera Android/iOS e impressão física; UI-07/UI-08 permanecem bloqueadas para aceite. Não fechar issue sem evidência e revisão visual humana.

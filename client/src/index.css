@@ -119,6 +119,40 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+.qr-scanner-frame {
+  height: clamp(12rem, 55vh, 32rem);
+}
+
+@supports (height: 100dvh) {
+  .qr-scanner-frame {
+    height: clamp(12rem, 55dvh, 32rem);
+  }
+}
+
+@media print {
+  body:has([data-print-qr]) #root {
+    display: none !important;
+  }
+
+  body:has([data-print-qr]) [data-radix-dialog-overlay] {
+    display: none !important;
+  }
+
+  [data-print-qr] {
+    position: static !important;
+    transform: none !important;
+    width: auto !important;
+    max-width: none !important;
+    max-height: none !important;
+    overflow: visible !important;
+    box-shadow: none !important;
+  }
+
+  [data-print-qr] button {
+    display: none !important;
+  }
+}
+
 @layer base {
   * {
     @apply border-border;

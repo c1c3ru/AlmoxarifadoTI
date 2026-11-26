@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Switch, Route, Redirect } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -5,19 +6,19 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { SidebarProvider } from "@/hooks/use-sidebar";
-import Login from "@/pages/login";
-import Dashboard from "@/pages/dashboard";
-import Items from "@/pages/items";
-import Search from "@/pages/search";
-import Scanner from "@/pages/scanner";
-import Movements from "@/pages/movements";
-import History from "@/pages/history";
-import Users from "@/pages/users";
-import Categories from "@/pages/categories";
-import NotFound from "@/pages/not-found";
-import RegisterUserPage from "@/pages/register";
-import ResetPassword from "@/pages/reset-password";
-import ConsumptionDashboard from "@/pages/consumption";
+const Login = lazy(() => import("@/pages/login"));
+const Dashboard = lazy(() => import("@/pages/dashboard"));
+const Items = lazy(() => import("@/pages/items"));
+const Search = lazy(() => import("@/pages/search"));
+const Scanner = lazy(() => import("@/pages/scanner"));
+const Movements = lazy(() => import("@/pages/movements"));
+const History = lazy(() => import("@/pages/history"));
+const Users = lazy(() => import("@/pages/users"));
+const Categories = lazy(() => import("@/pages/categories"));
+const NotFound = lazy(() => import("@/pages/not-found"));
+const RegisterUserPage = lazy(() => import("@/pages/register"));
+const ResetPassword = lazy(() => import("@/pages/reset-password"));
+const ConsumptionDashboard = lazy(() => import("@/pages/consumption"));
 import { SpeedInsights } from "@vercel/speed-insights/react";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -55,7 +56,8 @@ function Router() {
   const { user } = useAuth();
 
   return (
-    <Switch>
+    <Suspense fallback={<div role="status" aria-live="polite" className="min-h-dvh flex items-center justify-center text-gray-700">Carregando interface…</div>}>
+      <Switch>
       <Route path="/login">
         {user ? <Redirect to="/" /> : <Login />}
       </Route>
@@ -127,7 +129,8 @@ function Router() {
       </Route>
       
       <Route component={NotFound} />
-    </Switch>
+      </Switch>
+    </Suspense>
   );
 }
 

@@ -84,7 +84,7 @@ export function QRScanner({ onScan, isActive, onActivate }: QRScannerProps) {
 
   if (!isActive) {
     return (
-      <Card className="w-full max-w-xl mx-auto h-[70vh] min-h-[360px] bg-gray-100 border-2 border-dashed border-gray-300 rounded-none sm:rounded-lg flex items-center justify-center overflow-visible">
+      <Card className="qr-scanner-frame w-full max-w-xl mx-auto bg-gray-100 border-2 border-dashed border-gray-300 rounded-none sm:rounded-lg flex items-center justify-center overflow-hidden">
         <CardContent className="text-center p-6">
           <i className="fas fa-camera text-4xl text-gray-400 mb-4"></i>
           <p className="text-gray-600 mb-4">Clique para ativar a câmera</p>
@@ -102,8 +102,8 @@ export function QRScanner({ onScan, isActive, onActivate }: QRScannerProps) {
   }
 
   return (
-    <Card className="w-full max-w-xl mx-auto h-[70vh] min-h-[360px] rounded-none sm:rounded-lg overflow-visible">
-      <CardContent className="p-0 relative bg-black h-full overflow-visible">
+    <Card className="qr-scanner-frame w-full max-w-xl mx-auto rounded-none sm:rounded-lg overflow-hidden">
+      <CardContent className="p-0 relative bg-black h-full overflow-hidden">
         {error ? (
           <div className="h-full flex items-center justify-center bg-gray-100">
             <div className="text-center p-6">
@@ -128,7 +128,7 @@ export function QRScanner({ onScan, isActive, onActivate }: QRScannerProps) {
               muted
               data-testid="video-camera-feed"
             />
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-visible">
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <div
                 className={
                   `w-56 h-56 max-w-[75%] max-h-[75%] rounded-lg shadow-[0_0_0_9999px_rgba(0,0,0,0.35)] ` +

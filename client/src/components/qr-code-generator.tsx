@@ -66,6 +66,9 @@ export function QRCodeGenerator({ value, size = 64, className = "" }: QRCodeGene
       height={size}
       className={`border border-gray-200 rounded ${className}`}
       title={`QR Code para: ${value}`}
+      role="img"
+      aria-label="Código QR do item"
+      style={{ maxWidth: "100%", height: "auto", display: "block" }}
     />
   );
-} 
+}
