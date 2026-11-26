@@ -1,6 +1,7 @@
 import { test, expect, item, openPage } from "./fixtures";
 
 test("simulated camera decodes the existing ITEM payload and withdraws once", async ({ page, api }) => {
+  await page.setViewportSize({ width: 844, height: 390 });
   await page.addInitScript(({ id, code }) => {
     class TestDetector {
       static async getSupportedFormats() { return ["qr_code"]; }
@@ -22,6 +23,11 @@ test("simulated camera decodes the existing ITEM payload and withdraws once", as
   }, { id: item.id, code: item.internalCode });
   await openPage(page, "/scanner");
   await page.getByTestId("button-activate-camera").click();
+  const scannerFrame = page.locator(".qr-scanner-frame");
+  const frameBounds = await scannerFrame.boundingBox();
+  expect(frameBounds).not.toBeNull();
+  expect(frameBounds!.height).toBeLessThan(390);
+  expect(frameBounds!.width).toBeLessThanOrEqual(844);
   await expect(page.getByTestId("scanned-item-code")).toHaveText(item.internalCode);
   await page.getByTestId("input-withdrawal-quantity").fill("2");
   await page.getByTestId("input-withdrawal-destination").fill("Laboratório sintético");

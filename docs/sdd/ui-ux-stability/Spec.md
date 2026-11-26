@@ -49,8 +49,12 @@ Sem alterar server/, shared/, API, rotas, autenticação, RBAC, heartbeat, query
 - Gate: mesmos valores e resultados; telas curtas/longas, filtros, roles, erros.
 ## UI-07 — QR
 - MODIFY client/src/components/{qr-scanner,thermal-qr-printer,qr-code-generator}.tsx, client/src/components/modals/qr-code-modal.tsx, client/src/pages/scanner.tsx apenas conforme necessário: viewport dinâmico, landscape e safe-area; manter lifecycle, decode, payload e área física de impressão.
-- Gate: câmera simulada + hardware Android/iOS e impressora real; sem homologação física, BLOCKED para aceite final.
+- MODIFY client/src/index.css para limitar a altura do scanner por viewport dinâmica e isolar o QR modal no print; não ocultar conteúdo de impressão nem alterar dimensões/configurações térmicas existentes.
+- Testes: decode com câmera simulada em landscape, QR e preview térmico a 320×568, foco/área impressa e axe no modal sem violações críticas/sérias. Testar QR gerado real e payload existente; não simular aprovação da impressora.
+- Gate: câmera simulada + hardware Android/iOS e impressora real; sem homologação física, BLOCKED para aceite final. O mantenedor informou que ainda precisa realizar a homologação.
 ## UI-08 — homologação
 - MODIFY docs/sdd/ui-ux-stability/{STATUS,REFLEXION}.md e README.md se necessário; matriz, CI, axe, teste manual, performance comparada, aprovação visual e rollback por revert. Não fazer deploy ou merge automático.
+- Confirmar Node 22, npm ci, verify, Chromium/Firefox/WebKit, PostgreSQL descartável 9/9, axe em páginas e diálogos, revisão de screenshots 200%, teclado/foco e câmera/impressora reais. Comparar bundle gzip à baseline 181,50 KB; >10% exige mitigação ou exceção explícita do mantenedor documentada antes de aceite.
+- Não fechar #33 nem declarar 9/9 enquanto a homologação física e a aprovação visual humana estiverem pendentes.
 ## Loop e gates
 A cada ciclo ler a skill .agents/skills/reflexion/SKILL.md; Observe/Actor/Evaluator/Reflector/Memory. Evidência de teste > opinião. Máximo 3 tentativas de correção por causa, depois BLOCKED. Regressões de negócio são P0. npm ci + npm run verify + npm run test:e2e quando disponível; comparação de bundle/métricas >10% exige investigação; CI e revisão humana obrigatórios. Progresso = tarefas aceitas / 9. Ver issue #33 para matriz e DoD.

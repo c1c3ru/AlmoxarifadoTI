@@ -192,7 +192,7 @@ export function ThermalQRPrinter({ open, onOpenChange, items }: ThermalQRPrinter
                     value={config.paperWidth} 
                     onValueChange={(value) => updateConfig('paperWidth', value)}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger id="paper-width">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -258,10 +258,10 @@ export function ThermalQRPrinter({ open, onOpenChange, items }: ThermalQRPrinter
 
             <Button 
               onClick={handlePrint}
-              className="w-full bg-green-600 hover:bg-green-700"
+              className="w-full bg-green-700 text-white hover:bg-green-800 focus-visible:ring-2 focus-visible:ring-green-700 focus-visible:ring-offset-2"
               disabled={items.length === 0}
             >
-              <i className="fas fa-print mr-2"></i>
+              <i className="fas fa-print mr-2" aria-hidden="true"></i>
               Imprimir {items.length} QR Code{items.length !== 1 ? 's' : ''}
             </Button>
           </div>
