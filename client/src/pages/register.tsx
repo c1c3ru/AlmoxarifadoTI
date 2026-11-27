@@ -25,7 +25,7 @@ const passwordPolicy = z
 const registerSchema = z
   .object({
     role: z.enum(["admin", "tech"], {
-      required_error: "Perfil é obrigatório",
+      error: "Perfil é obrigatório",
     }),
     name: z.string()
       .min(2, "Nome deve ter pelo menos 2 caracteres")

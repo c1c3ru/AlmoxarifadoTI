@@ -34,7 +34,7 @@ export function EditItemModal({ open, onOpenChange, item }: EditItemModalProps) 
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const form = useForm<EditItemFormData>({
+  const form = useForm<z.input<typeof editItemSchema>, unknown, EditItemFormData>({
     resolver: zodResolver(editItemSchema),
     defaultValues: {
       name: "",
@@ -181,6 +181,7 @@ export function EditItemModal({ open, onOpenChange, item }: EditItemModalProps) 
                         type="number"
                         min="0"
                         {...field}
+                        value={field.value as number}
                         data-testid="input-current-stock"
                       />
                     </FormControl>
@@ -200,6 +201,7 @@ export function EditItemModal({ open, onOpenChange, item }: EditItemModalProps) 
                         type="number"
                         min="0"
                         {...field}
+                        value={field.value as number}
                         data-testid="input-min-stock"
                       />
                     </FormControl>
@@ -304,4 +306,4 @@ export function EditItemModal({ open, onOpenChange, item }: EditItemModalProps) 
       </DialogContent>
     </Dialog>
   );
-} 
+}

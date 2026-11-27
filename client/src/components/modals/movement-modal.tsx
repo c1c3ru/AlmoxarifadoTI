@@ -43,7 +43,7 @@ export function MovementModal({ open, onOpenChange, item, initialType }: Movemen
 
   const activeItem = item ?? selectedItemLocal;
 
-  const form = useForm<MovementFormData>({
+  const form = useForm<z.input<typeof movementSchema>, unknown, MovementFormData>({
     resolver: zodResolver(movementSchema),
     defaultValues: {
       type: initialType || "saida",
@@ -226,6 +226,7 @@ export function MovementModal({ open, onOpenChange, item, initialType }: Movemen
                         ? (activeItem ? activeItem.currentStock : 0)
                         : 99999}
                       {...field}
+                      value={field.value as number}
                       data-testid="input-movement-quantity"
                     />
                   </FormControl>
