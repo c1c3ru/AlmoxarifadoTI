@@ -1,0 +1,18 @@
+{
+  "android": {
+    "validado": false,
+    "dispositivo": "",
+    "evidencia_path": ""
+  },
+  "ios": {
+    "validado": false,
+    "dispositivo": "",
+    "evidencia_path": ""
+  },
+  "impressora_termica": {
+    "validado": false,
+    "modelo": "",
+    "dpi": 203,
+    "evidencia_path": ""
+  }
+}

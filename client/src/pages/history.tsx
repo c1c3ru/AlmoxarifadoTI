@@ -1,3 +1,4 @@
+import { ErrorState } from "@/components/shared/error-state";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { MainLayout } from "@/components/layout/main-layout";
@@ -20,7 +21,7 @@ export default function History() {
   });
 
   const itemIdParam = selectedItemFilter === ALL ? undefined : selectedItemFilter;
-  const { data: movements = [], isLoading } = useQuery<MovementWithDetails[]>({
+  const { data: movements = [], isLoading, isError, isFetching, refetch } = useQuery<MovementWithDetails[]>({
     queryKey: ["/api/movements", { itemId: itemIdParam, limit: 100 }],
   });
 
@@ -53,8 +54,9 @@ export default function History() {
       subtitle="Log completo de todas as operações do almoxarifado"
       showAddButton={false}
     >
+      {isError ? <ErrorState onRetry={() => { void refetch(); }} isRetrying={isFetching} /> : <>
       {/* Summary Dashboard */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,14rem),1fr))] gap-6 mb-8">
         <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-0 shadow-lg hover:shadow-xl transition-all duration-300">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -145,6 +147,7 @@ export default function History() {
                   <i className="fa-solid fa-search text-gray-400"></i>
                 </div>
                 <Input
+                  aria-label="Buscar no histórico"
                   placeholder="Buscar..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -297,6 +300,7 @@ export default function History() {
           )}
         </CardContent>
       </Card>
+      </>}
     </MainLayout>
   );
 }

@@ -1,3 +1,4 @@
+import { ErrorState } from "@/components/shared/error-state";
 import { useQuery } from "@tanstack/react-query";
 import { MainLayout } from "@/components/layout/main-layout";
 import { Card, CardContent } from "@/components/ui/card";
@@ -26,31 +27,40 @@ export default function Dashboard() {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
 
-  const { data: stats, isLoading: statsLoading } = useQuery<DashboardStats>({
+  const statsQuery = useQuery<DashboardStats>({
     queryKey: ["/api/dashboard/stats"],
     // Atualiza periodicamente para refletir usuários online
     refetchInterval: 60000,
     refetchOnWindowFocus: true,
   });
 
-  const { data: lowStockItems = [], isLoading: lowStockLoading } = useQuery<ItemWithCategory[]>({
+  const lowStockQuery = useQuery<ItemWithCategory[]>({
     queryKey: ["/api/dashboard/low-stock"],
   });
 
-  const { data: recentMovements = [], isLoading: movementsLoading } = useQuery<MovementWithDetails[]>({
+  const movementsQuery = useQuery<MovementWithDetails[]>({
     queryKey: ["/api/dashboard/recent-movements"],
     enabled: isAdmin, // Only load movements for admins
   });
 
-  const { data: categories = [] } = useQuery<(any & { itemCount: number })[]>({
+  const categoriesQuery = useQuery<(any & { itemCount: number })[]>({
     queryKey: ["/api/categories/with-counts"],
   });
 
-  const { data: onlineUsers = [], isLoading: onlineLoading } = useQuery<OnlineUser[]>({
+  const onlineQuery = useQuery<OnlineUser[]>({
     queryKey: ["/api/users/online"],
     refetchInterval: 60000,
     refetchOnWindowFocus: true,
   });
+
+  const { data: stats, isLoading: statsLoading } = statsQuery;
+  const { data: lowStockItems = [], isLoading: lowStockLoading } = lowStockQuery;
+  const { data: recentMovements = [], isLoading: movementsLoading } = movementsQuery;
+  const { data: categories = [] } = categoriesQuery;
+  const { data: onlineUsers = [], isLoading: onlineLoading } = onlineQuery;
+  const queries = [statsQuery, lowStockQuery, movementsQuery, categoriesQuery, onlineQuery];
+  const hasQueryError = queries.some((query) => query.isError);
+  const retryFailed = () => { queries.filter((query) => query.isError).forEach((query) => { void query.refetch(); }); };
 
   return (
     <MainLayout
@@ -58,8 +68,9 @@ export default function Dashboard() {
       subtitle="Visão geral completa do almoxarifado"
       showAddButton={false}
     >
+      {hasQueryError ? <ErrorState message="Não foi possível carregar o dashboard." onRetry={retryFailed} isRetrying={queries.some((query) => query.isFetching)} /> : <>
       {/* Hero Stats Section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,14rem),1fr))] gap-6 mb-8">
         <Card className="relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 group bg-card hover:-translate-y-1">
           <div className="absolute inset-0 bg-gradient-to-br from-chart-1/10 to-transparent opacity-50" />
           <CardContent className="p-6 relative z-10">
@@ -259,7 +270,7 @@ export default function Dashboard() {
       )}
 
       {/* Content Grid */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,24rem),1fr))] gap-8">
         {/* Recent Activities - Only for Admins */}
         {isAdmin && (
           <Card className="bg-card border-border shadow-md hover:shadow-lg transition-all duration-300">
@@ -384,6 +395,7 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+      </>}
     </MainLayout>
   );
 }

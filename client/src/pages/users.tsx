@@ -1,3 +1,4 @@
+import { ErrorState } from "@/components/shared/error-state";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
@@ -45,7 +46,7 @@ export default function Users() {
   const queryClient = useQueryClient();
   const { user: currentUser } = useAuth();
 
-  const { data: users = [], isLoading } = useQuery<User[]>({
+  const { data: users = [], isLoading, isError, isFetching, refetch } = useQuery<User[]>({
     queryKey: ["/api/users"],
   });
 
@@ -295,8 +296,9 @@ export default function Users() {
         </Card>
       )}
 
+      {!isError && <>
       {/* Hero Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,16rem),1fr))] gap-6 mb-8">
         <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-0 shadow-lg">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -346,11 +348,12 @@ export default function Users() {
         </Card>
       </div>
 
+      </>}
       {/* Users Management */}
-      <Card className="bg-white border-0 shadow-xl">
+      <Card className="bg-white border-0 shadow-sm">
         <div className="bg-gradient-to-r from-gray-50 to-blue-50 px-6 py-4 border-b border-gray-200">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex min-w-0 flex-wrap items-center gap-3">
               <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
                 <i className="fa-solid fa-users text-white text-sm"></i>
               </div>
@@ -567,7 +570,7 @@ export default function Users() {
         </div>
 
         <CardContent className="p-6">
-          {isLoading ? (
+          {isError ? <ErrorState onRetry={() => { void refetch(); }} isRetrying={isFetching} /> : isLoading ? (
             <div className="space-y-4">
               {Array.from({ length: 5 }).map((_, i) => (
                 <div key={i} className="flex items-center space-x-4 p-4 rounded-xl border border-gray-200">

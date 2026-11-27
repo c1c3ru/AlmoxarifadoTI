@@ -332,11 +332,12 @@ export default function RegisterUserPage() {
                           }`}></i>
                         Nome Completo *
                       </FormLabel>
-                      <FormControl>
-                        <div className="relative">
+                      <div className="relative">
+                        <FormControl>
                           <Input
                             placeholder="Digite o nome completo"
                             {...field}
+                            autoComplete="name"
                             data-testid="input-name"
                             className={`h-11 placeholder:text-gray-400 pr-10 transition-colors ${hasError ? 'border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-200' :
                               isEmpty ? 'border-orange-300 bg-orange-50 focus:border-orange-500 focus:ring-orange-200' :
@@ -345,17 +346,17 @@ export default function RegisterUserPage() {
                               }`}
                             maxLength={100}
                           />
-                          {isValid && (
-                            <i className="fa-solid fa-check absolute right-3 top-1/2 transform -translate-y-1/2 text-green-500"></i>
-                          )}
-                          {hasError && (
-                            <i className="fa-solid fa-exclamation-triangle absolute right-3 top-1/2 transform -translate-y-1/2 text-red-500"></i>
-                          )}
-                          {isEmpty && !hasError && (
-                            <i className="fa-solid fa-info-circle absolute right-3 top-1/2 transform -translate-y-1/2 text-orange-500"></i>
-                          )}
-                        </div>
-                      </FormControl>
+                        </FormControl>
+                        {isValid && (
+                          <i className="fa-solid fa-check absolute right-3 top-1/2 transform -translate-y-1/2 text-green-500"></i>
+                        )}
+                        {hasError && (
+                          <i className="fa-solid fa-exclamation-triangle absolute right-3 top-1/2 transform -translate-y-1/2 text-red-500"></i>
+                        )}
+                        {isEmpty && !hasError && (
+                          <i className="fa-solid fa-info-circle absolute right-3 top-1/2 transform -translate-y-1/2 text-orange-500"></i>
+                        )}
+                      </div>
                       <FormMessage className="text-red-600 font-medium flex items-center mt-2">
                         {hasError && <i className="fa-solid fa-exclamation-triangle mr-2"></i>}
                       </FormMessage>
@@ -385,8 +386,8 @@ export default function RegisterUserPage() {
                           }`}></i>
                         Email Institucional *
                       </FormLabel>
-                      <FormControl>
-                        <div className="relative">
+                      <div className="relative">
+                        <FormControl>
                           <Input
                             type="email"
                             placeholder="usuario@instituicao.edu.br"
@@ -400,17 +401,17 @@ export default function RegisterUserPage() {
                             maxLength={255}
                             autoComplete="email"
                           />
-                          {isValid && (
-                            <i className="fa-solid fa-check absolute right-3 top-1/2 transform -translate-y-1/2 text-green-500"></i>
-                          )}
-                          {hasError && (
-                            <i className="fa-solid fa-exclamation-triangle absolute right-3 top-1/2 transform -translate-y-1/2 text-red-500"></i>
-                          )}
-                          {isEmpty && !hasError && (
-                            <i className="fa-solid fa-info-circle absolute right-3 top-1/2 transform -translate-y-1/2 text-orange-500"></i>
-                          )}
-                        </div>
-                      </FormControl>
+                        </FormControl>
+                        {isValid && (
+                          <i className="fa-solid fa-check absolute right-3 top-1/2 transform -translate-y-1/2 text-green-500"></i>
+                        )}
+                        {hasError && (
+                          <i className="fa-solid fa-exclamation-triangle absolute right-3 top-1/2 transform -translate-y-1/2 text-red-500"></i>
+                        )}
+                        {isEmpty && !hasError && (
+                          <i className="fa-solid fa-info-circle absolute right-3 top-1/2 transform -translate-y-1/2 text-orange-500"></i>
+                        )}
+                      </div>
                       <FormMessage className="text-red-600 font-medium flex items-center mt-2">
                         {hasError && <i className="fa-solid fa-exclamation-triangle mr-2"></i>}
                       </FormMessage>
@@ -440,8 +441,8 @@ export default function RegisterUserPage() {
                           }`}></i>
                         Matrícula {selectedRole === 'admin' ? 'Administrativa' : 'de Técnico'} *
                       </FormLabel>
-                      <FormControl>
-                        <div className="relative">
+                      <div className="relative">
+                        <FormControl>
                           <Input
                             placeholder={matriculaConfig.placeholder}
                             {...field}
@@ -456,17 +457,17 @@ export default function RegisterUserPage() {
                             inputMode="numeric"
                             autoComplete="off"
                           />
-                          {isValid && (
-                            <i className="fa-solid fa-check absolute right-3 top-1/2 transform -translate-y-1/2 text-green-500"></i>
-                          )}
-                          {hasError && (
-                            <i className="fa-solid fa-exclamation-triangle absolute right-3 top-1/2 transform -translate-y-1/2 text-red-500"></i>
-                          )}
-                          {isEmpty && !hasError && (
-                            <i className="fa-solid fa-info-circle absolute right-3 top-1/2 transform -translate-y-1/2 text-orange-500"></i>
-                          )}
-                        </div>
-                      </FormControl>
+                        </FormControl>
+                        {isValid && (
+                          <i className="fa-solid fa-check absolute right-3 top-1/2 transform -translate-y-1/2 text-green-500"></i>
+                        )}
+                        {hasError && (
+                          <i className="fa-solid fa-exclamation-triangle absolute right-3 top-1/2 transform -translate-y-1/2 text-red-500"></i>
+                        )}
+                        {isEmpty && !hasError && (
+                          <i className="fa-solid fa-info-circle absolute right-3 top-1/2 transform -translate-y-1/2 text-orange-500"></i>
+                        )}
+                      </div>
                       <p className={`text-xs mt-1 ${hasError ? 'text-red-500' : isEmpty ? 'text-orange-500' : 'text-gray-500'
                         }`}>{matriculaConfig.description}</p>
                       <FormMessage className="text-red-600 font-medium flex items-center mt-2">
@@ -498,8 +499,8 @@ export default function RegisterUserPage() {
                           }`}></i>
                         Senha de Acesso *
                       </FormLabel>
-                      <FormControl>
-                        <div className="relative">
+                      <div className="relative">
+                        <FormControl>
                           <Input
                             type="password"
                             placeholder="Crie uma senha segura"
@@ -513,17 +514,17 @@ export default function RegisterUserPage() {
                             maxLength={128}
                             autoComplete="new-password"
                           />
-                          {isValid && (
-                            <i className="fa-solid fa-check absolute right-3 top-1/2 transform -translate-y-1/2 text-green-500"></i>
-                          )}
-                          {hasError && (
-                            <i className="fa-solid fa-exclamation-triangle absolute right-3 top-1/2 transform -translate-y-1/2 text-red-500"></i>
-                          )}
-                          {isEmpty && !hasError && (
-                            <i className="fa-solid fa-info-circle absolute right-3 top-1/2 transform -translate-y-1/2 text-orange-500"></i>
-                          )}
-                        </div>
-                      </FormControl>
+                        </FormControl>
+                        {isValid && (
+                          <i className="fa-solid fa-check absolute right-3 top-1/2 transform -translate-y-1/2 text-green-500"></i>
+                        )}
+                        {hasError && (
+                          <i className="fa-solid fa-exclamation-triangle absolute right-3 top-1/2 transform -translate-y-1/2 text-red-500"></i>
+                        )}
+                        {isEmpty && !hasError && (
+                          <i className="fa-solid fa-info-circle absolute right-3 top-1/2 transform -translate-y-1/2 text-orange-500"></i>
+                        )}
+                      </div>
                       <p className={`text-xs mt-1 ${hasError ? 'text-red-500' : isEmpty ? 'text-orange-500' : 'text-gray-500'
                         }`}>
                         Mín. 8 caracteres, com maiúscula, minúscula, número e símbolo
@@ -557,8 +558,8 @@ export default function RegisterUserPage() {
                           }`}></i>
                         Confirmar Senha *
                       </FormLabel>
-                      <FormControl>
-                        <div className="relative">
+                      <div className="relative">
+                        <FormControl>
                           <Input
                             type="password"
                             placeholder="Digite a senha novamente"
@@ -572,17 +573,17 @@ export default function RegisterUserPage() {
                             maxLength={128}
                             autoComplete="new-password"
                           />
-                          {isValid && (
-                            <i className="fa-solid fa-check absolute right-3 top-1/2 transform -translate-y-1/2 text-green-500"></i>
-                          )}
-                          {hasError && (
-                            <i className="fa-solid fa-exclamation-triangle absolute right-3 top-1/2 transform -translate-y-1/2 text-red-500"></i>
-                          )}
-                          {isEmpty && !hasError && (
-                            <i className="fa-solid fa-info-circle absolute right-3 top-1/2 transform -translate-y-1/2 text-orange-500"></i>
-                          )}
-                        </div>
-                      </FormControl>
+                        </FormControl>
+                        {isValid && (
+                          <i className="fa-solid fa-check absolute right-3 top-1/2 transform -translate-y-1/2 text-green-500"></i>
+                        )}
+                        {hasError && (
+                          <i className="fa-solid fa-exclamation-triangle absolute right-3 top-1/2 transform -translate-y-1/2 text-red-500"></i>
+                        )}
+                        {isEmpty && !hasError && (
+                          <i className="fa-solid fa-info-circle absolute right-3 top-1/2 transform -translate-y-1/2 text-orange-500"></i>
+                        )}
+                      </div>
                       <FormMessage className="text-red-600 font-medium flex items-center mt-2">
                         {hasError && <i className="fa-solid fa-exclamation-triangle mr-2"></i>}
                       </FormMessage>

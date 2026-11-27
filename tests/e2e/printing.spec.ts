@@ -23,6 +23,16 @@ test("single QR dialog stays readable on mobile and is isolated for printing", a
   await expect(page.locator("#root")).toBeHidden();
 });
 
+test("print media hides application navigation even outside QR dialog", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await openPage(page, "/items");
+  await expect(page.locator("#app-sidebar")).toBeVisible();
+  await expect(page.locator("header")).toBeVisible();
+  await page.emulateMedia({ media: "print" });
+  await expect(page.locator("#app-sidebar")).toBeHidden();
+  await expect(page.locator("header")).toBeHidden();
+});
+
 test("thermal QR preview dialog fits a short mobile viewport", async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 568 });
   await openPage(page, "/items");

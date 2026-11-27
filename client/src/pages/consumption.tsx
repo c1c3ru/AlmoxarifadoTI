@@ -1,3 +1,4 @@
+import { ErrorState } from "@/components/shared/error-state";
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { MainLayout } from "@/components/layout/main-layout";
@@ -73,7 +74,7 @@ export default function ConsumptionDashboard() {
   const [sortBy, setSortBy] = useState<"consumed" | "stock" | "name">("consumed");
   const [category, setCategory] = useState<string>("all");
 
-  const { data: raw = [], isLoading } = useQuery<ConsumptionItem[]>({
+  const { data: raw = [], isLoading, isError, isFetching, refetch } = useQuery<ConsumptionItem[]>({
     queryKey: ["/api/dashboard/consumption"],
     refetchInterval: 120000,
   });
@@ -163,13 +164,14 @@ export default function ConsumptionDashboard() {
       subtitle="Saídas acumuladas desde o início do sistema"
       showAddButton={false}
     >
+      {isError ? <ErrorState onRetry={() => { void refetch(); }} isRetrying={isFetching} /> : <>
       {/* ── KPIs ─────────────────────────────────────────── */}
       {/*
         Mobile  : 1 coluna (cada card ocupa 100 %)
         ≥ 480px : 2 colunas
         ≥ 768px : 4 colunas
       */}
-      <div className="grid grid-cols-1 min-[480px]:grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,14rem),1fr))] gap-3 mb-6">
         {kpis.map((kpi) => (
           <div
             key={kpi.label}
@@ -203,7 +205,7 @@ export default function ConsumptionDashboard() {
                     {kpi.value}
                   </p>
                   {kpi.sub && (
-                    <p className="text-[0.7rem] text-muted-foreground mt-0.5 truncate">
+                    <p className="text-[0.7rem] text-muted-foreground mt-0.5 break-words">
                       {kpi.sub}
                     </p>
                   )}
@@ -215,13 +217,14 @@ export default function ConsumptionDashboard() {
       </div>
 
       {/* ── SEARCH + SORT ─────────────────────────────────── */}
-      <div className="flex gap-2 mb-3">
+      <div className="flex flex-wrap gap-2 mb-3">
         <div className="relative flex-1 min-w-0">
-          <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-xs pointer-events-none" />
+          <i aria-hidden="true" className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-xs pointer-events-none" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            aria-label="Buscar no consumo"
             placeholder="Buscar item, código ou categoria…"
             className="w-full pl-8 pr-3 py-2 text-sm rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/40"
           />
@@ -441,6 +444,7 @@ export default function ConsumptionDashboard() {
           Dados acumulados desde o início · atualizado a cada 2 min
         </p>
       )}
+      </>}
     </MainLayout>
   );
 }

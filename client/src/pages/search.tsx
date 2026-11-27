@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { apiRequest } from "@/lib/queryClient";
+import { ErrorState } from "@/components/shared/error-state";
 import type { ItemWithCategory, Category } from "@shared/schema";
 
 export default function Search() {
@@ -44,7 +45,7 @@ export default function Search() {
   const statusParam = selectedStatus === ALL ? undefined : selectedStatus;
   const hasFilters = Boolean(debouncedQuery || categoryParam || statusParam);
   
-  const { data: searchResults = [], isLoading } = useQuery<ItemWithCategory[]>({
+  const { data: searchResults = [], isLoading, isError, isFetching, refetch } = useQuery<ItemWithCategory[]>({
     queryKey: ["/api/items/search", debouncedQuery, categoryParam, statusParam],
     queryFn: async () => {
       if (!hasFilters) return [];
@@ -162,6 +163,7 @@ export default function Search() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-12 pr-4 py-4 h-14 text-lg border-2 border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all duration-200"
+                  aria-label="Pesquisar itens"
                   data-testid="input-search"
                 />
               </div>
@@ -227,8 +229,8 @@ export default function Search() {
       </Card>
 
       {/* Search Results */}
-      {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {isError ? <ErrorState message="Não foi possível concluir a pesquisa." onRetry={() => { void refetch(); }} isRetrying={isFetching} /> : isLoading ? (
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,18rem),1fr))] gap-6">
           {Array.from({ length: 6 }).map((_, i) => (
             <Card key={i} className="border-0 shadow-lg">
               <CardContent className="p-6">
@@ -284,7 +286,7 @@ export default function Search() {
             </span>
           </div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,18rem),1fr))] gap-4 md:gap-6">
             {searchResults.map((item) => (
               <Card key={item.id} className="bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 h-full flex flex-col" data-testid={`search-item-${item.id}`}>
                 <CardContent className="p-4 sm:p-6 flex flex-col h-full">
@@ -320,7 +322,7 @@ export default function Search() {
                               variant="ghost"
                               size="sm"
                               onClick={() => handleShowQR(item)}
-                              className="w-6 h-6 p-0 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
+                              className="min-h-11 w-11 p-0 text-indigo-700 hover:bg-indigo-50"
                               data-testid={`button-qr-modal-${item.id}`}
                               aria-label="Ampliar QR Code"
                             >

@@ -2,6 +2,41 @@
 @tailwind components;
 @tailwind utilities;
 
+.inventory-table td { overflow-wrap: anywhere; }
+@media (max-width: 767px) {
+  .inventory-table, .inventory-table tbody { display: block; }
+  .inventory-table tbody { padding: 12px; }
+  .inventory-table tbody tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    margin-bottom: 12px;
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--radius);
+    background: hsl(var(--card));
+  }
+  .inventory-table tbody tr:last-child { margin-bottom: 0; }
+  .inventory-table tbody td { display: block; min-width: 0; padding: 8px 12px; }
+}
+
+/* Bound modal geometry independently of consumer width/height utility overrides. */
+.sgat-dialog {
+  width: calc(100% - 2rem);
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+@supports (max-height: 100dvh) {
+  .sgat-dialog { max-height: calc(100dvh - 2rem); }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -10,22 +45,22 @@
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
+    --primary: 221.2 83.2% 43.3%;
     --primary-foreground: 210 40% 98%;
     --primary-50: 210 40% 98%;
     --primary-100: 214.3 31.8% 91.4%;
     --primary-200: 213 90% 85%;
     --primary-300: 213 90% 75%;
     --primary-500: 221.2 83.2% 58%;
-    --primary-600: 221.2 83.2% 53.3%;
-    --primary-700: 221.2 83.2% 43.3%;
+    --primary-600: 221.2 83.2% 43.3%;
+    --primary-700: 221.2 83.2% 35.3%;
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
     --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted-foreground: 215.4 16.3% 37%;
     --accent: 210 40% 96.1%;
     --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
+    --destructive: 0 72.2% 45%;
     --destructive-foreground: 210 40% 98%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
@@ -50,12 +85,12 @@
     /* Custom Status Colors */
     --success-50: 142.1 76.2% 96.3%;
     --success-100: 141.7 76.6% 91%;
-    --success-600: 142.1 70.6% 45.3%;
+    --success-600: 142.4 71.8% 29.2%;
     --success-700: 142.4 71.8% 29.2%;
 
     --warning-50: 48 100% 96.1%;
     --warning-100: 48 96.5% 88.8%;
-    --warning-600: 47.9 95.8% 53.1%;
+    --warning-600: 35.8 96.3% 32%;
     --warning-700: 35.8 96.3% 44.1%;
 
     --error-50: 0 85.7% 97.3%;
@@ -130,6 +165,14 @@
 }
 
 @media print {
+  nav,
+  header,
+  aside,
+  #app-sidebar,
+  .no-print {
+    display: none !important;
+  }
+
   body:has([data-print-qr]) #root {
     display: none !important;
   }
@@ -160,6 +203,10 @@
 
   body {
     @apply font-sans antialiased bg-background text-foreground;
+    padding-top: env(safe-area-inset-top);
+    padding-right: env(safe-area-inset-right);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
   }
 
   /* Improved input styling for better contrast */

@@ -1,20 +1,22 @@
 # STATUS — UI/UX Stability
 
-Issue #33 · atualizado em 2026-11-27 · branch `test/ui-ux-release-gate` · base `b8f3d739dc792b812092be5d24821c5a770333dc`.
+Issue #33 · atualizado em 2026-11-27 · branch `fix/ui-ux-backlog-sync` · base `4d364b8` (`origin/main`).
 
-**Registradas como DONE: 9/9 tarefas.** UI-00 a UI-06 integradas. Em 27/11/2026, o mantenedor informou que realizou a homologação física e pediu marcar DONE antes de anexar as evidências. UI-07/UI-08 foram concluídas por essa declaração e decisão explícita. Evidências físicas, identificação dos dispositivos, registro detalhado de revisão visual/zoom/teclado e assinaturas formais continuam pendentes; não são apresentados como verificados pelo agente. Matriz e resultados: [UI-08 — Homologação](../../UI-08-HOMOLOGACAO.md).
+**Progresso técnico verificado: 7/9 ciclos aceitos em código/automação; UI-07 (hardware físico) e UI-08 (homologação final) permanecem pendentes de evidência física e assinatura humana.**
+
+Auditoria do histórico Git em 27/11/2026 identificou que os PRs #40 (UI-03), #42 (UI-04), #43 (UI-05) e #44 (UI-06) haviam sido mergeados em branches empilhadas (`fix/responsive-layout` → `feat/responsive-inventory`) e não tinham chegado à `main`, além de lacunas técnicas em UI-07 (`viewport-fit=cover` / `safe-area-inset-*` e ocultação explícita de `nav, header, aside, #app-sidebar, .no-print` em `@media print`). A branch `fix/ui-ux-backlog-sync` reconciliou todas as entregas de UI-03 a UI-07 sem quebrar os contratos existentes.
 
 | Tarefa | Estado | Evidência / próximo passo |
 |---|---|---|
 | UI-00 | DONE | PR #34 mergeado; PRD, Spec e STATUS publicados. |
-| UI-01 | DONE | PR #37 mergeado; baseline real e falhas reproduzíveis arquivadas, sem relaxamento de asserts. PostgreSQL descartável: 9/9 contratos PASS após os hotfixes #36/#38. |
-| UI-02 | DONE | PR #39 mergeado; drawer responsivo, foco e navegação acessíveis; 12 testes focados Chromium passaram. |
-| UI-03 | DONE | PR #40 mergeado; diálogos roláveis, foco e labels corrigidos. |
-| UI-04 | DONE | PR #42 mergeado; estados de erro/retry, contraste e alvos de toque. |
-| UI-05 | DONE | PR #43 mergeado; inventário móvel em cards e tabela desktop, sem duplicar mutações. |
-| UI-06 | DONE | PR #44 mergeado; telas operacionais, filtros e recuperação de falhas. |
-| UI-07 | DONE por declaração | Código mergeado por PR #60; CI anterior 66/66. Mantenedor declarou homologação física realizada em 27/11; anexos e identificação de hardware pendentes. |
-| UI-08 | DONE por solicitação do mantenedor | Matriz, logs e termo de aprovação registrados. Revalidação local: verify 30/30, Chromium/Firefox 56/56, PostgreSQL 17 descartável 9/9, axe das nove rotas sem violações. Aceite por declaração com evidências a anexar; assinaturas e registro visual manual pendentes. |
+| UI-01 | DONE | PR #37 mergeado; baseline real e PostgreSQL descartável 9/9 PASS. |
+| UI-02 | DONE | PR #39 mergeado; drawer responsivo, foco e navegação acessíveis. |
+| UI-03 | DONE (reconciliado) | Reconciliado na branch `fix/ui-ux-backlog-sync` (PR #40 não havia entrado em `main`): `.sgat-dialog`, botão `Fechar` 44px, restauração de foco, `prefers-reduced-motion`, labels/autocomplete em `login.tsx`/`register.tsx` e `tests/e2e/dialogs.spec.ts`. |
+| UI-04 | DONE (reconciliado) | Reconciliado na branch `fix/ui-ux-backlog-sync` (PR #42 não havia entrado em `main`): `ErrorState`, tokens de contraste, alvos de 44px em `button`/`input`/`card` e `ErrorState` em `search.tsx`. |
+| UI-05 | DONE (reconciliado) | Reconciliado na branch `fix/ui-ux-backlog-sync` (PR #43 não havia entrado em `main`): `.inventory-table` responsiva, `ErrorState`, inputs com `aria-label` e 44px, `tests/e2e/inventory.spec.ts`. |
+| UI-06 | DONE (reconciliado) | Reconciliado na branch `fix/ui-ux-backlog-sync` (PR #44 não havia entrado em `main`): grids `auto-fit`, `ErrorState` em todas as telas operacionais e `tests/e2e/operations.spec.ts`. |
+| UI-07 | BLOCKED (código OK / hardware pendente) | Código concluído com `viewport-fit=cover`, `env(safe-area-inset-*)` e isolamento `@media print` para navegação (`printing.spec.ts` 3/3 PASS; `scripts/validar_task_qr_impressao.py` 10/13). Aguarda evidências físicas reais em `homologacao_hardware.json` (Android, iOS, impressora térmica). |
+| UI-08 | BLOCKED (automação OK / assinaturas e anexos pendentes) | Matriz, `npm run verify` (30/30), Playwright Chromium/Firefox (76/76) e PostgreSQL 17 descartável (9/9) PASS. Faltam anexos físicos, registro manual de zoom 200%/teclado/visual e merge revisado da branch `fix/ui-ux-backlog-sync`. |
 
 ## Correções de contrato autorizadas
 

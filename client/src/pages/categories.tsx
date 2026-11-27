@@ -1,3 +1,4 @@
+import { ErrorState } from "@/components/shared/error-state";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
@@ -83,7 +84,7 @@ export default function Categories() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: categories = [], isLoading } = useQuery<Category[]>({
+  const { data: categories = [], isLoading, isError, isFetching, refetch } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
   });
 
@@ -209,7 +210,7 @@ export default function Categories() {
     >
       <Card className="border border-gray-200 shadow-sm">
         <CardContent className="p-6">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
             <div>
               <h3 className="text-xl font-semibold text-gray-900 mb-1">Categorias Cadastradas</h3>
               <p className="text-sm text-gray-500">Visualize e gerencie todas as categorias do sistema</p>
@@ -335,8 +336,8 @@ export default function Categories() {
             )}
           </div>
 
-          {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {isError ? <ErrorState onRetry={() => { void refetch(); }} isRetrying={isFetching} /> : isLoading ? (
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,18rem),1fr))] gap-4">
               {Array.from({ length: 6 }).map((_, i) => (
                 <Card key={i} className="border border-gray-200">
                   <CardContent className="p-4">
@@ -356,7 +357,7 @@ export default function Categories() {
               </Button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,18rem),1fr))] gap-6">
               {categories.map((category) => (
                 <Card
                   key={category.id}

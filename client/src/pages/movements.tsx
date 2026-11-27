@@ -1,3 +1,4 @@
+import { ErrorState } from "@/components/shared/error-state";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { MainLayout } from "@/components/layout/main-layout";
@@ -22,7 +23,7 @@ export default function Movements() {
   });
 
   const itemIdParam = selectedItemFilter === ALL ? undefined : selectedItemFilter;
-  const { data: movements = [], isLoading, isError, error } = useQuery<MovementWithDetails[]>({
+  const { data: movements = [], isLoading, isError, isFetching, refetch } = useQuery<MovementWithDetails[]>({
     queryKey: ["/api/movements", { itemId: itemIdParam, limit: 100 }],
     // Garante atualização ao entrar na página mesmo com staleTime global infinito
     refetchOnMount: "always",
@@ -71,7 +72,7 @@ export default function Movements() {
       showAddButton={false}
     >
       {/* Quick Actions Hero */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,16rem),1fr))] gap-6 mb-8">
         <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-0 shadow-lg hover:shadow-xl transition-all duration-300 group cursor-pointer"
           onClick={() => handleNewMovement("entrada")}>
           <CardContent className="p-8 text-center">
@@ -203,10 +204,7 @@ export default function Movements() {
               ))}
             </div>
           ) : isError ? (
-            <div className="text-center py-8">
-              <p className="text-red-600 font-medium">Erro ao carregar movimentações.</p>
-              <p className="text-sm text-gray-500 mt-1">{error instanceof Error ? error.message : "Tente novamente mais tarde."}</p>
-            </div>
+            <ErrorState message="Não foi possível carregar as movimentações." onRetry={() => { void refetch(); }} isRetrying={isFetching} />
           ) : movements.length === 0 ? (
             <div className="text-center py-16">
               <div className="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mx-auto mb-6">
