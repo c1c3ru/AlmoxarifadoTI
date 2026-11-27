@@ -56,3 +56,10 @@
 - Evidência CI PR #60: quality, build e audit PASS; Playwright 66/66 em Chromium/Firefox/WebKit; integração PostgreSQL 17 descartável 9/9. O host local ainda não tem `libmanette-0.2-0`, mas CI instalou as dependências e validou WebKit sem falhas.
 - Resultado: PR #60 mergeado em `0427d08`; nenhum deploy foi feito. UI-07 e UI-08 continuam BLOCKED para aceite humano porque o mantenedor confirmou que ainda precisa fazer câmera Android/iOS e impressão física.
 - Gate final: anexar evidências físicas e concluir revisão visual/zoom/teclado; não fechar issue sem esses registros.
+
+## R-010 · 2026-11-27 · UI-08 · registro de homologação e isolamento
+- Base: `b8f3d739dc792b812092be5d24821c5a770333dc` (`origin/main`); branch `test/ui-ux-release-gate`. Produto e lockfile preservados; `vercel.json` bloqueia auto-deploy somente desta branch. Commit solicitado com `[skip ci]`.
+- Evidência atual: instalação limpa de 778 pacotes; `npm run verify` PASS (TypeScript/build, ESLint 0 erros/36 avisos, Vitest 30/30); Playwright Chromium/Firefox 56/56; API real com PostgreSQL 17 descartável 9/9; nove rotas axe sem violações e diálogos sem violações sérias/críticas. Logs e resumo versionados em `docs/evidencias/ui08/`.
+- Infraestrutura: execução inicial no sandbox restringiu instalação/sockets; reexecução completa fora dele passou. WebKit local não executado por bibliotecas ausentes; o CI instala as dependências. CI da base `b8f3d73` conferido verde no run 45825083130; distinguir essa evidência de execução da nova branch.
+- Avaliação: automação local PASS. O mantenedor declarou a homologação física realizada e pediu DONE com evidências posteriores; STATUS registra 9/9 DONE por essa decisão. Modelos, versões, medições, imagens e assinaturas não foram fornecidos; não foram inferidos. Registro manual visual/zoom/teclado permanece pendente.
+- Próxima ação: anexar comprovação física e aprovações formais no termo UI-08. Nenhum merge/deploy ou encerramento automático da issue.

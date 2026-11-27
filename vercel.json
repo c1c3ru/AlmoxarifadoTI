@@ -1,5 +1,10 @@
 {
   "framework": null,
+  "git": {
+    "deploymentEnabled": {
+      "test/ui-ux-release-gate": false
+    }
+  },
   "buildCommand": "npm run build",
   "outputDirectory": "dist/public",
   "installCommand": "npm ci",

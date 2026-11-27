@@ -1,0 +1,459 @@
+{
+  "recorded_at": "2026-11-27T12:47:08.416767+00:00",
+  "base_sha": "b8f3d739dc792b812092be5d24821c5a770333dc",
+  "branch": "test/ui-ux-release-gate",
+  "runtime_changes": false,
+  "node": "22.19.0",
+  "npm": "11.6.0",
+  "clean_install": {
+    "command": "npm ci --no-audit --no-fund",
+    "exit_code": 0,
+    "packages": 778
+  },
+  "verify": {
+    "command": "npm run verify",
+    "exit_code": 0,
+    "unit_tests_passed": 30,
+    "lint_errors": 0,
+    "lint_warnings": 36,
+    "typecheck": "PASS",
+    "build": "PASS"
+  },
+  "ui": {
+    "command": "npm run test:e2e -- --project=chromium --project=firefox",
+    "exit_code": 0,
+    "passed": 56,
+    "failed": 0,
+    "screenshots": 81,
+    "webkit_local": "NOT_RUN: missing system libraries; use GitHub Actions for full matrix",
+    "qr_dialog_serious_critical_violations": 0,
+    "thermal_dialog_serious_critical_violations": 0
+  },
+  "integration": {
+    "command": "env -u DATABASE_URL E2E_DATABASE_URL=postgresql://deppi@127.0.0.1:55438/sgat_ui_regression npm run test:e2e:integration",
+    "exit_code": 0,
+    "passed": 9,
+    "database": "disposable PostgreSQL 17 on loopback"
+  },
+  "axe_routes": [
+    {
+      "url": "http://127.0.0.1:4173/",
+      "axe_version": "4.10.3",
+      "violations": 0,
+      "incomplete": 1,
+      "rules_passed": 24,
+      "source": "test-results/ui/accessibility-WCAG-baseline--chromium/axe-results.json",
+      "incomplete_rules": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            [
+              ".md\\:text-2xl"
+            ],
+            [
+              ".mt-0\\.5"
+            ],
+            [
+              ".border-0.hover\\:shadow-xl.hover\\:-translate-y-1:nth-child(1) > .z-10.p-6.relative > .justify-between.items-center.flex > div:nth-child(1) > .font-medium.mb-1.text-sm"
+            ],
+            [
+              "p[data-testid=\"stat-total-items\"]"
+            ],
+            [
+              ".border-0.hover\\:shadow-xl.hover\\:-translate-y-1:nth-child(2) > .z-10.p-6.relative > .justify-between.items-center.flex > div:nth-child(1) > .font-medium.mb-1.text-sm"
+            ],
+            [
+              "p[data-testid=\"stat-low-stock\"]"
+            ],
+            [
+              ".border-0.hover\\:shadow-xl.hover\\:-translate-y-1:nth-child(2) > .z-10.p-6.relative > .justify-between.items-center.flex > div:nth-child(1) > .mt-1.items-center.flex > .text-xs"
+            ],
+            [
+              ".border-0.hover\\:shadow-xl.hover\\:-translate-y-1:nth-child(3) > .z-10.p-6.relative > .justify-between.items-center.flex > div:nth-child(1) > .font-medium.mb-1.text-sm"
+            ],
+            [
+              "p[data-testid=\"stat-today-movements\"]"
+            ],
+            [
+              ".border-0.hover\\:shadow-xl.hover\\:-translate-y-1:nth-child(3) > .z-10.p-6.relative > .justify-between.items-center.flex > div:nth-child(1) > .mt-1.items-center.flex > .text-xs"
+            ],
+            [
+              ".border-0.hover\\:shadow-xl.hover\\:-translate-y-1:nth-child(4) > .z-10.p-6.relative > .justify-between.items-center.flex > div:nth-child(1) > .font-medium.mb-1.text-sm"
+            ],
+            [
+              "p[data-testid=\"stat-active-users\"]"
+            ],
+            [
+              ".border-0.hover\\:shadow-xl.hover\\:-translate-y-1:nth-child(4) > .z-10.p-6.relative > .justify-between.items-center.flex > div:nth-child(1) > .mt-1.items-center.flex > .text-xs"
+            ],
+            [
+              ".min-w-0.space-x-3.items-center > .min-w-0 > .text-xs.text-muted-foreground"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "url": "http://127.0.0.1:4173/categories",
+      "axe_version": "4.10.3",
+      "violations": 0,
+      "incomplete": 1,
+      "rules_passed": 24,
+      "source": "test-results/ui/accessibility-WCAG-baseline-categories-chromium/axe-results.json",
+      "incomplete_rules": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            [
+              ".md\\:text-2xl"
+            ],
+            [
+              ".text-muted-foreground"
+            ],
+            [
+              ".ml-2"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "url": "http://127.0.0.1:4173/consumption",
+      "axe_version": "4.10.3",
+      "violations": 0,
+      "incomplete": 1,
+      "rules_passed": 27,
+      "source": "test-results/ui/accessibility-WCAG-baseline-consumption-chromium/axe-results.json",
+      "incomplete_rules": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            [
+              ".md\\:text-2xl"
+            ],
+            [
+              ".md\\:text-base"
+            ],
+            [
+              ".mb-3.text-xs.text-muted-foreground"
+            ],
+            [
+              ".text-foreground.font-semibold"
+            ],
+            [
+              ".py-16 > .font-semibold.text-sm"
+            ],
+            [
+              ".mt-1"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "url": "http://127.0.0.1:4173/history",
+      "axe_version": "4.10.3",
+      "violations": 0,
+      "incomplete": 1,
+      "rules_passed": 26,
+      "source": "test-results/ui/accessibility-WCAG-baseline-history-chromium/axe-results.json",
+      "incomplete_rules": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            [
+              ".md\\:text-2xl"
+            ],
+            [
+              ".text-muted-foreground"
+            ],
+            [
+              ".text-blue-600"
+            ],
+            [
+              ".text-blue-900"
+            ],
+            [
+              ".text-emerald-600"
+            ],
+            [
+              "p[data-testid=\"stat-entries\"]"
+            ],
+            [
+              ".text-emerald-700"
+            ],
+            [
+              ".text-red-600"
+            ],
+            [
+              ".text-red-900"
+            ],
+            [
+              ".text-red-700"
+            ],
+            [
+              ".text-purple-600"
+            ],
+            [
+              "p[data-testid=\"stat-net-balance\"]"
+            ],
+            [
+              ".text-purple-700"
+            ],
+            [
+              "h3"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "url": "http://127.0.0.1:4173/items",
+      "axe_version": "4.10.3",
+      "violations": 0,
+      "incomplete": 1,
+      "rules_passed": 32,
+      "source": "test-results/ui/accessibility-WCAG-baseline-items-chromium/axe-results.json",
+      "incomplete_rules": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            [
+              ".md\\:text-2xl"
+            ],
+            [
+              ".text-muted-foreground"
+            ],
+            [
+              ".ml-auto > span"
+            ],
+            [
+              ".text-2xl"
+            ],
+            [
+              ".gap-4 > .gap-3.flex.items-center:nth-child(1) > div:nth-child(2) > p"
+            ],
+            [
+              ".space-x-3.flex.items-center:nth-child(1) > h3"
+            ],
+            [
+              ".space-x-2.flex.items-center > span"
+            ],
+            [
+              ".hidden.md\\:table-cell.text-left:nth-child(2)"
+            ],
+            [
+              ".hidden.md\\:table-cell.text-left:nth-child(3)"
+            ],
+            [
+              ".hidden.md\\:table-cell.text-left:nth-child(4)"
+            ],
+            [
+              ".hidden.md\\:table-cell.text-left:nth-child(5)"
+            ],
+            [
+              ".text-center.px-6.py-4"
+            ],
+            [
+              ".px-6.py-4.hidden:nth-child(7)"
+            ],
+            [
+              ".from-purple-100"
+            ],
+            [
+              ".to-blue-600"
+            ],
+            [
+              ".from-green-500"
+            ],
+            [
+              ".from-red-500"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "url": "http://127.0.0.1:4173/movements",
+      "axe_version": "4.10.3",
+      "violations": 0,
+      "incomplete": 1,
+      "rules_passed": 24,
+      "source": "test-results/ui/accessibility-WCAG-baseline-movements-chromium/axe-results.json",
+      "incomplete_rules": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            [
+              ".md\\:text-2xl"
+            ],
+            [
+              ".text-muted-foreground"
+            ],
+            [
+              ".text-emerald-900"
+            ],
+            [
+              ".text-emerald-700"
+            ],
+            [
+              ".text-red-900"
+            ],
+            [
+              ".text-red-700"
+            ],
+            [
+              ".text-blue-900"
+            ],
+            [
+              ".text-blue-700"
+            ],
+            [
+              ".space-x-3.items-center.flex > .text-gray-900"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "url": "http://127.0.0.1:4173/scanner",
+      "axe_version": "4.10.3",
+      "violations": 0,
+      "incomplete": 1,
+      "rules_passed": 24,
+      "source": "test-results/ui/accessibility-WCAG-baseline-scanner-chromium/axe-results.json",
+      "incomplete_rules": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            [
+              ".text-xl"
+            ],
+            [
+              ".text-muted-foreground"
+            ],
+            [
+              "h3"
+            ],
+            [
+              ".mb-5"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "url": "http://127.0.0.1:4173/search",
+      "axe_version": "4.10.3",
+      "violations": 0,
+      "incomplete": 1,
+      "rules_passed": 26,
+      "source": "test-results/ui/accessibility-WCAG-baseline-search-chromium/axe-results.json",
+      "incomplete_rules": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            [
+              ".md\\:text-2xl"
+            ],
+            [
+              ".text-muted-foreground"
+            ],
+            [
+              ".from-blue-600"
+            ],
+            [
+              ".text-gray-600.font-medium"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "url": "http://127.0.0.1:4173/users",
+      "axe_version": "4.10.3",
+      "violations": 0,
+      "incomplete": 1,
+      "rules_passed": 24,
+      "source": "test-results/ui/accessibility-WCAG-baseline-users-chromium/axe-results.json",
+      "incomplete_rules": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            [
+              ".md\\:text-2xl"
+            ],
+            [
+              ".text-muted-foreground"
+            ],
+            [
+              ".text-blue-600"
+            ],
+            [
+              ".text-blue-900"
+            ],
+            [
+              ".text-purple-600"
+            ],
+            [
+              ".text-purple-900"
+            ],
+            [
+              ".text-green-600.font-medium"
+            ],
+            [
+              ".text-green-900"
+            ],
+            [
+              "h3"
+            ],
+            [
+              ".text-primary-foreground"
+            ],
+            [
+              ".group-hover\\:text-blue-700"
+            ],
+            [
+              ".focus\\:outline-none"
+            ],
+            [
+              ".break-all.min-w-0:nth-child(1)"
+            ],
+            [
+              ".break-all.min-w-0:nth-child(2)"
+            ],
+            [
+              ".break-all.min-w-0:nth-child(3)"
+            ],
+            [
+              ".break-all.min-w-0:nth-child(4)"
+            ],
+            [
+              ".hover\\:to-indigo-700"
+            ]
+          ]
+        }
+      ]
+    }
+  ],
+  "hardware": {
+    "status": "DONE_DECLARED_BY_MAINTAINER",
+    "evidence": "PENDING",
+    "device_metadata": "NOT_PROVIDED",
+    "independently_verified": false
+  },
+  "log_sha256": {
+    "verify.log": "84d93f4dd4033d80470778b21bff75c8dfd2367b8a8de982b8872c94551fd8e9",
+    "playwright.log": "d38be72e60ce9c294c814fdff09857a7acd83a2375484ba74d0036a1661166f6",
+    "integration.log": "b9f7c2731d3ea00d5c5b481f07ca6ae9cffe188c678c4f54cb3b526261be964d"
+  }
+}
