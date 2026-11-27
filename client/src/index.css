@@ -1,6 +1,5 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@config "../../tailwind.config.ts";
 
 .inventory-table td { overflow-wrap: anywhere; }
 @media (max-width: 767px) {
