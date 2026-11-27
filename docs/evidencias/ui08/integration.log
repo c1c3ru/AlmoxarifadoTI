@@ -1,0 +1,29 @@
+
+> rest-express@1.0.0 test:e2e:integration
+> playwright test --config playwright.integration.config.ts
+
+[WebServer] (node:38105) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:38127) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:38147) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:38147) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] [email] Email service not configured. Missing environment variables.
+
+Running 9 tests using 1 worker
+
+(node:38210) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 tests/integration/contracts.spec.ts:12:1 › anonymous clients cannot read inventory or create stock movements (1.3s)
+  ✓  2 tests/integration/contracts.spec.ts:17:1 › login uses httpOnly cookies and logout clears them (1.0s)
+  ✓  3 tests/integration/contracts.spec.ts:29:1 › tech cannot delete inventory, create categories or list users (39ms)
+  ✓  4 tests/integration/contracts.spec.ts:37:1 › real entry/exit changes stock once and rejects insufficient stock (85ms)
+  ✓  5 tests/integration/contracts.spec.ts:53:1 › unit is returned after persisting an inline unit update (29ms)
+  ✓  6 tests/integration/contracts.spec.ts:62:1 › scanner lookup resolves the code using the frontend endpoint (28ms)
+  ✓  7 tests/integration/contracts.spec.ts:69:1 › admin creates, edits, finds and deletes an item (909ms)
+  ✓  8 tests/integration/contracts.spec.ts:82:1 › CSV and XLSX exports return actual inventory content (77ms)
+  ✓  9 tests/integration/contracts.spec.ts:93:1 › browser authenticates through the real API and shows persisted stock (3.9s)
+
+  9 passed (17.8s)

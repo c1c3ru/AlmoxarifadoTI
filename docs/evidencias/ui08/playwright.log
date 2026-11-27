@@ -1,0 +1,89 @@
+
+> rest-express@1.0.0 test:e2e
+> playwright test --project=chromium --project=firefox
+
+[WebServer] (node:38074) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:38086) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:38103) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:38103) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 56 tests using 4 workers
+
+(node:38182) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:38176) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:38175) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:38188) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 [chromium] › tests/e2e/accessibility.spec.ts:6:3 › WCAG baseline /search (6.5s)
+  ✓   4 [chromium] › tests/e2e/accessibility.spec.ts:6:3 › WCAG baseline /movements (7.8s)
+  ✓   2 [chromium] › tests/e2e/accessibility.spec.ts:6:3 › WCAG baseline / (6.8s)
+  ✓   3 [chromium] › tests/e2e/accessibility.spec.ts:6:3 › WCAG baseline /items (6.7s)
+  ✓   5 [chromium] › tests/e2e/accessibility.spec.ts:6:3 › WCAG baseline /history (1.7s)
+  ✓   6 [chromium] › tests/e2e/accessibility.spec.ts:6:3 › WCAG baseline /consumption (1.7s)
+  ✓   7 [chromium] › tests/e2e/accessibility.spec.ts:6:3 › WCAG baseline /users (1.7s)
+  ✓   8 [chromium] › tests/e2e/accessibility.spec.ts:6:3 › WCAG baseline /categories (1.6s)
+  ✓  11 [chromium] › tests/e2e/navigation.spec.ts:28:1 › compact menu keeps password and logout reachable and preserves preference (1.1s)
+  ✓  10 [chromium] › tests/e2e/navigation.spec.ts:3:1 › mobile drawer traps focus, survives keyboard resize and restores focus (1.3s)
+  ✓   9 [chromium] › tests/e2e/accessibility.spec.ts:6:3 › WCAG baseline /scanner (1.6s)
+  ✓  12 [chromium] › tests/e2e/printing.spec.ts:4:1 › single QR dialog stays readable on mobile and is isolated for printing (2.0s)
+  ✓  13 [chromium] › tests/e2e/printing.spec.ts:26:1 › thermal QR preview dialog fits a short mobile viewport (1.9s)
+  ✓  14 [chromium] › tests/e2e/responsive.spec.ts:10:3 › global reflow 320x568 (5.8s)
+  ✓  15 [chromium] › tests/e2e/responsive.spec.ts:10:3 › global reflow 360x800 (5.9s)
+  ✓  16 [chromium] › tests/e2e/responsive.spec.ts:10:3 › global reflow 390x844 (5.8s)
+  ✓  17 [chromium] › tests/e2e/responsive.spec.ts:10:3 › global reflow 844x390 (6.0s)
+  ✓  18 [chromium] › tests/e2e/responsive.spec.ts:10:3 › global reflow 768x1024 (6.0s)
+  ✓  19 [chromium] › tests/e2e/responsive.spec.ts:10:3 › global reflow 1024x768 (6.5s)
+  ✓  20 [chromium] › tests/e2e/responsive.spec.ts:10:3 › global reflow 1366x768 (6.7s)
+  ✓  23 [chromium] › tests/e2e/responsive.spec.ts:28:3 › sidebar has reachable navigation at breakpoint 767 (908ms)
+  ✓  24 [chromium] › tests/e2e/responsive.spec.ts:28:3 › sidebar has reachable navigation at breakpoint 768 (970ms)
+  ✓  25 [chromium] › tests/e2e/responsive.spec.ts:28:3 › sidebar has reachable navigation at breakpoint 769 (905ms)
+  ✓  21 [chromium] › tests/e2e/responsive.spec.ts:10:3 › global reflow 1920x1080 (7.2s)
+  ✓  26 [chromium] › tests/e2e/responsive.spec.ts:28:3 › sidebar has reachable navigation at breakpoint 1023 (1.0s)
+  ✓  27 [chromium] › tests/e2e/responsive.spec.ts:28:3 › sidebar has reachable navigation at breakpoint 1024 (1.3s)
+  ✓  28 [chromium] › tests/e2e/responsive.spec.ts:28:3 › sidebar has reachable navigation at breakpoint 1025 (976ms)
+  ✓  29 [chromium] › tests/e2e/responsive.spec.ts:28:3 › sidebar has reachable navigation at breakpoint 1279 (1.4s)
+  ✓  30 [chromium] › tests/e2e/responsive.spec.ts:28:3 › sidebar has reachable navigation at breakpoint 1280 (1.3s)
+  ✓  31 [chromium] › tests/e2e/responsive.spec.ts:28:3 › sidebar has reachable navigation at breakpoint 1281 (1.2s)
+  ✓  32 [chromium] › tests/e2e/scanner.spec.ts:3:1 › simulated camera decodes the existing ITEM payload and withdraws once (1.1s)
+  ✓  34 [chromium] › tests/e2e/smoke.spec.ts:20:1 › inline stock creates one movement and unit creates one update (1.1s)
+  ✓  33 [chromium] › tests/e2e/smoke.spec.ts:5:1 › signed-out session › login and logout preserve the auth request contract (1.9s)
+  ✓  35 [chromium] › tests/e2e/smoke.spec.ts:38:1 › selection survives viewport changes without stock mutations (1.2s)
+  ✓  36 [chromium] › tests/e2e/smoke.spec.ts:51:3 › entrada submits exactly one movement with the selected item (2.1s)
+  ✓  22 [chromium] › tests/e2e/responsive.spec.ts:10:3 › global reflow 2560x1440 (8.9s)
+  ✓  37 [chromium] › tests/e2e/smoke.spec.ts:51:3 › saida submits exactly one movement with the selected item (2.0s)
+  ✓  39 [chromium] › tests/e2e/smoke.spec.ts:88:1 › search filters preserve the matching item and empty result (1.2s)
+  ✓  38 [chromium] › tests/e2e/smoke.spec.ts:65:1 › edit, QR, delete and export retain their callbacks (3.3s)
+  ✓  42 [chromium] › tests/e2e/smoke.spec.ts:129:3 › technician UI › hides admin navigation and destructive actions (1.5s)
+  ✓  43 [chromium] › tests/e2e/states.spec.ts:3:1 › empty inventory has an actionable empty state (811ms)
+  ✓  40 [chromium] › tests/e2e/smoke.spec.ts:96:1 › create form validates required data and submits once (2.7s)
+  ✓  45 [chromium] › tests/e2e/states.spec.ts:22:1 › mobile inventory exposes code, category and unit (692ms)
+  ✓  44 [chromium] › tests/e2e/states.spec.ts:10:1 › inventory failure is distinguished from an empty inventory (977ms)
+(node:39966) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:39965) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  46 [chromium] › tests/e2e/states.spec.ts:31:1 › add item dialog keyboard cancellation does not mutate stock (1.7s)
+(node:40007) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  41 [chromium] › tests/e2e/smoke.spec.ts:112:1 › CSV import preserves category and data in one mutation (7.5s)
+(node:40653) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  48 [firefox] › tests/e2e/smoke.spec.ts:20:1 › inline stock creates one movement and unit creates one update (4.0s)
+  ✓  49 [firefox] › tests/e2e/smoke.spec.ts:38:1 › selection survives viewport changes without stock mutations (3.6s)
+  ✓  47 [firefox] › tests/e2e/smoke.spec.ts:5:1 › signed-out session › login and logout preserve the auth request contract (3.9s)
+  ✓  52 [firefox] › tests/e2e/smoke.spec.ts:51:3 › saida submits exactly one movement with the selected item (2.8s)
+  ✓  53 [firefox] › tests/e2e/smoke.spec.ts:88:1 › search filters preserve the matching item and empty result (2.1s)
+  ✓  51 [firefox] › tests/e2e/smoke.spec.ts:65:1 › edit, QR, delete and export retain their callbacks (4.5s)
+  ✓  50 [firefox] › tests/e2e/smoke.spec.ts:51:3 › entrada submits exactly one movement with the selected item (4.5s)
+  ✓  56 [firefox] › tests/e2e/smoke.spec.ts:129:3 › technician UI › hides admin navigation and destructive actions (1.8s)
+  ✓  54 [firefox] › tests/e2e/smoke.spec.ts:96:1 › create form validates required data and submits once (3.6s)
+  ✓  55 [firefox] › tests/e2e/smoke.spec.ts:112:1 › CSV import preserves category and data in one mutation (8.1s)
+
+  56 passed (1.0m)
